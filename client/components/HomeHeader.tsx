@@ -1,0 +1,14 @@
+import { SignInButton } from "@clerk/clerk-react"
+
+export default function HomeHeader() {
+    return (
+        <div className="flex w-full h-full justify-between items-center">
+            <div className="text-[48px] font-bold">TagInspo</div>
+            <div className="flex gap-10">
+                <div>Sign Up</div>
+                <SignInButton><div>Log In</div></SignInButton>
+            </div>
+
+        </div>
+    )
+}
