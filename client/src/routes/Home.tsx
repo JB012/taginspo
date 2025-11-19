@@ -1,9 +1,11 @@
-import { SignedOut, SignUp } from '@clerk/clerk-react'
+import { SignedOut, SignedIn,  SignUp, SignUpButton } from '@clerk/clerk-react'
 import HomeHeader from '../../components/HomeHeader'
 import HomeFooter from '../../components/HomeFooter'
+import { Navigate } from 'react-router'
 
 export default function Home() {
   return (
+    <>
     <SignedOut>
       <div className="flex flex-col w-full h-full px-16">
           <HomeHeader />
@@ -17,9 +19,11 @@ export default function Home() {
                   Design and customize your ideas to your liking
                 </div>
               </div>
-              <button className='w-[134px] h-[27px] outline outline-black rounded-full text-center'>
-                Get Started
-              </button>
+              <SignUpButton forceRedirectUrl={'/dashboard'}>
+                <button className='w-[134px] h-[27px] outline outline-black rounded-full text-center'>
+                  Get Started
+                </button>
+              </SignUpButton>
             </div>
             <div id='features-display' className='flex flex-col gap-10'>
               <div className='flex justify-between items-center'>
@@ -72,5 +76,9 @@ export default function Home() {
         <HomeFooter />
       </div>  
     </SignedOut>
+    <SignedIn>
+      <Navigate to={'/dashboard'}/>
+    </SignedIn>
+    </>
   )
 }

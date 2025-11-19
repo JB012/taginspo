@@ -1,17 +1,21 @@
 # Use the latest LTS version of Node.js
 FROM node:24.11-alpine
- 
+
+ARG VITE_CLERK_PUBLISHABLE_KEY
+
+ENV VITE_CLERK_PUBLISHABLE_KEY=${VITE_CLERK_PUBLISHABLE_KEY}
+
 # Set the working directory inside the container
-WORKDIR /app
+WORKDIR /client
  
 # Copy package.json and package-lock.json
-COPY package*.json ./
+COPY ./client/package*.json .
  
 # Install dependencies
 RUN npm install
  
 # Copy the rest of your application files
-COPY . .
+COPY ./client .
  
 # Expose the port your app runs on
 EXPOSE 5173

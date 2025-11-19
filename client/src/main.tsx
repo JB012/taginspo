@@ -15,7 +15,7 @@ if (!PUBLISHABLE_KEY) {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
-      <ClerkProvider signInForceRedirectUrl={'/dashboard'} publishableKey={PUBLISHABLE_KEY}>
+      <ClerkProvider signUpForceRedirectUrl={'/dashboard'} signInForceRedirectUrl={'/dashboard'} publishableKey={PUBLISHABLE_KEY}>
           <Routes>
             <Route path='/' element={<Home />} />
             <Route path='/dashboard' element={<Dashboard />} />
