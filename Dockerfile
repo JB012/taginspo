@@ -6,7 +6,7 @@ ARG VITE_CLERK_PUBLISHABLE_KEY
 ENV VITE_CLERK_PUBLISHABLE_KEY=${VITE_CLERK_PUBLISHABLE_KEY}
 
 # Set the working directory inside the container
-WORKDIR /client
+WORKDIR /app
  
 # Copy package.json and package-lock.json
 COPY ./client/package*.json .

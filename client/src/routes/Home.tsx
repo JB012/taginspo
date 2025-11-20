@@ -10,7 +10,7 @@ export default function Home() {
       <div className="flex flex-col w-full h-full px-16">
           <HomeHeader />
           <div className='flex flex-col pt-[172px]'>
-            <div className='flex justify-between items-center'>
+            <div id='hook-section' className='flex justify-between items-center'>
               <div className='flex flex-col gap-2'>
                 <div className='w-[338px] h-[184px] text-[40px]'>
                   All-in-one moodboard and image gallery
@@ -26,7 +26,7 @@ export default function Home() {
               </SignUpButton>
             </div>
             <div id='features-display' className='flex flex-col gap-10'>
-              <div className='flex justify-between items-center'>
+              <div id='feature-1' className='feature flex justify-between items-center'>
                 <div className='flex flex-col gap-2'>  
                   <div className='text-[36px]'>
                     Arrange freely
@@ -35,35 +35,35 @@ export default function Home() {
                     Drag-and-drop editor to suit your vision
                   </div>
                 </div>
-                <div className='w-[502px] h-[330px] bg-gray-400'>
+                <div className='flex shrink w-[502px] h-[330px] bg-gray-400'>
                   Placeholder
                 </div>
               </div>
-              <div className='flex justify-between items-center'>
-                <div className='w-[502px] h-[330px] bg-gray-400'>
+              <div id='feature-2' className='feature flex justify-between items-center'>
+                <div className='flex shrink w-[502px] h-[330px] bg-gray-400'>
                   Placeholder
                 </div>
                 <div className='flex flex-col gap-2'>  
                   <div className='text-[36px]'>
                     Tag Images
                   </div>
-                  <div className='text-[24px] w-[263px] h-[104px]'>
+                  <div className='text-[24px] w-[350px] h-[104px]'>
                     Customize tags to
                     your images for easier
                     accessibility in the image gallery.
                   </div>
                 </div>
               </div>
-              <div className='flex justify-between items-center'>
+              <div id='feature-3' className='feature flex justify-between items-center'>
                 <div className='flex flex-col gap-2'>  
-                  <div className='text-[36px]'>
+                  <div className='text-[36px] w-[431.9px] h-[54px]'>
                     Collaborate with your team
                   </div>
-                  <div className='text-[24px] w-[351px] h-[52px]'>
+                  <div className='text-[24px] w-[431.9px] h-[54px]'>
                     Share your moodboard to design with your team in real time. 
                   </div>
                 </div>
-                <div className='w-[502px] h-[330px] bg-gray-400'>
+                <div className='flex shrink w-[502px] h-[330px] bg-gray-400'>
                   Placeholder
                 </div>
               </div>
