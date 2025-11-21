@@ -20,7 +20,7 @@ export default function Home() {
                 </div>
               </div>
               <SignUpButton forceRedirectUrl={'/dashboard'}>
-                <button className='w-[134px] h-[27px] outline outline-black rounded-full text-center'>
+                <button className='w-[115px] h-[30px] bg-green-400 rounded-lg cursor-pointer text-center'>
                   Get Started
                 </button>
               </SignUpButton>
