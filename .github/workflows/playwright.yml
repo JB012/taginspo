@@ -4,6 +4,10 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+env:
+  CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
+  CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+  TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
 jobs:
   test:
     timeout-minutes: 60
@@ -18,10 +22,6 @@ jobs:
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
     - name: Run Playwright tests
-      env:
-        CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY}}
-        CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
-        TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
       run: npx playwright test
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
