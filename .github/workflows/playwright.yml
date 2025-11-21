@@ -4,10 +4,7 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-env:
-  CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
-  CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
-  TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+env: production
 jobs:
   test:
     timeout-minutes: 60
