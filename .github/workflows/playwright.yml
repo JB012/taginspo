@@ -18,11 +18,11 @@ jobs:
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
     - name: Run Playwright tests
-      run: npx playwright test
       env:
         CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY}}
         CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
         TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+      run: npx playwright test
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
       with:
