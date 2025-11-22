@@ -11,7 +11,7 @@ setup('global setup', async ({}) => {
 const authFile = path.join(__dirname, '../playwright/.clerk/user.json');
 
 setup('authenticate and save state to storage', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('');
   
   await clerk.signIn({
     page,
