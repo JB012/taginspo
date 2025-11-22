@@ -11,7 +11,7 @@ setup('global setup', async ({}) => {
 const authFile = path.join(__dirname, '../playwright/.clerk/user.json');
 
 setup('authenticate and save state to storage', async ({ page }) => {
-  await page.goto('/', {waitUntil: 'load'});
+  await page.goto('http://localhost:5173', {waitUntil: 'load'});
   
   await clerk.loaded({page});
   
@@ -24,7 +24,7 @@ setup('authenticate and save state to storage', async ({ page }) => {
   },
 });
 
-  await page.goto("/dashboard", {waitUntil: "load"});
+  await page.goto("http://localhost:5173/dashboard", {waitUntil: "load"});
   
   await expect(page.getByLabel('Open user menu')).toBeVisible();
 
