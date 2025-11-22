@@ -13,10 +13,16 @@ const authFile = path.join(__dirname, '../playwright/.clerk/user.json');
 setup('authenticate and save state to storage', async ({ page }) => {
   await page.goto('/', {waitUntil: 'load'});
   
+  await clerk.loaded({page});
+  
   await clerk.signIn({
-    page,
-    emailAddress: process.env.TEST_USER_EMAIL,
-  })
+  page,
+  signInParams: {
+    strategy: 'password',
+    identifier: process.env.E2E_CLERK_USER_USERNAME!,
+    password: process.env.E2E_CLERK_USER_PASSWORD!,
+  },
+});
 
   await page.goto("/dashboard", {waitUntil: "load"});
   
