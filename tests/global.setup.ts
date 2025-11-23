@@ -17,8 +17,8 @@ const authFile = path.join(__dirname, '../playwright/.clerk/user.json');
 
 setup('authenticate and save state to storage', async ({ page }) => {
   await page.goto('/', {waitUntil: 'load'});
-  await page.getByRole('button', {name: "Log In"}).click();
   
+  await expect(page).toHaveTitle(/TagInspo/);
   await clerk.loaded({page});
   
   await clerk.signIn({
