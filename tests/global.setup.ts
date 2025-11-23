@@ -11,20 +11,16 @@ setup('global setup', async ({}) => {
 const authFile = path.join(__dirname, '../playwright/.clerk/user.json');
 
 setup('authenticate and save state to storage', async ({ page }) => {
-  await page.goto('http://localhost:5173', {waitUntil: 'load'});
+  await page.goto('/', {waitUntil: 'load'});
   
   await clerk.loaded({page});
   
   await clerk.signIn({
-  page,
-  signInParams: {
-    strategy: 'password',
-    identifier: process.env.E2E_CLERK_USER_USERNAME!,
-    password: process.env.E2E_CLERK_USER_PASSWORD!,
-  },
-});
+    page,
+    emailAddress: process.env.TEST_USER_EMAIL
+  });
 
-  await page.goto("http://localhost:5173/dashboard", {waitUntil: "load"});
+  await page.goto("/dashboard", {waitUntil: "load"});
   
   await expect(page.getByLabel('Open user menu')).toBeVisible();
 

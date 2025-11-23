@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "client": "cd ./client && npm install && npm run dev",
-    "server": "cd ./server && npm install && node index.js"
+    "client": "npm install && cd ./client && npm install && npm run dev",
+    "server": "npm install && cd ./server && npm install && node index.js"
   },
   "repository": {
     "type": "git",
