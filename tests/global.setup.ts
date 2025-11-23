@@ -11,6 +11,7 @@ setup('global setup', async ({}) => {
 const authFile = path.join(__dirname, '../playwright/.clerk/user.json');
 
 setup('authenticate and save state to storage', async ({ page }) => {
+  setup.setTimeout(60000);
   await page.goto('/', {waitUntil: 'load'});
   
   await clerk.loaded({page});
