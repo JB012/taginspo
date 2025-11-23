@@ -6,6 +6,11 @@ setup.describe.configure({ mode: 'serial' })
 
 setup('global setup', async ({}) => {
     await clerkSetup();
+    if (!process.env.TEST_USER_EMAIL) {
+      throw new Error(
+        "Please provide TEST_USER_EMAIL environment variables."
+      );
+    }
 });
 
 const authFile = path.join(__dirname, '../playwright/.clerk/user.json');
