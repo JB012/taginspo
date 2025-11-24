@@ -19,3 +19,14 @@ test.describe('not signed in tests', () => {
   });
 
 });
+
+test.describe('signed in tests', () => {
+  test.use({ storageState: 'playwright/.clerk/user.json' });
+
+  test('goes to dashboard page when signed in on home page', async ({ page }) => {
+    await page.goto('/');
+
+    await expect(page.getByLabel("Open user menu")).toBeVisible();
+  });
+
+});
