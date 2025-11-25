@@ -28,5 +28,4 @@ test.describe('signed in tests', () => {
 
     await expect(page.getByLabel("Open user menu")).toBeVisible();
   });
-
 });
