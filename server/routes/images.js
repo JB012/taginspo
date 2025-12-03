@@ -8,6 +8,7 @@ const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const dotenv = require('dotenv');
 const multer = require('multer');
 const { v4 } = require('uuid');
+const cors = require('cors');
 const upload = multer({storage: multer.memoryStorage()});
 dotenv.config();
 
@@ -19,35 +20,38 @@ const s3Client = new S3Client({
     }
 });
 
+router.use(cors());
 router.use(clerkMiddleware());
 router.use(bodyParser.urlencoded({extended:false}));
 router.use(bodyParser.json())
 
 router.get("/", (req, res) => {
     const { isAuthenticated, userID } = getAuth(req);
-    const preSignedURLs = [];
     
     if (isAuthenticated) {
         try {
             pool.query(`SELECT * FROM images WHERE userID=?`, [userID], async (err, results, fields) => {
                 if (results !== undefined) {
                     const imagesJSON = Object.values(JSON.parse(JSON.stringify(results)));
-                    for (const json of imagesJSON) {
-                        const command = GetObjectCommand({
-                            Bucket: 'www.taginspo.com',
-                            Key: json.title,
-                        });
+                    const preSignedURLs = [];   
+                    
+                    if (imagesJSON.length > 0) {
+                        for (const json of imagesJSON) {
+                            const command = GetObjectCommand({
+                                Bucket: 'www.taginspo.com',
+                                Key: json.title,
+                            });
 
-                        const preSignedURL = await getSignedUrl(s3Client, command, {expiresIn: 3600});
-                        preSignedURLs.push(preSignedURL);
+                            const preSignedURL = await getSignedUrl(s3Client, command, {expiresIn: 3600});
+                            preSignedURLs.push(preSignedURL);
+                        }
+                        
+                        return res.send(preSignedURLs);     
                     }
                 }
-                else {
-                    return res.status(401).send("User hasn't add any images");
-                }
+                
+                return res.send("User hasn't add any images");
             });
-
-            return res.send(preSignedURLs);
         }
         catch(err) {
             if (err instanceof NoSuchKey) {
