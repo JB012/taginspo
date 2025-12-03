@@ -19,7 +19,7 @@ export default function Home() {
                   Design and customize your ideas to your liking
                 </div>
               </div>
-              <SignUpButton forceRedirectUrl={'/dashboard'}>
+              <SignUpButton forceRedirectUrl={'/gallery'}>
                 <button className='w-[115px] h-[30px] bg-green-400 rounded-lg cursor-pointer text-center'>
                   Get Started
                 </button>
@@ -77,7 +77,7 @@ export default function Home() {
       </div>  
     </SignedOut>
     <SignedIn>
-      <Navigate to={'/dashboard'}/>
+      <Navigate to={'/gallery'}/>
     </SignedIn>
     </>
   )

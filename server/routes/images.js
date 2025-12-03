@@ -24,27 +24,30 @@ router.use(bodyParser.urlencoded({extended:false}));
 router.use(bodyParser.json())
 
 router.get("/", (req, res) => {
-    const auth = getAuth();
-    const userID = req.body.userID;
+    const { isAuthenticated, userID } = getAuth(req);
     const preSignedURLs = [];
     
-    if (auth.isAuthenticated) {
+    if (isAuthenticated) {
         try {
             pool.query(`SELECT * FROM images WHERE userID=?`, [userID], async (err, results, fields) => {
-                const imagesJSON = Object.values(JSON.parse(JSON.stringify(results)));
-                for (const json of imagesJSON) {
-                    const command = GetObjectCommand({
-                        Bucket: 'www.taginspo.com',
-                        Key: json.title,
-                    });
+                if (results !== undefined) {
+                    const imagesJSON = Object.values(JSON.parse(JSON.stringify(results)));
+                    for (const json of imagesJSON) {
+                        const command = GetObjectCommand({
+                            Bucket: 'www.taginspo.com',
+                            Key: json.title,
+                        });
 
-                    const preSignedURL = await getSignedUrl(s3Client, command, {expiresIn: 3600});
-                    preSignedURLs.push(preSignedURL);
+                        const preSignedURL = await getSignedUrl(s3Client, command, {expiresIn: 3600});
+                        preSignedURLs.push(preSignedURL);
+                    }
                 }
-
+                else {
+                    return res.status(401).send("User hasn't add any images");
+                }
             });
 
-            return res.send({preSignedURLs: preSignedURLs});
+            return res.send(preSignedURLs);
         }
         catch(err) {
             if (err instanceof NoSuchKey) {
@@ -64,42 +67,47 @@ router.get("/", (req, res) => {
 });
 
 router.post("/add", upload.single('file'), async (req, res) => {
+    const { isAuthenticated, userID } = getAuth(req);
     const imageID = v4();
-    const userID = req.body.userID;
     const title = req.body.title;
 
-    try {
-        const [rows] = pool.query(`SELECT * FROM images WHERE title=?`, [title]);
-        
-        if (rows.length === 0) {
-            const command = new PutObjectCommand({
-                Bucket: 'www.taginspo.com',
-                Key: req.file.originalname,
-                Body: req.file.buffer,
-                ContentType: req.file.mimetype
-            });
+    if (isAuthenticated) {
+        try {
+            const [rows] = pool.query(`SELECT * FROM images WHERE title=?`, [title]);
             
-            const response = await s3Client.send(command);
-            pool.query('INSERT INTO images VALUES (?, ?, ?)', [userID, imageID, title]);
+            if (rows.length === 0) {
+                const command = new PutObjectCommand({
+                    Bucket: 'www.taginspo.com',
+                    Key: req.file.originalname,
+                    Body: req.file.buffer,
+                    ContentType: req.file.mimetype
+                });
+                
+                const response = await s3Client.send(command);
+                pool.query('INSERT INTO images VALUES (?, ?, ?)', [userID, imageID, title]);
+            }
+            else {
+                res.send("Title already exists, please try again.");
+            }
         }
-        else {
-            res.send("Title already exists, please try again.");
+        catch(err) {
+            if (err instanceof S3ServiceException && err.name === "EntityTooLarge") {
+                console.error(
+                    `Error from S3 while uploading object to ${bucketName}. \
+                    The object was too large. To upload objects larger than 5GB, use the S3 console (160GB max) \
+                    or the multipart upload API (5TB max).`,
+                );
+            } 
+            else if (err instanceof S3ServiceException) {
+                console.error(`Error from S3 while uploading object to ${bucketName}.  ${err.name}: ${err.message}`,);
+            } 
+            else {
+                console.log(err);
+            }
         }
     }
-    catch(err) {
-        if (err instanceof S3ServiceException && err.name === "EntityTooLarge") {
-            console.error(
-                `Error from S3 while uploading object to ${bucketName}. \
-                The object was too large. To upload objects larger than 5GB, use the S3 console (160GB max) \
-                or the multipart upload API (5TB max).`,
-            );
-        } 
-        else if (err instanceof S3ServiceException) {
-            console.error(`Error from S3 while uploading object to ${bucketName}.  ${err.name}: ${err.message}`,);
-        } 
-        else {
-            console.log(err);
-        }
+    else {
+        return res.status(401).send('User not authenticated');
     }
 });
 
