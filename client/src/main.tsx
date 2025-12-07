@@ -5,6 +5,7 @@ import Home from './routes/Home.tsx'
 import { ClerkProvider } from '@clerk/clerk-react'
 import { BrowserRouter, Routes, Route } from "react-router";
 import Gallery from './routes/Gallery.tsx'
+import EditImage from './routes/EditImage.tsx'
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 
@@ -19,6 +20,7 @@ createRoot(document.getElementById('root')!).render(
           <Routes>
             <Route path='/' element={<Home />} />
             <Route path='/gallery' element={<Gallery />} />
+            <Route path='/editimage' element={< EditImage />}/>
           </Routes>
       </ClerkProvider>
     </BrowserRouter>

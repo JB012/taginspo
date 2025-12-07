@@ -21,3 +21,15 @@
         padding-bottom: 100px;
     }
 }
+
+::-webkit-file-upload-button {
+   display: none;
+}
+
+::file-selector-button {
+  display: none;
+}
+
+#add-image {
+    font-size: 0;
+}

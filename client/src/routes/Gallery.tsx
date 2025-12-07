@@ -4,11 +4,13 @@ import { FaList, FaPlusCircle } from "react-icons/fa";
 import { FaMagnifyingGlass } from "react-icons/fa6";
 import axios from 'axios';
 import useToken from '../../utils/useToken'
+import { useNavigate } from "react-router";
 
 export default function Gallery() {
     const [input, setInput] = useState("");
     // Initial state is null instead of empty array to prevent multiple axios calls from useEffect
     const [preSignedURLs, setPreSignedURLs] = useState<[]|null>(null);
+    const navigate = useNavigate();
     const token = useToken();
 
     useEffect(() => {
@@ -44,7 +46,7 @@ export default function Gallery() {
                     <div className="flex w-full justify-between py-10 items-center">
                         <div className="flex items-center gap-8">
                             <div className="text-[32px] font-bold">Your images</div>
-                            <FaPlusCircle id="add-button" className="cursor-pointer" scale={1} size={20}/>
+                            <FaPlusCircle onClick={() => navigate("/editimage")} id="add-button" className="cursor-pointer" scale={1} size={20}/>
                         </div>
                         <FaList id="sort-button" className="cursor-pointer" size={20} scale={1}/>
                     </div>
