@@ -9,6 +9,7 @@ export default function EditImage() {
 
     useEffect(() => {
         const dropZone = document.querySelector('#drop-zone');
+        const dropZoneContainer = document.querySelector('#drop-zone-container') as HTMLElement;
         const preview = document.querySelector("#preview-image");
         const message = document.querySelector("#drop-zone-message") as HTMLElement;
         const clearBtn = document.querySelector("#clear-image") as HTMLElement;
@@ -70,14 +71,16 @@ export default function EditImage() {
             if (preview) {
                 for (const img of preview.querySelectorAll("img")) {
                     URL.revokeObjectURL(img.src);
+                    preview.removeChild(img);
                 }
 
-                preview.textContent = "";
                 
                 if (message) {
                     clearBtn.style.display = "none";
                     message.style.display = "block";
+                    dropZoneContainer.style.outlineStyle = "dashed";
                 }
+                
             }
         });
 
@@ -94,7 +97,12 @@ export default function EditImage() {
                 
                 
                 if (preview) {
-                    preview.innerHTML = "";
+                    const existingImage = preview.querySelector("img");
+
+                    if (existingImage) {
+                        preview.removeChild(existingImage);
+                    }
+
                     preview.appendChild(img);
 
                     if (message) {
@@ -103,6 +111,10 @@ export default function EditImage() {
 
                     if (clearBtn) {
                         clearBtn.style.display = "block";
+                    }
+
+                    if (dropZoneContainer) {
+                        dropZoneContainer.style.outlineStyle = "none";
                     }
                 }
             }
@@ -130,14 +142,15 @@ export default function EditImage() {
                 <button className="cursor-pointer">Save Changes</button>
             </div>
             <div className="flex justify-around w-full">
-                <div className="outline-dashed outline-black flex w-[455px] h-[584px]">
-                    <div className="flex flex-col w-full justify-center items-center relative">
-                        <FaCircleXmark id="clear-image" className="hidden z-10 absolute top-3 right-3 cursor-pointer" size={20} scale={1}/>
+                <div id="drop-zone-container" className="outline-dashed outline-black flex w-[800px] h-[584px]">
+                    <div className="flex flex-col w-full items-center relative">
                         <label id="drop-zone" htmlFor="add-image" className="w-full h-full flex items-center justify-center absolute cursor-pointer">
                             <div id="drop-zone-message">Drag-and-drop image or click to choose file</div>
                             <input id="add-image" type="file" accept="image/*" />
                         </label>
-                        <div id="preview-image" className="relative"></div>
+                        <div id="preview-image" className="relative">  
+                            <FaCircleXmark color="white" id="clear-image" className="hidden z-20 absolute top-3 right-3 cursor-pointer" size={20} scale={1}/>
+                        </div>
                     </div>
                 </div>
                 <div className="flex flex-col gap-16">
