@@ -8,8 +8,9 @@ export default function EditImage() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const dropZone = document.querySelector('#drop-zone');
+        const dropZone = document.querySelector('#drop-zone') as HTMLElement;
         const dropZoneContainer = document.querySelector('#drop-zone-container') as HTMLElement;
+        const fileInput = document.querySelector('#add-image') as HTMLInputElement;
         const preview = document.querySelector("#preview-image");
         const message = document.querySelector("#drop-zone-message") as HTMLElement;
         const clearBtn = document.querySelector("#clear-image") as HTMLElement;
@@ -24,52 +25,63 @@ export default function EditImage() {
            return e.type === "drag";
         }
         
-        window.addEventListener('drop', (e) => {
-            if ([...e.dataTransfer!.items].some((item) => item.kind === "file")) {
-                e.preventDefault();
+        function handleWindowDrop(event : DragEvent) {
+            if ([...event.dataTransfer!.items].some((item) => item.kind === "file")) {
+                event.preventDefault();
             }
-        });
+        }
 
-        window.addEventListener("dragover", (e) => {
-            const fileItems = [...e.dataTransfer!.items].filter(
+        function handleDragOver(event : DragEvent) {
+            const fileItems = [...event.dataTransfer!.items].filter(
                 (item) => item.kind === "file",
             );
 
             try {
-                assertIsNode(e.target);
+                assertIsNode(event.target);
                 
                 if (fileItems.length > 0) {
-                    e.preventDefault();
+                    event.preventDefault();
                     
-                    if (!dropZone!.contains(e.target)) {
-                        e.dataTransfer!.dropEffect = "none";
+                    if (!dropZone!.contains(event.target)) {
+                        event.dataTransfer!.dropEffect = "none";
                     }
                 }
             }
             catch (err) {
                 console.log(err);
             }
-        });
+        }
 
-        dropZone?.addEventListener("dragover", (e) => {
-            if (isDragEvent(e)) {
-                const fileItems = [...e.dataTransfer!.items].filter(
+        function handleDropZone(event : Event) {
+             if (isDragEvent(event)) {
+                const fileItems = [...event.dataTransfer!.items].filter(
                     (item) => item.kind === "file",
                 );
                 if (fileItems.length > 0) {
-                    e.preventDefault();
+                    event.preventDefault();
                     if (fileItems.some((item) => item.type.startsWith("image/"))) {
-                        e.dataTransfer!.dropEffect = "copy";
+                        event.dataTransfer!.dropEffect = "copy";
                     } else {
-                        e.dataTransfer!.dropEffect = "none";
+                        event.dataTransfer!.dropEffect = "none";
                     }
                 }
             }
-        });
+        }
 
-        clearBtn?.addEventListener("click", () => {
-            if (preview) {
-                for (const img of preview.querySelectorAll("img")) {
+        function handleFileInput(event : Event) {
+            const input = event.target as HTMLInputElement;
+            
+            console.log(input.files);
+            if (input.files) {
+                displayImage(input.files[0]);
+            }
+        }
+
+        function handleClearButton() {
+             if (preview) {
+                const img = preview.querySelector('img');
+
+                if (img) {
                     URL.revokeObjectURL(img.src);
                     preview.removeChild(img);
                 }
@@ -79,10 +91,15 @@ export default function EditImage() {
                     clearBtn.style.display = "none";
                     message.style.display = "block";
                     dropZoneContainer.style.outlineStyle = "dashed";
+                    dropZone.style.cursor = "pointer";
+                    // Changing value so that the input event is fired even when picking the same image.
+                    fileInput.value = "";
+                    // Disabling file input since an image is currently displayed.
+                    fileInput.disabled = false;
                 }
                 
             }
-        });
+        }
 
         function displayImage(file : File | null) {
             if (file?.type.startsWith("image/")) {
@@ -97,30 +114,18 @@ export default function EditImage() {
                 
                 
                 if (preview) {
-                    const existingImage = preview.querySelector("img");
-
-                    if (existingImage) {
-                        preview.removeChild(existingImage);
-                    }
-
                     preview.appendChild(img);
 
-                    if (message) {
-                        message.style.display = "none";
-                    }
-
-                    if (clearBtn) {
-                        clearBtn.style.display = "block";
-                    }
-
-                    if (dropZoneContainer) {
-                        dropZoneContainer.style.outlineStyle = "none";
-                    }
+                    message.style.display = "none";
+                    clearBtn.style.display = "block";
+                    dropZoneContainer.style.outlineStyle = "none";
+                    dropZone.style.cursor = "default";
+                    fileInput.disabled = true;
                 }
             }
         }
 
-        function dropHandler(ev : Event) {
+        function handleDrop(ev : Event) {
             if (ev instanceof DragEvent) {
                 ev.preventDefault();
                 const file = ev.dataTransfer!.items[0].getAsFile();
@@ -130,10 +135,21 @@ export default function EditImage() {
         }
 
         
+        window.addEventListener('drop', handleWindowDrop);
+        window.addEventListener('dragover', handleDragOver);
+        clearBtn?.addEventListener("click", handleClearButton);
+        dropZone?.addEventListener("dragover", handleDropZone);
+        fileInput?.addEventListener('input', handleFileInput);
+        dropZone?.addEventListener("drop", handleDrop);
 
-        dropZone!.addEventListener("drop", dropHandler);
-
-        return () => dropZone!.removeEventListener("drop", dropHandler);
+        return () => {   
+            window.addEventListener('drop', handleWindowDrop);
+            window.addEventListener('dragover', handleDragOver); 
+            clearBtn?.removeEventListener("click", handleClearButton); 
+            dropZone?.removeEventListener('dragover', handleDropZone);
+            fileInput?.removeEventListener('input', handleFileInput);
+            dropZone?.removeEventListener("drop", handleDrop);
+        }
     }, []);
     return (
         <div className="flex flex-col p-4 gap-10 w-full h-full">
