@@ -2,8 +2,10 @@ import { FaArrowLeft, FaCheck, FaPlus } from "react-icons/fa";
 import { FaCircleXmark, FaX } from "react-icons/fa6";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
-import TagType from '../../types/TagType';
+import type { TagType } from '../../types/TagType';
+import Tag from '../../components/Tag';
 import axios from "axios";
+import { v4 } from 'uuid';
 
 export default function EditImage() {
     const [title, setTitle] = useState('');
@@ -156,6 +158,19 @@ export default function EditImage() {
         }
     }, [allTags]);
 
+
+    function removeTag(id : string) {
+        setAddedTags(addedTags.filter(tag => tag.id !== id));
+    }
+
+    function editTagTitle(id: string, title: string) {
+        const findTag = addedTags.find(tag => tag.id === id);
+
+        if (findTag) {
+            setAddedTags([...addedTags, {...findTag, title: title}]);
+        }
+    }
+
     function handleSubmit() {
         if (imageRef.current?.src) {
             const bodyData = {
@@ -173,7 +188,7 @@ export default function EditImage() {
     }
 
     function handleAddTag() {
-        setAddedTags([...addedTags, {title: tagInput, color: "#JFWKKF"}]);
+        setAddedTags([...addedTags, {id: v4(), title: tagInput, color: "#JFWKKF"}]);
         setTagInput("");
         setTagSearchResults([]);
     }
@@ -202,7 +217,7 @@ export default function EditImage() {
     return (
         <div className="flex flex-col p-4 gap-10 w-full h-full">
             <div className="flex w-full justify-between">
-                <FaArrowLeft className="cursor-pointer" onClick={() => navigate("/gallery")} data-testid="cancel-image" size={20} scale={1} />
+                <FaArrowLeft className="cursor-pointer" onClick={() => navigate("/tags")} data-testid="cancel-image" size={20} scale={1} />
                 <button className="cursor-pointer">Save Changes</button>
             </div>
             <div className="flex justify-around w-full">
@@ -244,6 +259,11 @@ export default function EditImage() {
                                         <div>tag</div>
                                     </div>
                                 </div>      
+                            </div>
+                            <div className="flex flex-wrap gap-4">
+                                {
+                                    addedTags.map(tag => <Tag key={tag.id} id={tag.id} title={tag.title} color={tag.color} inEditImage={true} removeTag={removeTag} editTagTitle={editTagTitle} />)
+                                }
                             </div>
                         </div>
                         

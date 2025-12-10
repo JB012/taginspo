@@ -1,9 +1,10 @@
 const express = require('express');
 const { pool } = require("../db");
+const { s3Client } = require("../s3");
 const router = express.Router();
 const { clerkMiddleware, getAuth } =  require('@clerk/express')
 const bodyParser = require("body-parser");
-const { S3Client, GetObjectCommand, PutObjectCommand, S3ServiceException, NoSuchKey } = require('@aws-sdk/client-s3');
+const { GetObjectCommand, PutObjectCommand, S3ServiceException, NoSuchKey } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const dotenv = require('dotenv');
 const multer = require('multer');
@@ -11,14 +12,6 @@ const { v4 } = require('uuid');
 const cors = require('cors');
 const upload = multer({storage: multer.memoryStorage()});
 dotenv.config();
-
-const s3Client = new S3Client({
-    region: 'us-east-1', 
-    credentials: {
-        accessKeyId: process.env.AWS_USER_ACCESS_KEY_ID, 
-        secretAccessKey: process.env.AWS_USER_SECRET_ACCESS_KEY
-    }
-});
 
 router.use(cors());
 router.use(clerkMiddleware());
@@ -77,7 +70,7 @@ router.post("/add", upload.single('file'), async (req, res) => {
 
     if (isAuthenticated) {
         try {
-            const [rows] = pool.query(`SELECT * FROM images WHERE title=?`, [title]);
+            const [rows] = pool.query(`SELECT * FROM images WHERE userID=? AND title=?`, [userID, title]);
             
             if (rows.length === 0) {
                 const command = new PutObjectCommand({
@@ -91,7 +84,7 @@ router.post("/add", upload.single('file'), async (req, res) => {
                 pool.query('INSERT INTO images VALUES (?, ?, ?)', [userID, imageID, title]);
             }
             else {
-                res.send("Title already exists, please try again.");
+                return res.send("Title already exists, please try again.");
             }
         }
         catch(err) {

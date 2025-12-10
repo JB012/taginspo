@@ -6,12 +6,14 @@ const { pool } = require("./db");
 const { verifyWebhook } = require('@clerk/express/webhooks');
 const { clerkClient, clerkMiddleware, getAuth } = require('@clerk/express');
 const images = require('./routes/images');
+const tags = require('./routes/tags');
 const cors = require('cors');
 require('dotenv').config();
 
 app.use(cors());
 app.use(clerkMiddleware());
 app.use("/images", images);
+app.use("/tags", tags);
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
