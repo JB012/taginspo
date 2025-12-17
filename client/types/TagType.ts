@@ -1,5 +1,5 @@
 export interface TagType {
-    id: string,
+    tag_id: string,
     title: string,
     color: string
 }

@@ -33,3 +33,7 @@
 #add-image {
     font-size: 0;
 }
+
+svg {
+    cursor: pointer;
+}

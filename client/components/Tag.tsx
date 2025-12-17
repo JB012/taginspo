@@ -1,74 +1,94 @@
 import { useEffect, useState, useRef } from "react";
-import { FaEllipsis } from "react-icons/fa6";
+import { FaCheck, FaEllipsis, FaX } from "react-icons/fa6";
+import {assertIsNode} from '../utils/utils.ts';
 
 interface TagProp {
     id: string, 
     title: string, 
     color: string, 
-    inEditImage: boolean, 
-    removeTag: (id: string) => void
-    editTagTitle: (id: string, title: string) => void
+    addedTag: boolean, 
+    tagResult: boolean,
+    removeTag?: (id: string) => void,
+    editTag?: (id: string, title: string, color: string) => void,
+    duplicateTag?: (id: string, title : string) => boolean,
+    handleAddTag?: (title: string, color: string, edit: boolean, id?: string) => void,
 }
 
 
-export default function Tag({id, title, color, inEditImage, removeTag, editTagTitle} : TagProp) {
-    const [ellipsis, setEllipsis] = useState(false);
+export default function Tag({id, title, color, addedTag, tagResult,
+    removeTag, editTag, duplicateTag, handleAddTag} : TagProp) {
     const [edit, setEdit] = useState(false);
     const [options, setOptions] = useState(false);
-    const [editInput, setEditInput] = useState("");
-    const tagRef = useRef<HTMLDivElement | null>(null);
+    const [editTitle, setEditTitle] = useState(title);
+    const [editColor, setEditColor] = useState(color);
     const optionsRef = useRef<HTMLDivElement | null>(null);
-    useEffect(() => {
-        function assertIsNode(e: EventTarget | null): asserts e is Node {
-            if (!e || !("nodeType" in e)) {
-                throw new Error(`Node expected`);
-            }
-        }
+    const tagRef = useRef<HTMLDivElement | null>(null);
 
+    useEffect(() => {
         function handleClickOutside(event: Event) {
             try {
                 assertIsNode(event.target);
-                if (tagRef.current && !tagRef.current.contains(event.target)) {
-                    setEllipsis(false);
-                }
 
                 if (optionsRef.current && !optionsRef.current.contains(event.target)) {
                     setOptions(false);
+                }
+
+                if (tagRef.current &&  !tagRef.current.contains(event.target)) {
+                    setEdit(false);
                 }
             }
             catch (err) {
                 console.log(err);
             }
         }
+
         document.addEventListener("mousedown", handleClickOutside);
+
         return () => {
         document.removeEventListener("mousedown", handleClickOutside);
         };
-    }, [tagRef, optionsRef]);
+    }, [optionsRef]);
 
     function handleKeyDown(event : React.KeyboardEvent<HTMLInputElement>) {
         if (event.key === "Enter") {
-            editTagTitle(id, editInput);
-            setEditInput("");
-            setEdit(false);
+            if (!duplicateTag?.(id, editTitle)) {        
+                editTag!(id, editTitle, editColor);
+                setEdit(false);
+                setOptions(false);
+            }
+        }
+    }
+    
+    function handleClick() {
+        if (tagResult) {
+            handleAddTag?.(title, color, false, id);
         }
     }
 
+//TODO: Get out of edit mode when clicking out of component
     return (
-        <div ref={tagRef} onClick={() => {if (inEditImage) setEllipsis(true)}} className="text-center relative p-4" style={{color: color !== "" ? color : "white", 
-        outline: color === "" ? "1px solid black" : ""}}>
-            {
-                edit ? <input value={editInput === "" ? title : editInput} onChange={(e) => setEditInput(e.target.value)} onKeyDown={handleKeyDown}/> : 
-                <div>{title}</div> 
-            }
-            <FaEllipsis className="absolute top-0 right-2" onClick={() => setOptions(true)} style={{display: ellipsis ? 'block' : 'none'}}>
-                <div style={{display: options ? 'flex' : 'none'}}>
-                    <div className="flex flex-col gap-4">
-                        <div onClick={() => setEdit(true)}>Edit</div>
-                        <div onClick={() => removeTag(id)}>Delete</div>
+        <div onClick={() => handleClick()} ref={addedTag && edit ? tagRef : undefined} className="flex gap-1">
+            <div className="text-center cursor-pointer rounded-full h-6 px-3" style={{backgroundColor: color, 
+            outline: color === "#ffffff" ? "1px solid black" : "", color: "black"}}>
+                {
+                    edit ? 
+                    <div className="flex gap-4">
+                        <input id="title-input" style={{color: duplicateTag?.(id, editTitle) && editTitle !== title ? "red" : "black"}} className="max-w-[100px]" placeholder="Edit tag title" value={editTitle} onChange={(e) => {setEditTitle(e.target.value); console.log(title)}} onKeyDown={handleKeyDown}/> 
+                        <input id="color-input" type="color" value={editColor} onChange={(e) => setEditColor(e.target.value)} />
+                        <FaCheck size={20} scale={1} />
+                        <FaX size={20} scale={1} />
                     </div>
-                </div>
-            </FaEllipsis>
+                    : 
+                    <div>{title}</div> 
+                }
+                
+            </div>
+            <FaEllipsis onClick={() => setOptions(!options)} style={{display: addedTag && !options ? 'block' : 'none'}} />
+            <div ref={optionsRef} style={{display: options ? 'flex' : 'none'}} className="flex-col outline outline-black">
+                <div id="edit-button" className="p-2 cursor-pointer" onClick={() => {setEdit(true); setOptions(false)}}>Edit</div>
+                <hr />
+                <div className="p-2 cursor-pointer" onClick={() => removeTag!(id)}>Delete</div>
+            </div>
         </div>
     )
 }
