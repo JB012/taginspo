@@ -1,11 +1,12 @@
 const express = require('express');
 const { pool } = require("../db");
-const { s3Client } = require("../s3");
+const { s3Client, cloudFront } = require("../s3-cloudfront");
 const router = express.Router();
 const { clerkMiddleware, getAuth } =  require('@clerk/express')
 const bodyParser = require("body-parser");
-const { GetObjectCommand, PutObjectCommand, S3ServiceException, NoSuchKey } = require('@aws-sdk/client-s3');
-const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+const { DeleteObjectCommand, PutObjectCommand, S3ServiceException, NoSuchKey } = require('@aws-sdk/client-s3');
+const { CreateInvalidationCommand } = require('@aws-sdk/client-cloudfront');
+const { getSignedUrl } = require("@aws-sdk/cloudfront-signer");
 const dotenv = require('dotenv');
 const multer = require('multer');
 const { v4 } = require('uuid');
@@ -19,27 +20,29 @@ router.use(bodyParser.urlencoded({extended:false}));
 router.use(bodyParser.json())
 
 router.get("/", (req, res) => {
-    const { isAuthenticated, userID } = getAuth(req);
+    const { isAuthenticated, userId } = getAuth(req);
     
     if (isAuthenticated) {
         try {
-            pool.query(`SELECT * FROM images WHERE userID=?`, [userID], async (err, results, fields) => {
+            pool.query(`SELECT * FROM images WHERE user_id=?`, [userId], async (err, results, fields) => {
                 if (results !== undefined) {
                     const imagesJSON = Object.values(JSON.parse(JSON.stringify(results)));
-                    const preSignedURLs = [];   
+                    const imageURLs = [];   
                     
                     if (imagesJSON.length > 0) {
                         for (const json of imagesJSON) {
-                            const command = GetObjectCommand({
-                                Bucket: 'www.taginspo.com',
-                                Key: json.title,
-                            });
-
-                            const preSignedURL = await getSignedUrl(s3Client, command, {expiresIn: 3600});
-                            preSignedURLs.push(preSignedURL);
+                            const imageURL = `d2ijutr0xv20w3.cloudfront.net/${json.title}`;
+                            const expiresInOneHour = new Date(Date.now + 1000 * 60 * 24)
+                            const signedURL = getSignedUrl({
+                                url: imageURL,
+                                dateLessThan: expiresInOneHour,
+                                privateKey: process.env.CLOUDFRONT_PRIVATE_KEY,
+                                keyPairId: process.env.CLOUDFRONT_KEY_PAIR_ID
+                            })
+                            imageURLs.push(signedURL);
                         }
                         
-                        return res.send(preSignedURLs);     
+                        return res.send(imageURLs);     
                     }
                 }
                 
@@ -64,13 +67,14 @@ router.get("/", (req, res) => {
 });
 
 router.post("/add", upload.single('file'), async (req, res) => {
-    const { isAuthenticated, userID } = getAuth(req);
+    const { isAuthenticated, userId } = getAuth(req);
     const imageID = v4();
     const title = req.body.title;
+    const source = req.body.source;
 
     if (isAuthenticated) {
         try {
-            const [rows] = pool.query(`SELECT * FROM images WHERE userID=? AND title=?`, [userID, title]);
+            const [rows] = pool.query(`SELECT * FROM images WHERE user_id=? AND title=?`, [userId, title]);
             
             if (rows.length === 0) {
                 const command = new PutObjectCommand({
@@ -81,7 +85,9 @@ router.post("/add", upload.single('file'), async (req, res) => {
                 });
                 
                 const response = await s3Client.send(command);
-                pool.query('INSERT INTO images VALUES (?, ?, ?)', [userID, imageID, title]);
+                pool.query('INSERT INTO images (user_id, image_id, title, source) VALUES (?, ?, ?, ?)', [userId, imageID, title, source]);
+                
+                return res.send('Image successfully added');
             }
             else {
                 return res.send("Title already exists, please try again.");
@@ -97,6 +103,62 @@ router.post("/add", upload.single('file'), async (req, res) => {
             } 
             else if (err instanceof S3ServiceException) {
                 console.error(`Error from S3 while uploading object to ${bucketName}.  ${err.name}: ${err.message}`,);
+            } 
+            else {
+                console.log(err);
+            }
+        }
+    }
+    else {
+        return res.status(401).send('User not authenticated');
+    }
+});
+
+router.post("/delete:id", async (req, res) => {
+    const imageID = req.params.id;
+    const { isAuthenticated, userId } = getAuth(req);
+    
+    if (isAuthenticated) {
+        try {        
+            pool.query(`SELECT * FROM images WHERE userID=? AND image_id=?`, [userId, imageID], async (err, results, fields) => {
+                if (results.length) {
+                    const [imageInfo] = Object.values(JSON.parse(JSON.stringify(results)));
+
+                    const s3Command = new DeleteObjectCommand({Bucket: bucketName, Key: imageInfo.title});
+                    await s3Client.send(s3Command);
+
+                    //Invalidating cloudfront cache for the image
+                    const invalidateParams = { 
+                        DistributionId: process.env.DISTRIBUTION_ID,
+                        InvalidationBatch: {
+                            CallerReference: imageInfo.title,
+                            Paths: {
+                                Quantity: 1,
+                                Items: [
+                                    "/" + imageInfo.title
+                                ]
+                            }
+                        }
+                    }
+
+                    const invalidationCommand = new CreateInvalidationCommand(invalidateParams);
+                    await cloudFront.send(invalidationCommand);
+
+                    pool.query(`DELETE FROM images WHERE user_id=? AND image_id=?`, [userId, imageID]);
+                
+                    return res.send('Image successfully deleted');
+                }
+                else {
+                    return res.send('Image with id doesn\'t exist.');
+                }
+            });
+        }
+        catch (err) {
+            if (err instanceof S3ServiceException && err.name === "NoSuchBucket") {
+                console.error(`Error from S3 while deleting object from ${bucketName}. The bucket doesn't exist.`);
+            } 
+            else if (err instanceof S3ServiceException) {
+                console.error(`Error from S3 while deleting object from ${bucketName}.  ${err.name}: ${err.message}`);
             } 
             else {
                 console.log(err);

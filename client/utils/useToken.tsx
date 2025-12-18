@@ -6,7 +6,7 @@ export default function useToken() {
   const [token, setToken] = useState("");
   
   useEffect(() => {
-    getToken().then((token) => {
+    getToken({skipCache: true}).then((token) => {
       if (token !== null) {
         setToken(token);
       }

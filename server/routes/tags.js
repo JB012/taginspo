@@ -1,6 +1,6 @@
 const express = require('express');
 const { pool } = require("../db");
-const { s3Client } = require("../s3");
+const { s3Client } = require("../s3-cloudfront");
 const router = express.Router();
 const { clerkMiddleware, getAuth } =  require('@clerk/express')
 const bodyParser = require("body-parser");
@@ -19,17 +19,14 @@ router.use(bodyParser.urlencoded({extended:false}));
 router.use(bodyParser.json());
 
 router.get('/', (req, res) => {
-    const { isAuthenticated, userID } = getAuth(req);
-    
+    const { isAuthenticated, userId } = getAuth(req);
+
     if (isAuthenticated) {
-        pool.query(`SELECT * FROM tags WHERE userID=?`, [userID], (err, results, fields) => {
-            if (results) {
-                const tagsJSON = Object.values(JSON.parse(JSON.stringify(results)));
-                return res.send(tagsJSON);
-            }
-            else {
-                return res.send([]);
-            }
+        pool.query(`SELECT tag_id, title, color FROM tags WHERE user_id=?`, [userId], (err, results, fields) => {
+            const tagsJSON = Object.values(JSON.parse(JSON.stringify(results)));
+    
+            return tagsJSON.length !== 0 ? res.send(tagsJSON) 
+            : res.send('User has no tags added');
         });
     }
     else {
@@ -38,26 +35,49 @@ router.get('/', (req, res) => {
 });
 
 router.post('/add', (req, res) => {
-    const { isAuthenticated, userID } = getAuth(req);
+    const { isAuthenticated, userId } = getAuth(req);
 
     if (isAuthenticated) {
-        const title = req.body.title;
-        const color = req.body.color;
-        const tagID =  req.body.tagID;
+        const multipleTags = req.body.multipleTags;
 
-        const [rows] = pool.query(`SELECT * FROM tags WHERE userID=? AND title=?`, [userID, title]);
-        
-        if (rows.length == 0) {
+        if (!multipleTags) {
+            const title = req.body.title;
+            const color = req.body.color;
+            const tagID =  req.body.tagID;
+            
+
+            pool.query(`SELECT * FROM tags WHERE user_id=? AND title=?`, [userId, title], (err, results, fields) => {
+                const tagJSON = Object.values(JSON.parse(JSON.stringify(results)));
+                if (tagJSON.length === 0) {
+                    try {
+                        pool.query(`INSERT INTO tags (user_id, tag_id, title, color) VALUES (?, ?, ?, ?)`, [userId, tagID, title, color]);
+
+                        return res.send('Tag successfully added');
+                    }
+                    catch (err) {
+                        console.log(err);
+                    }
+                }
+                else {
+                    return res.send("Title already exists, please try again");
+                }
+            });     
+        }   
+        else {
             try {
-                pool.query(`INSERT INTO tags VALUES (?, ?, ?, ?)`, [userID, tagID, title, color]);
+                for (const tag of multipleTags) {   
+                    const title = tag.title;
+                    const color = tag.color;
+                    const tagID = tag.tag_id;
+                    pool.query(`INSERT INTO tags (user_id, tag_id, title, color) VALUES (?, ?, ?, ?)`, [userId, tagID, title, color])
+                }
+
+                return res.send('All tags have been added successfully');
             }
             catch (err) {
                 console.log(err);
             }
         }
-        else {
-            return res.send("Title already exists, please try again.");
-        }   
     }
     else {
         return res.status(401).send('User not authenticated');
@@ -65,12 +85,12 @@ router.post('/add', (req, res) => {
 });
 
 router.post('/delete', (req, res) => {
-    const { isAuthenticated, userID } = getAuth(req);
+    const { isAuthenticated, userId } = getAuth(req);
     const tagID = req.body.tagID;
 
     if (isAuthenticated) {
         try {
-            pool.query(`DELETE FROM tags WHERE userID=? AND tagID=?`, [userID, tagID]);
+            pool.query(`DELETE FROM tags WHERE user_id=? AND tag_id=?`, [userId, tagID]);
         }
         catch (err) {
             console.log(err);

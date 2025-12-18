@@ -17,7 +17,7 @@ export default function EditTag() {
                 axios.post('http://localhost:3000/tags/add', {tagID: v4(), title: title, color: color}, 
                     {headers:  { Authorization: `Bearer ${token}` }}).then(res => {
                     if (!(res.data as string).includes("Title already exists")) {
-                        navigate('http://localhost:5173/tags');
+                        navigate('http://localhost:5173/gallery');
                     }
                     else {
                         console.log(res.data);

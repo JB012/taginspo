@@ -77,7 +77,7 @@ export default function Gallery() {
                                 'Click on the + button to add an image' 
                             }
                         </div> :
-                        <div id="tag-previews" className="flex w-full flex-wrap gap-25">
+                        <div id="tag-previews" style={{justifyContent: !tags ? "center" : "flex-start"}} className="flex w-full flex-wrap gap-25">
                             {
                                 tags ? tags.map((tag) => <Tag key={tag.tag_id} id={tag.tag_id} title={tag.title} color={tag.color} addedTag={false} tagResult={false} />) 
                                 : 'Click on the + button to add a tag' 

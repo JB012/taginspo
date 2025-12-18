@@ -3,34 +3,22 @@ import type { TagType } from '../types/TagType';
 import { FaCheck, FaPlus } from "react-icons/fa";
 import { FaX } from "react-icons/fa6";
 import {assertIsNode} from '../utils/utils.ts';
-import axios from "axios";
-import useToken from "../utils/useToken";
 import { v4 } from 'uuid';
 import Tag from "./Tag.tsx";
 
 interface TagSearchProp {
+    allTags: Array<TagType> | null,
     duplicateTag: (title: string, id?: string) => boolean, 
     addTagToImage : (id: string, title: string, color: string) => void
 }
 
-export default function TagSearch({duplicateTag, addTagToImage} : TagSearchProp) {
+export default function TagSearch({allTags, duplicateTag, addTagToImage} : TagSearchProp) {
     const [tagInput, setTagInput] = useState('');
     const [addTag, setAddTag] = useState(false);
     const [duplicateTagError, setDuplicateTagError] = useState(false);
     const [color, setColor] = useState('#ffffff');
-    const [allTags, setAllTags] = useState<Array<TagType> | null>(null);
     const [tagSearchResults, setTagSearchResults] = useState<Array<TagType>>([]);
     const tagResultsRef = useRef<HTMLDivElement | null>(null);
-    const token = useToken();
-
-    useEffect(() => {
-        if (!allTags && token) {
-            axios.get('http://localhost:3000/tags', 
-                {headers:  { Authorization: `Bearer ${token}` }}).then(res => {
-                    setAllTags(res.data);
-            });
-        }
-    }, [allTags, token]);
 
     useEffect(() => {
          function handleClickOutside(event: Event) {
@@ -95,10 +83,17 @@ export default function TagSearch({duplicateTag, addTagToImage} : TagSearchProp)
 
     }
 
-    function handleKeyDown(event : React.KeyboardEvent<HTMLInputElement>) {
-        if (event.key === "Enter" && tagInput !== "") {
+    function handleConfirm() {
+        if (tagInput !== "") {
+            setAddTag(false);
             handleAddTag(tagInput, color, true);
         }
+    }
+
+    function handleCancel() {
+        setAddTag(false); 
+        setTagInput(""); 
+        setTagSearchResults([]);
     }
 
     return (
@@ -107,18 +102,18 @@ export default function TagSearch({duplicateTag, addTagToImage} : TagSearchProp)
             <div id="tag-input-container" className={addTag ? "flex flex-col" : "hidden"}>
                 <div className="flex gap-6">
                     <div className="flex gap-4">
-                        <input value={tagInput} onChange={handleTagSearch} onKeyDown={handleKeyDown} placeholder="Enter tag here" multiple={false} className="w-[243px] h-[30px] rounded-full px-3 outline outline-black" />
+                        <input value={tagInput} onChange={handleTagSearch} placeholder="Enter tag here" multiple={false} className="w-[243px] h-[30px] rounded-full px-3 outline outline-black" />
                         <input type="color" value={color} onChange={(e) => setColor(e.target.value)} />
                     </div>
                     <div className="flex justify-between w-[60px]">
-                        <FaCheck data-testid="submit-tag" onClick={() => {setAddTag(false); handleAddTag(tagInput, color, true)}} size={20} scale={1} />
-                        <FaX data-testid="cancel-tag" onClick={() => {setAddTag(false); setTagInput(""); setTagSearchResults([])}} size={20} scale={1} />
+                        <FaCheck data-testid="submit-tag" onClick={() => handleConfirm()} size={20} scale={1} />
+                        <FaX data-testid="cancel-tag" onClick={() => handleCancel()} size={20} scale={1} />
                     </div>
                 </div>
                 <div className={duplicateTagError ? "text-red-500" : "hidden"}> 
                     A tag with the same title has already been added.
                 </div>
-                <div ref={tagResultsRef} style={{display: tagSearchResults.length ? 'flex' : 'none'}} className="flex flex-col max-h-[200px] mt-8.5 z-10 bg-white fixed flex-wrap outline outline-black w-[239px] p-4 gap-4 overflow-y-auto">
+                <div ref={tagResultsRef} style={{display: tagSearchResults.length ? 'flex' : 'none'}} className="flex flex-col max-h-[200px] mt-8.5 z-10 bg-white fixed  outline outline-black w-[239px] p-4 gap-4 overflow-y-auto">
                     {
                         tagSearchResults.map((tag) => <Tag key={tag.tag_id} title={tag.title} id={tag.tag_id} color={tag.color} addedTag={false} tagResult={true} duplicateTag={duplicateTag} handleAddTag={handleAddTag}/>)
                     }

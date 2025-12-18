@@ -49,13 +49,11 @@ export default function Tag({id, title, color, addedTag, tagResult,
         };
     }, [optionsRef]);
 
-    function handleKeyDown(event : React.KeyboardEvent<HTMLInputElement>) {
-        if (event.key === "Enter") {
-            if (!duplicateTag?.(id, editTitle)) {        
-                editTag!(id, editTitle, editColor);
-                setEdit(false);
-                setOptions(false);
-            }
+    function handleConfirm() {
+        if (!duplicateTag?.(id, editTitle)) {        
+            editTag!(id, editTitle, editColor);
+            setEdit(false);
+            setOptions(false);
         }
     }
     
@@ -73,10 +71,10 @@ export default function Tag({id, title, color, addedTag, tagResult,
                 {
                     edit ? 
                     <div className="flex gap-4">
-                        <input id="title-input" style={{color: duplicateTag?.(id, editTitle) && editTitle !== title ? "red" : "black"}} className="max-w-[100px]" placeholder="Edit tag title" value={editTitle} onChange={(e) => {setEditTitle(e.target.value); console.log(title)}} onKeyDown={handleKeyDown}/> 
+                        <input id="title-input" style={{color: duplicateTag?.(id, editTitle) && editTitle !== title ? "red" : "black"}} className="max-w-[100px]" placeholder="Edit tag title" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} /> 
                         <input id="color-input" type="color" value={editColor} onChange={(e) => setEditColor(e.target.value)} />
-                        <FaCheck size={20} scale={1} />
-                        <FaX size={20} scale={1} />
+                        <FaCheck data-testid="confirm-addtag" onClick={() => handleConfirm()} size={20} scale={1} />
+                        <FaX data-testid="cancel-addtag" onClick={() => setEdit(false)} size={20} scale={1} />
                     </div>
                     : 
                     <div>{title}</div> 
