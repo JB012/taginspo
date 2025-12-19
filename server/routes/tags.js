@@ -64,12 +64,26 @@ router.post('/add', (req, res) => {
             });     
         }   
         else {
+            const imageID = req.body.imageID;
             try {
                 for (const tag of multipleTags) {   
                     const title = tag.title;
                     const color = tag.color;
                     const tagID = tag.tag_id;
-                    pool.query(`INSERT INTO tags (user_id, tag_id, title, color) VALUES (?, ?, ?, ?)`, [userId, tagID, title, color])
+
+                    pool.getConnection((err, conn) => {
+                        conn.query(`SELECT * FROM tags WHERE tag_id=?`, [tag.tag_id], (err, results, fields) => {
+                            const tag = Object.values(JSON.parse(JSON.stringify(results)));
+
+                            if (!tag.length) {
+                                conn.query(`INSERT INTO tags (user_id, tag_id, title, color) VALUES (?, ?, ?, ?)`, [userId, tagID, title, color])
+                                conn.query(`INSERT INTO users_images_tags (user_id, image_id, tag_id) VALUES (?, ?, ?)`, [userId, imageID, tag.tag_id]);
+                            }
+                        });
+
+                        conn.release();
+                    });
+                    
                 }
 
                 return res.send('All tags have been added successfully');

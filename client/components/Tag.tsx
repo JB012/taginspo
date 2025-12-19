@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { FaCheck, FaEllipsis, FaX } from "react-icons/fa6";
-import {assertIsNode} from '../utils/utils.ts';
+import {assertIsNode, hexToHSL} from '../utils/utils.ts';
 
 interface TagProp {
     id: string, 
@@ -10,7 +10,7 @@ interface TagProp {
     tagResult: boolean,
     removeTag?: (id: string) => void,
     editTag?: (id: string, title: string, color: string) => void,
-    duplicateTag?: (id: string, title : string) => boolean,
+    duplicateTag?: ( title : string, id?: string) => boolean,
     handleAddTag?: (title: string, color: string, edit: boolean, id?: string) => void,
 }
 
@@ -21,6 +21,7 @@ export default function Tag({id, title, color, addedTag, tagResult,
     const [options, setOptions] = useState(false);
     const [editTitle, setEditTitle] = useState(title);
     const [editColor, setEditColor] = useState(color);
+    const [colorLightness, setColorLightness] = useState(hexToHSL(color)?.l ?? 100);
     const optionsRef = useRef<HTMLDivElement | null>(null);
     const tagRef = useRef<HTMLDivElement | null>(null);
 
@@ -50,34 +51,50 @@ export default function Tag({id, title, color, addedTag, tagResult,
     }, [optionsRef]);
 
     function handleConfirm() {
-        if (!duplicateTag?.(id, editTitle)) {        
+        if (!duplicateTag?.(editTitle, id)) {        
             editTag!(id, editTitle, editColor);
             setEdit(false);
             setOptions(false);
         }
     }
     
+    function handleCancel() {
+        setEditTitle(title);
+        setEditColor(color);
+        setEdit(false);
+    }
+
     function handleClick() {
         if (tagResult) {
             handleAddTag?.(title, color, false, id);
         }
     }
 
-//TODO: Get out of edit mode when clicking out of component
+    function handleColorChange(event : React.ChangeEvent<HTMLInputElement>) {
+        const changedColor = event.target.value;
+        setEditColor(changedColor);
+
+        const hsl = hexToHSL(changedColor);
+
+        if (hsl && hsl.l) setColorLightness(hsl.l);
+    }
+
     return (
-        <div onClick={() => handleClick()} ref={addedTag && edit ? tagRef : undefined} className="flex gap-1">
-            <div className="text-center cursor-pointer rounded-full h-6 px-3" style={{backgroundColor: color, 
+        <div id="tag-container" onClick={() => handleClick()} ref={addedTag && edit ? tagRef : undefined} className="flex gap-1">
+            <div className="text-center cursor-pointer rounded-full h-6 px-3" style={{backgroundColor: editColor, 
             outline: color === "#ffffff" ? "1px solid black" : "", color: "black"}}>
                 {
                     edit ? 
                     <div className="flex gap-4">
-                        <input id="title-input" style={{color: duplicateTag?.(id, editTitle) && editTitle !== title ? "red" : "black"}} className="max-w-[100px]" placeholder="Edit tag title" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} /> 
-                        <input id="color-input" type="color" value={editColor} onChange={(e) => setEditColor(e.target.value)} />
-                        <FaCheck data-testid="confirm-addtag" onClick={() => handleConfirm()} size={20} scale={1} />
-                        <FaX data-testid="cancel-addtag" onClick={() => setEdit(false)} size={20} scale={1} />
+                        <input id="title-input" style={{color: duplicateTag?.(id, editTitle) && editTitle !== title ? "red" : 
+                            colorLightness < 60 ? "white" : "black"}} className="max-w-[100px]" placeholder="Edit tag title" 
+                            value={editTitle} onChange={(e) => setEditTitle(e.target.value)} /> 
+                        <input id="color-input" type="color" value={editColor} onChange={handleColorChange} />
+                        <FaCheck fill={colorLightness < 60 ? "white" : "black"} data-testid="confirm-addtag" onClick={() => handleConfirm()} size={20} scale={1} />
+                        <FaX fill={colorLightness < 60 ? "white" : "black"} data-testid="cancel-addtag" onClick={() => handleCancel()} size={20} scale={1} />
                     </div>
                     : 
-                    <div>{title}</div> 
+                    <div style={{color: colorLightness < 60 ? "white" : "black"}}>{title}</div> 
                 }
                 
             </div>

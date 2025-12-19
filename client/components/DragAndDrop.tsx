@@ -2,7 +2,13 @@ import { useEffect } from "react";
 import { FaCircleXmark } from "react-icons/fa6";
 import {assertIsNode, isDragEvent} from '../utils/utils.ts';
 
-export default function DragAndDrop({imageRef} : {imageRef : {current: HTMLImageElement | null}}) {
+interface DragAndDropProp {
+    imageRef: {current: HTMLImageElement | null},
+    setSubmitable: (value: React.SetStateAction<boolean>) => void
+}
+
+
+export default function DragAndDrop({imageRef, setSubmitable} : DragAndDropProp) {
     useEffect(() => {
         const dropZone = document.querySelector('#drop-zone') as HTMLElement;
         const dropZoneContainer = document.querySelector('#drop-zone-container') as HTMLElement;
@@ -82,6 +88,8 @@ export default function DragAndDrop({imageRef} : {imageRef : {current: HTMLImage
                     // Disabling file input since an image is currently displayed.
                     fileInput.disabled = false;
                 }
+
+                setSubmitable(false);
             }
         }
 
@@ -98,6 +106,9 @@ export default function DragAndDrop({imageRef} : {imageRef : {current: HTMLImage
                     dropZoneContainer.style.outlineStyle = "none";
                     dropZone.style.cursor = "default";
                     fileInput.disabled = true;
+
+                    
+                    setSubmitable(true);
                 }
                 
             }
@@ -127,14 +138,14 @@ export default function DragAndDrop({imageRef} : {imageRef : {current: HTMLImage
             fileInput?.removeEventListener('input', handleFileInput);
             dropZone?.removeEventListener("drop", handleDrop);
         }
-    }, [imageRef]);
+    }, [imageRef, setSubmitable]);
 
     return (
-    <div id="drop-zone-container" className="outline-dashed outline-black flex w-[800px] h-[584px]">
+    <div id="drop-zone-container" className="outline-dashed outline-black flex w-[800px] h-[567px]">
         <div className="flex flex-col w-full items-center relative">
             <label id="drop-zone" htmlFor="add-image" className="w-full h-full flex items-center justify-center absolute cursor-pointer">
                 <div id="drop-zone-message">Drag-and-drop image or click to choose file</div>
-                <input id="add-image" type="file" accept="image/*" />
+                <input id="add-image" type="file" name="file" accept="image/*" />
             </label>
             <div id="preview-image" className="relative">  
                 <FaCircleXmark color="white" id="clear-image" className="hidden z-20 absolute top-3 right-3" size={20} scale={1}/>

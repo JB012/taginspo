@@ -6,25 +6,26 @@ import axios from 'axios';
 import useToken from '../../utils/useToken'
 import { useNavigate } from "react-router";
 import type { TagType } from "../../types/TagType";
+import type { ImageType } from "../../types/ImageType";
 import Tag from "../../components/Tag";
 
 export default function Gallery() {
     const [input, setInput] = useState("");
     const [galleryType, setGalleryType] = useState("Image");
     // Initial state is null instead of empty array to prevent multiple axios calls from useEffect
-    const [preSignedURLs, setPreSignedURLs] = useState<[]|null>(null);
+    const [images, setImages] = useState<ImageType[]|null>(null);
     const [tags, setTags] = useState<TagType[]|null>(null);
     const navigate = useNavigate();
     const token = useToken();
 
     useEffect(() => {
-        if (!preSignedURLs && token) {
+        if (!images && token) {
             try {
                 axios
                 .get('http://localhost:3000/images', {headers: { Authorization: `Bearer ${token}` }})
                 .then((res) => {
                     if (typeof res.data === "object") {
-                        setPreSignedURLs(res.data);
+                        setImages(res.data);
                     }
                 });
 
@@ -40,7 +41,7 @@ export default function Gallery() {
                 console.log(err);
             }
         }
-    }, [preSignedURLs, token]);
+    }, [images, token]);
 
     return (
         <>
@@ -73,7 +74,7 @@ export default function Gallery() {
                         galleryType === "Image" ?    
                         <div id="images-previews" className="flex w-full justify-center flex-wrap gap-25">
                             {
-                                preSignedURLs ? preSignedURLs.map((url) => <img src={url} key={url} width={200} height={200} />) : 
+                                images ? images.map((img) => <img id={img.id} key={img.id} src={img.url} width={200} height={200} />) : 
                                 'Click on the + button to add an image' 
                             }
                         </div> :

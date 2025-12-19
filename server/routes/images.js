@@ -2,7 +2,7 @@ const express = require('express');
 const { pool } = require("../db");
 const { s3Client, cloudFront } = require("../s3-cloudfront");
 const router = express.Router();
-const { clerkMiddleware, getAuth } =  require('@clerk/express')
+const { clerkMiddleware, getAuth, clerkClient } =  require('@clerk/express')
 const bodyParser = require("body-parser");
 const { DeleteObjectCommand, PutObjectCommand, S3ServiceException, NoSuchKey } = require('@aws-sdk/client-s3');
 const { CreateInvalidationCommand } = require('@aws-sdk/client-cloudfront');
@@ -11,6 +11,7 @@ const dotenv = require('dotenv');
 const multer = require('multer');
 const { v4 } = require('uuid');
 const cors = require('cors');
+const axios = require('axios');
 const upload = multer({storage: multer.memoryStorage()});
 dotenv.config();
 
@@ -24,29 +25,42 @@ router.get("/", (req, res) => {
     
     if (isAuthenticated) {
         try {
-            pool.query(`SELECT * FROM images WHERE user_id=?`, [userId], async (err, results, fields) => {
-                if (results !== undefined) {
-                    const imagesJSON = Object.values(JSON.parse(JSON.stringify(results)));
-                    const imageURLs = [];   
-                    
-                    if (imagesJSON.length > 0) {
-                        for (const json of imagesJSON) {
-                            const imageURL = `d2ijutr0xv20w3.cloudfront.net/${json.title}`;
-                            const expiresInOneHour = new Date(Date.now + 1000 * 60 * 24)
-                            const signedURL = getSignedUrl({
-                                url: imageURL,
-                                dateLessThan: expiresInOneHour,
-                                privateKey: process.env.CLOUDFRONT_PRIVATE_KEY,
-                                keyPairId: process.env.CLOUDFRONT_KEY_PAIR_ID
-                            })
-                            imageURLs.push(signedURL);
-                        }
+            pool.getConnection((err, conn) => {               
+                conn.query(`SELECT * FROM images WHERE user_id=?`, [userId], async (err, results, fields) => {
+                    if (results !== undefined) {
+                        const imagesJSON = Object.values(JSON.parse(JSON.stringify(results)));
+                        const imageURLs = [];   
                         
-                        return res.send(imageURLs);     
+                        if (imagesJSON.length > 0) {
+                            for (const json of imagesJSON) {
+                                const imageURL = `d2ijutr0xv20w3.cloudfront.net/${json.title}`;
+                                const expiresInOneHour = new Date(Date.now + 1000 * 60 * 24)
+                                const signedURL = getSignedUrl({
+                                    url: imageURL,
+                                    dateLessThan: expiresInOneHour,
+                                    privateKey: process.env.CLOUDFRONT_PRIVATE_KEY,
+                                    keyPairId: process.env.CLOUDFRONT_KEY_PAIR_ID
+                                })
+
+
+                                conn.query(`SELECT tag_id FROM users_images_tags WHERE user_id=? AND image_id=?`, [userId, json.image_id], (err, results, fields) => {
+                                    const tagIDs = Object.values(JSON.parse(JSON.stringify(results)));
+
+                                    imageURLs.push({id: json.image_id, title: json.title, url: signedURL, source: json.source, tagIDs: tagIDs});
+                                });
+                                
+                            }
+
+                            conn.release();
+                            
+                            return res.send(imageURLs);     
+                        }
                     }
-                }
-                
-                return res.send("User hasn't add any images");
+                    
+                    
+                    conn.release();
+                    return res.send("User hasn't add any images");
+                });
             });
         }
         catch(err) {
@@ -71,27 +85,43 @@ router.post("/add", upload.single('file'), async (req, res) => {
     const imageID = v4();
     const title = req.body.title;
     const source = req.body.source;
+    const addedTags = req.body.addedTags;
 
     if (isAuthenticated) {
         try {
-            const [rows] = pool.query(`SELECT * FROM images WHERE user_id=? AND title=?`, [userId, title]);
-            
-            if (rows.length === 0) {
-                const command = new PutObjectCommand({
-                    Bucket: 'www.taginspo.com',
-                    Key: req.file.originalname,
-                    Body: req.file.buffer,
-                    ContentType: req.file.mimetype
+            pool.getConnection((err, conn) => {
+                conn.query(`SELECT * FROM images WHERE user_id=? AND title=?`, [userId, title], async (err, results, fields) => {
+                    const images = Object.values(JSON.parse(JSON.stringify(results)));
+
+                    if (images.length === 0) {
+
+                        console.log(req.file);
+                        const command = new PutObjectCommand({
+                            Bucket: 'www.taginspo.com',
+                            Key: req.file.originalname,
+                            Body: req.file.buffer,
+                            ContentType: req.file.mimetype
+                        });
+                        
+                        const response = await s3Client.send(command);
+                        conn.query('INSERT INTO images (user_id, image_id, title, source) VALUES (?, ?, ?, ?)', [userId, imageID, title, source]);
+                        
+                        const token = clerkClient.sessions.getToken();
+                        
+                        axios.post('http://localhost:3000/tags/add', {multipleTags: addedTags, imageID: imageID}, 
+                            {headers: {Authorization: `Bearer ${token}`}}
+                        );
+
+                        conn.release();
+                        return res.send('Image successfully added');
+                    }
+                    
+                    else {
+                        conn.release();
+                        return res.send("Title already exists, please try again.");
+                    }
                 });
-                
-                const response = await s3Client.send(command);
-                pool.query('INSERT INTO images (user_id, image_id, title, source) VALUES (?, ?, ?, ?)', [userId, imageID, title, source]);
-                
-                return res.send('Image successfully added');
-            }
-            else {
-                return res.send("Title already exists, please try again.");
-            }
+            })
         }
         catch(err) {
             if (err instanceof S3ServiceException && err.name === "EntityTooLarge") {
@@ -110,7 +140,7 @@ router.post("/add", upload.single('file'), async (req, res) => {
         }
     }
     else {
-        return res.status(401).send('User not authenticated');
+        return res.status(401).send('User not authenticated to add images');
     }
 });
 

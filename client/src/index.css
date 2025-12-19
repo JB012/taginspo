@@ -34,6 +34,6 @@
     font-size: 0;
 }
 
-svg {
+svg, button {
     cursor: pointer;
 }

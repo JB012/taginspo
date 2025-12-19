@@ -11,10 +11,11 @@ import useToken from "../../utils/useToken";
 export default function EditImage() {
     const [title, setTitle] = useState('');
     const [source, setSource] = useState('');
-    
     const [allTags, setAllTags] = useState<Array<TagType> | null>(null);
     const [addedTags, setAddedTags] = useState<Array<TagType>>([]);
     const imageRef = useRef<HTMLImageElement | null>(null);
+    const [submitable, setSubmitable] = useState(false);
+    const [error, setError] = useState('');
     const navigate = useNavigate();
     const token = useToken();
 
@@ -27,6 +28,45 @@ export default function EditImage() {
         }
     }, [allTags, token]);
 
+    useEffect(() => {
+        const form = document.querySelector('form');
+
+        function handleSubmit(ev: SubmitEvent) {
+            ev.preventDefault();
+
+            if (submitable && form) {
+                const formData = new FormData(form);
+
+                formData.set("title", title ? title : new Date().toString());
+                formData.append("addedTags", JSON.stringify(addedTags));
+
+                try {
+                    axios.post('http://localhost:3000/images/add', formData, 
+                    {headers:  { Authorization: `Bearer ${token}`, 
+                "Content-Type": "multipart/form-data"}}).then(res => {
+                        if (res.status === 200) {
+                            navigate('/gallery');
+                        }
+                    });
+                }
+                catch (err) {
+                    if (err instanceof Error) {
+                        setError(err.message);
+                        setSubmitable(false);
+                    }
+                    console.log(err);
+                }
+            }
+            else {
+                console.log("form is null?");
+            }
+        }
+        form?.addEventListener('submit', handleSubmit);
+
+        return () => form?.removeEventListener("submit", handleSubmit);
+
+    }, [addedTags, navigate, submitable, title, token]);
+
     function addTagToImage(id: string, title: string, color: string) {
         setAddedTags([...addedTags, {tag_id: id, title: title, color: color}]);
     }
@@ -37,11 +77,11 @@ export default function EditImage() {
 
     function editTag(id: string, title: string, color: string) {
         setAddedTags(addedTags.map(tag => {
-            if (tag.tag_id === id && !addedTags.some((tag) => tag.title === title)) {
-                const findExistingTag = allTags?.find((tag) => tag.title === title);
-                
+            // changedTitle is needed for the case that a tag's color is the only thing
+            // that needs to be changed. Since the tag's already in addedTags, 
+            if (tag.tag_id === id) {
                 tag.title = title;
-                tag.color = findExistingTag ? findExistingTag.color : color;
+                tag.color = color;
             }
 
             return tag;
@@ -62,44 +102,51 @@ export default function EditImage() {
     }
 
     function handleSubmit() {
-        if (imageRef.current?.src) {
+        if (submitable) {
             const bodyData = {
                 title: title !== "" ? title : new Date(),
-                source: source !== "" ? source : null
+                source: source !== "" ? source : null,
+                addedTags: addedTags
             }
 
             try {
                 axios.post('http://localhost:3000/images/add', bodyData, 
                 {headers:  { Authorization: `Bearer ${token}` }}).then(res => {
                     if (res.status === 200) {
-                        //call tab add
-                        // add user_id image_id and tab_id (for each in arr) to many-to-many table
-                        //navigate('/gallery');
+                        navigate('/gallery');
                     }
                 });
             }
             catch (err) {
+                if (err instanceof Error) {
+                    setError(err.message);
+                    setSubmitable(false);
+                }
                 console.log(err);
             }
         }
     }
 
     return (
-        <div className="flex flex-col p-4 gap-10 w-full h-full">
+        <form encType="multipart/form-data" method="post" className="flex flex-col p-4 gap-10 w-full h-full">
             <div className="flex w-full justify-between">
                 <FaArrowLeft onClick={() => navigate(-1)} data-testid="cancel-image" size={20} scale={1} />
-                <button className="cursor-pointer">Save Changes</button>
+                <button className="rounded-full p-4" style={{backgroundColor:  submitable ? "cyan" : "gainsboro", 
+                    color: submitable ? "black" : "white"}}>
+                    Save Changes
+                </button>
             </div>
             <div className="flex justify-around w-full">
-                <DragAndDrop imageRef={imageRef} />
+                <DragAndDrop imageRef={imageRef} setSubmitable={setSubmitable}/>
                 <div className="flex flex-col gap-16">
+                    <div style={{display: error ? "block" : "none"}}>{error}</div>
                     <div className="flex flex-col gap-4">
                         <label htmlFor="title">Title</label>
-                        <input value={title} onChange={(e) => setTitle(e.target.value)} id="title" className="p-4 w-[464px] h-[50px] rounded-full outline outline-black" />
+                        <input value={title} onChange={(e) => setTitle(e.target.value)} id="title" name="title" className="p-4 w-[464px] h-[50px] rounded-full outline outline-black" />
                     </div>
                     <div className="flex flex-col gap-4">
-                        <label htmlFor="title">Source</label>
-                        <input value={source} onChange={(e) => setSource(e.target.value)} id="title" className="p-4 w-[464px] h-[50px] rounded-full outline outline-black" />
+                        <label htmlFor="source">Source</label>
+                        <input value={source} onChange={(e) => setSource(e.target.value)} id="source" name="source" className="p-4 w-[464px] h-[50px] rounded-full outline outline-black" />
                     </div>
                     <div className="flex flex-col">
                         <div className="flex gap-3">
@@ -115,6 +162,6 @@ export default function EditImage() {
                     </div>
                 </div>
             </div>
-        </div>
+        </form>
     )
 }
