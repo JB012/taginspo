@@ -6,7 +6,7 @@ import Tag from '../../components/Tag';
 import DragAndDrop from '../../components/DragAndDrop';
 import TagSearch from '../../components/TagSearch';
 import axios from "axios";
-import useToken from "../../utils/useToken";
+import { useAuth } from "@clerk/clerk-react";
 
 export default function EditImage() {
     const [title, setTitle] = useState('');
@@ -17,16 +17,21 @@ export default function EditImage() {
     const [submitable, setSubmitable] = useState(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
-    const token = useToken();
+    const fileRef = useRef<HTMLInputElement | null>(null);
+    const {getToken} = useAuth();
 
     useEffect(() => {
-        if (!allTags && token) {
-            axios.get('http://localhost:3000/tags', 
-                {headers:  { Authorization: `Bearer ${token}` }}).then(res => {
-                    setAllTags(res.data);
+        if (!allTags) {
+            getToken({skipCache: true}).then((token) => {
+                if (token) {        
+                    axios.get('http://localhost:3000/tags', 
+                        {headers:  { Authorization: `Bearer ${token}` }}).then(res => {
+                            setAllTags(res.data);
+                    });
+                }
             });
         }
-    }, [allTags, token]);
+    }, [allTags, getToken]);
 
     useEffect(() => {
         const form = document.querySelector('form');
@@ -34,18 +39,23 @@ export default function EditImage() {
         function handleSubmit(ev: SubmitEvent) {
             ev.preventDefault();
 
-            if (submitable && form) {
+            if (submitable && form && fileRef.current) {
+                fileRef.current.disabled = false;
                 const formData = new FormData(form);
 
                 formData.set("title", title ? title : new Date().toString());
                 formData.append("addedTags", JSON.stringify(addedTags));
 
                 try {
-                    axios.post('http://localhost:3000/images/add', formData, 
-                    {headers:  { Authorization: `Bearer ${token}`, 
-                "Content-Type": "multipart/form-data"}}).then(res => {
-                        if (res.status === 200) {
-                            navigate('/gallery');
+                    getToken(({skipCache: true})).then((token) => {
+                        if (token) {        
+                            axios.post('http://localhost:3000/images/add', formData, 
+                            {headers:  { Authorization: `Bearer ${token}`, 
+                        "Content-Type": "multipart/form-data"}}).then(res => {
+                                if (res.status === 200) {
+                                    navigate('/gallery');
+                                }
+                            });
                         }
                     });
                 }
@@ -65,7 +75,7 @@ export default function EditImage() {
 
         return () => form?.removeEventListener("submit", handleSubmit);
 
-    }, [addedTags, navigate, submitable, title, token]);
+    }, [addedTags, navigate, submitable, title, getToken]);
 
     function addTagToImage(id: string, title: string, color: string) {
         setAddedTags([...addedTags, {tag_id: id, title: title, color: color}]);
@@ -101,32 +111,6 @@ export default function EditImage() {
 
     }
 
-    function handleSubmit() {
-        if (submitable) {
-            const bodyData = {
-                title: title !== "" ? title : new Date(),
-                source: source !== "" ? source : null,
-                addedTags: addedTags
-            }
-
-            try {
-                axios.post('http://localhost:3000/images/add', bodyData, 
-                {headers:  { Authorization: `Bearer ${token}` }}).then(res => {
-                    if (res.status === 200) {
-                        navigate('/gallery');
-                    }
-                });
-            }
-            catch (err) {
-                if (err instanceof Error) {
-                    setError(err.message);
-                    setSubmitable(false);
-                }
-                console.log(err);
-            }
-        }
-    }
-
     return (
         <form encType="multipart/form-data" method="post" className="flex flex-col p-4 gap-10 w-full h-full">
             <div className="flex w-full justify-between">
@@ -137,7 +121,7 @@ export default function EditImage() {
                 </button>
             </div>
             <div className="flex justify-around w-full">
-                <DragAndDrop imageRef={imageRef} setSubmitable={setSubmitable}/>
+                <DragAndDrop fileRef={fileRef} imageRef={imageRef} setSubmitable={setSubmitable}/>
                 <div className="flex flex-col gap-16">
                     <div style={{display: error ? "block" : "none"}}>{error}</div>
                     <div className="flex flex-col gap-4">

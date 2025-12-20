@@ -18,23 +18,21 @@ router.use(clerkMiddleware());
 router.use(bodyParser.urlencoded({extended:false}));
 router.use(bodyParser.json());
 
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
     const { isAuthenticated, userId } = getAuth(req);
 
     if (isAuthenticated) {
-        pool.query(`SELECT tag_id, title, color FROM tags WHERE user_id=?`, [userId], (err, results, fields) => {
-            const tagsJSON = Object.values(JSON.parse(JSON.stringify(results)));
-    
-            return tagsJSON.length !== 0 ? res.send(tagsJSON) 
-            : res.send('User has no tags added');
-        });
+        const [rows, fields] = await pool.query(`SELECT tag_id, title, color FROM tags WHERE user_id=?`, [userId]);
+
+        return rows.length !== 0 ? res.send(rows) 
+        : res.send('User has no tags added');
     }
     else {
         return res.status(401).send('User not authenticated');
     }
 });
 
-router.post('/add', (req, res) => {
+router.post('/add', async (req, res) => {
     const { isAuthenticated, userId } = getAuth(req);
 
     if (isAuthenticated) {
@@ -46,22 +44,21 @@ router.post('/add', (req, res) => {
             const tagID =  req.body.tagID;
             
 
-            pool.query(`SELECT * FROM tags WHERE user_id=? AND title=?`, [userId, title], (err, results, fields) => {
-                const tagJSON = Object.values(JSON.parse(JSON.stringify(results)));
-                if (tagJSON.length === 0) {
-                    try {
-                        pool.query(`INSERT INTO tags (user_id, tag_id, title, color) VALUES (?, ?, ?, ?)`, [userId, tagID, title, color]);
+            const [rows, fields] = await pool.query(`SELECT * FROM tags WHERE user_id=? AND title=?`, [userId, title]);
 
-                        return res.send('Tag successfully added');
-                    }
-                    catch (err) {
-                        console.log(err);
-                    }
+            if (rows.length === 0) {
+                try {
+                    pool.query(`INSERT INTO tags (user_id, tag_id, title, color) VALUES (?, ?, ?, ?)`, [userId, tagID, title, color]);
+
+                    return res.send('Tag successfully added');
                 }
-                else {
-                    return res.send("Title already exists, please try again");
+                catch (err) {
+                    console.log(err);
                 }
-            });     
+            }
+            else {
+                return res.send("Title already exists, please try again");
+            }     
         }   
         else {
             const imageID = req.body.imageID;
@@ -71,19 +68,12 @@ router.post('/add', (req, res) => {
                     const color = tag.color;
                     const tagID = tag.tag_id;
 
-                    pool.getConnection((err, conn) => {
-                        conn.query(`SELECT * FROM tags WHERE tag_id=?`, [tag.tag_id], (err, results, fields) => {
-                            const tag = Object.values(JSON.parse(JSON.stringify(results)));
-
-                            if (!tag.length) {
-                                conn.query(`INSERT INTO tags (user_id, tag_id, title, color) VALUES (?, ?, ?, ?)`, [userId, tagID, title, color])
-                                conn.query(`INSERT INTO users_images_tags (user_id, image_id, tag_id) VALUES (?, ?, ?)`, [userId, imageID, tag.tag_id]);
-                            }
-                        });
-
-                        conn.release();
-                    });
+                    const [tag, fields] = await pool.query(`SELECT * FROM tags WHERE tag_id=?`, [tag.tag_id]);
                     
+                    if (!tag.length) {
+                        await pool.query(`INSERT INTO tags (user_id, tag_id, title, color) VALUES (?, ?, ?, ?)`, [userId, tagID, title, color]);
+                        await pool.query(`INSERT INTO users_images_tags (user_id, image_id, tag_id) VALUES (?, ?, ?)`, [userId, imageID, tag.tag_id]);
+                    }
                 }
 
                 return res.send('All tags have been added successfully');
@@ -98,13 +88,13 @@ router.post('/add', (req, res) => {
     }
 });
 
-router.post('/delete', (req, res) => {
+router.post('/delete', async (req, res) => {
     const { isAuthenticated, userId } = getAuth(req);
     const tagID = req.body.tagID;
 
     if (isAuthenticated) {
         try {
-            pool.query(`DELETE FROM tags WHERE user_id=? AND tag_id=?`, [userId, tagID]);
+            await pool.query(`DELETE FROM tags WHERE user_id=? AND tag_id=?`, [userId, tagID]);
         }
         catch (err) {
             console.log(err);

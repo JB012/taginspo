@@ -1,9 +1,8 @@
-import { SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
+import { SignedIn, SignedOut, UserButton, useAuth } from "@clerk/clerk-react";
 import { useEffect, useState } from "react";
 import { FaImage, FaList, FaPlusCircle, FaTag, FaWrench } from "react-icons/fa";
 import { FaMagnifyingGlass } from "react-icons/fa6";
 import axios from 'axios';
-import useToken from '../../utils/useToken'
 import { useNavigate } from "react-router";
 import type { TagType } from "../../types/TagType";
 import type { ImageType } from "../../types/ImageType";
@@ -16,24 +15,27 @@ export default function Gallery() {
     const [images, setImages] = useState<ImageType[]|null>(null);
     const [tags, setTags] = useState<TagType[]|null>(null);
     const navigate = useNavigate();
-    const token = useToken();
-
+    const {getToken} = useAuth();
     useEffect(() => {
-        if (!images && token) {
+        if (!images) {
             try {
-                axios
-                .get('http://localhost:3000/images', {headers: { Authorization: `Bearer ${token}` }})
-                .then((res) => {
-                    if (typeof res.data === "object") {
-                        setImages(res.data);
-                    }
-                });
+                getToken({skipCache: true}).then((token) => {
+                    if (token) {
+                        axios
+                        .get('http://localhost:3000/images', {headers: { Authorization: `Bearer ${token}` }})
+                        .then((res) => {
+                            if (typeof res.data === "object") {
+                                setImages(res.data);
+                            }
+                        });
 
-                axios
-                .get('http://localhost:3000/tags', {headers: { Authorization: `Bearer ${token}` }})
-                .then((res) => {
-                    if (typeof res.data === "object") {
-                        setTags(res.data);
+                        axios
+                        .get('http://localhost:3000/tags', {headers: { Authorization: `Bearer ${token}` }})
+                        .then((res) => {
+                            if (typeof res.data === "object") {
+                                setTags(res.data);
+                            }
+                        });
                     }
                 });
             }
@@ -41,7 +43,7 @@ export default function Gallery() {
                 console.log(err);
             }
         }
-    }, [images, token]);
+    }, [getToken, images]);
 
     return (
         <>

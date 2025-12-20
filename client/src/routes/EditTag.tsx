@@ -2,25 +2,29 @@ import { useState } from "react";
 import { FaArrowLeft } from "react-icons/fa";
 import { useNavigate } from "react-router";
 import axios from 'axios';
-import useToken from "../../utils/useToken";
 import { v4 } from 'uuid';
+import { useAuth } from "@clerk/clerk-react";
 
 export default function EditTag() {
     const navigate = useNavigate();
     const [title, setTitle] = useState("");
     const [color, setColor] = useState("#ffffff");
-    const token = useToken();
+    const { getToken } = useAuth();
 
     function handleSubmit() {
-        if (title && token) {
+        if (title) {
             try {
-                axios.post('http://localhost:3000/tags/add', {tagID: v4(), title: title, color: color}, 
-                    {headers:  { Authorization: `Bearer ${token}` }}).then(res => {
-                    if (!(res.data as string).includes("Title already exists")) {
-                        navigate('http://localhost:5173/gallery');
-                    }
-                    else {
-                        console.log(res.data);
+                getToken({skipCache: true}).then((token) => {
+                    if (token) {
+                        axios.post('http://localhost:3000/tags/add', {tagID: v4(), title: title, color: color}, 
+                        {headers:  { Authorization: `Bearer ${token}` }}).then(res => {
+                            if (!(res.data as string).includes("Title already exists")) {
+                                navigate('http://localhost:5173/gallery');
+                            }
+                            else {
+                                console.log(res.data);
+                            }
+                        });
                     }
                 });
             }

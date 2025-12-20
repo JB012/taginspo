@@ -3,12 +3,13 @@ import { FaCircleXmark } from "react-icons/fa6";
 import {assertIsNode, isDragEvent} from '../utils/utils.ts';
 
 interface DragAndDropProp {
+    fileRef: {current: HTMLInputElement | null},
     imageRef: {current: HTMLImageElement | null},
     setSubmitable: (value: React.SetStateAction<boolean>) => void
 }
 
 
-export default function DragAndDrop({imageRef, setSubmitable} : DragAndDropProp) {
+export default function DragAndDrop({fileRef, imageRef, setSubmitable} : DragAndDropProp) {
     useEffect(() => {
         const dropZone = document.querySelector('#drop-zone') as HTMLElement;
         const dropZoneContainer = document.querySelector('#drop-zone-container') as HTMLElement;
@@ -64,7 +65,6 @@ export default function DragAndDrop({imageRef, setSubmitable} : DragAndDropProp)
         function handleFileInput(event : Event) {
             const input = event.target as HTMLInputElement;
             
-            console.log(input.files);
             if (input.files) {
                 displayImage(input.files[0]);
             }
@@ -107,7 +107,6 @@ export default function DragAndDrop({imageRef, setSubmitable} : DragAndDropProp)
                     dropZone.style.cursor = "default";
                     fileInput.disabled = true;
 
-                    
                     setSubmitable(true);
                 }
                 
@@ -145,7 +144,7 @@ export default function DragAndDrop({imageRef, setSubmitable} : DragAndDropProp)
         <div className="flex flex-col w-full items-center relative">
             <label id="drop-zone" htmlFor="add-image" className="w-full h-full flex items-center justify-center absolute cursor-pointer">
                 <div id="drop-zone-message">Drag-and-drop image or click to choose file</div>
-                <input id="add-image" type="file" name="file" accept="image/*" />
+                <input ref={fileRef} id="add-image" type="file" name="file" accept="image/*" />
             </label>
             <div id="preview-image" className="relative">  
                 <FaCircleXmark color="white" id="clear-image" className="hidden z-20 absolute top-3 right-3" size={20} scale={1}/>
