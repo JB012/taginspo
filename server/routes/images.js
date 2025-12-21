@@ -1,17 +1,17 @@
 const express = require('express');
 const { pool } = require("../db");
-const { s3Client, cloudFront } = require("../s3-cloudfront");
+const { s3Client, cloudFront, createSignedURL } = require("../s3-cloudfront");
 const router = express.Router();
 const { clerkMiddleware, getAuth, clerkClient } =  require('@clerk/express')
 const bodyParser = require("body-parser");
 const { DeleteObjectCommand, PutObjectCommand, S3ServiceException, NoSuchKey } = require('@aws-sdk/client-s3');
 const { CreateInvalidationCommand } = require('@aws-sdk/client-cloudfront');
-const { getSignedUrl } = require("@aws-sdk/cloudfront-signer");
 const dotenv = require('dotenv');
 const multer = require('multer');
 const { v4 } = require('uuid');
 const cors = require('cors');
 const axios = require('axios');
+const { url } = require('inspector');
 const upload = multer({storage: multer.memoryStorage()});
 dotenv.config();
 
@@ -32,15 +32,7 @@ router.get("/", async (req, res) => {
 
             if (imagesJSON.length > 0) {
                 for (const json of imagesJSON) {
-                    const imageURL = `https://d2ijutr0xv20w3.cloudfront.net/${json.title}`;
-                    const expiresInOneHour = new Date(Date.now() + 1000 * 60 * 60);
-                    const signedURL = getSignedUrl({
-                        url: imageURL,
-                        dateLessThan: expiresInOneHour,
-                        privateKey: process.env.CLOUDFRONT_PRIVATE_KEY,
-                        keyPairId: process.env.CLOUDFRONT_KEY_PAIR_ID
-                    });
-
+                    const signedURL = createSignedURL(json.title);
                     const [rows, fields] = await pool.query(`SELECT tag_id FROM users_images_tags WHERE user_id=? AND image_id=?`, [userId, json.image_id]);
 
                     const tagIDs = Object.values(JSON.parse(JSON.stringify(rows)));
@@ -69,6 +61,25 @@ router.get("/", async (req, res) => {
     }
 });
 
+router.get("/:id", async (req, res) => {
+    const { isAuthenticated, userId } = getAuth(req);
+    
+    if (isAuthenticated) {
+        const imageID = req.params.id;
+
+        const [[image], fields] = await pool.query(`SELECT * FROM images WHERE user_id=? AND image_id=?`, [userId, imageID]);
+
+        
+        const signedURL = createSignedURL(image.title);
+
+        return res.send({url: signedURL, ...image});
+    }
+    else {
+        return res.status(401).send('User not authenticated');
+    }
+    
+})
+
 router.post("/add", upload.single('file'), async (req, res) => {
     const { isAuthenticated, userId, sessionId } = getAuth(req);
     const imageID = v4();
@@ -80,7 +91,7 @@ router.post("/add", upload.single('file'), async (req, res) => {
         try {
 
             const [rows, fields] = await pool.query(`SELECT * FROM images WHERE user_id=? AND title=?`, [userId, title]);
-
+            
             if (rows.length === 0) {
                 const command = new PutObjectCommand({
                     Bucket: 'www.taginspo.com',
@@ -89,7 +100,7 @@ router.post("/add", upload.single('file'), async (req, res) => {
                     ContentType: req.file.mimetype
                 });
                         
-                const response = await s3Client.send(command);
+                await s3Client.send(command);
 
                 await pool.query('INSERT INTO images (user_id, image_id, title, source) VALUES (?, ?, ?, ?)', [userId, imageID, title, source]);
             

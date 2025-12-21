@@ -17,6 +17,8 @@ app.use("/tags", tags);
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
+app.use(bodyParser.urlencoded({ extended: true }));
+
 app.post('/api/webhooks', express.raw({ type: 'application/json' }), async (req, res) => {
   try {
     const evt = await verifyWebhook(req)
@@ -28,7 +30,7 @@ app.post('/api/webhooks', express.raw({ type: 'application/json' }), async (req,
 
     if (eventType === "user.created") {
         try {
-          pool.query(`INSERT INTO users (user_id) VALUES (?)`, [id]);
+          await pool.query(`INSERT INTO users (user_id, deleted_at) VALUES (?, ?)`, [id, null]);
         }
         catch (err) {
             console.error('Error verifying webhook:', err)

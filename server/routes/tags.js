@@ -22,10 +22,26 @@ router.get('/', async (req, res) => {
     const { isAuthenticated, userId } = getAuth(req);
 
     if (isAuthenticated) {
-        const [rows, fields] = await pool.query(`SELECT tag_id, title, color FROM tags WHERE user_id=?`, [userId]);
+        const imageID = req.query.imageID;
 
-        return rows.length !== 0 ? res.send(rows) 
-        : res.send('User has no tags added');
+        if (!imageID) {    
+            const [rows, fields] = await pool.query(`SELECT tag_id, title, color FROM tags WHERE user_id=?`, [userId]);
+
+            return rows.length !== 0 ? res.send(rows) 
+            : res.send('User has no tags added');
+        }
+        else {
+            const [tagIDs, fields] = await pool.query(`SELECT tag_id FROM users_images_tags WHERE user_id=? AND image_id=?`, [userId, imageID]);
+
+            const allTags = [];
+
+            for (const tagID of tagIDs) {
+                const [tag, fields] = await pool.query(`SElECT * FROM tags WHERE user_id=? AND tag_id=?`, [userId, tagID]);
+                allTags.push(tag[0]);
+            }
+
+            return res.send(allTags);
+        }
     }
     else {
         return res.status(401).send('User not authenticated');

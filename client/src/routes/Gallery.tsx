@@ -45,6 +45,28 @@ export default function Gallery() {
         }
     }, [getToken, images]);
 
+    useEffect(() => {
+        if (!tags) {
+            try {
+                getToken({skipCache: true}).then((token) => {
+                    if (token) {
+                        axios
+                        .get('http://localhost:3000/tags', {headers: { Authorization: `Bearer ${token}` }})
+                        .then((res) => {
+                            if (typeof res.data === "object") {
+                                setTags(res.data);
+                            }
+                        });
+                    }
+                });
+            }
+            catch (err) {
+                console.log(err);
+            }
+        }
+    }, [getToken, tags]);
+
+
     return (
         <>
         <SignedIn>
@@ -76,7 +98,7 @@ export default function Gallery() {
                         galleryType === "Image" ?    
                         <div id="images-previews" className="flex w-full justify-center flex-wrap gap-25">
                             {
-                                images ? images.map((img) => <img id={img.id} key={img.id} src={img.url} width={200} height={200} />) : 
+                                images ? images.map((img) => <div className="cursor-pointer" onClick={() => navigate(`http://localhost:5173/images/${img.id}`)}><img id={img.id} key={img.id} src={img.url} alt={img.title} width={200} height={200} /></div>) : 
                                 'Click on the + button to add an image' 
                             }
                         </div> :
