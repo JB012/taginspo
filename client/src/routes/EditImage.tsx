@@ -1,14 +1,19 @@
 import { FaArrowLeft } from "react-icons/fa";
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import type { TagType } from '../../types/TagType';
+import type { ImageType } from "../../types/ImageType";
 import Tag from '../../components/Tag';
 import DragAndDrop from '../../components/DragAndDrop';
 import TagSearch from '../../components/TagSearch';
 import axios from "axios";
 import { useAuth } from "@clerk/clerk-react";
 
+const url = import.meta.env.VITE_DEFAULT_URL;
+
 export default function EditImage() {
+    const { id } = useParams();
+    const [editImage, setEditImage] = useState<ImageType | null>(null);
     const [title, setTitle] = useState('');
     const [source, setSource] = useState('');
     const [allTags, setAllTags] = useState<Array<TagType> | null>(null);
@@ -34,6 +39,34 @@ export default function EditImage() {
     }, [allTags, getToken]);
 
     useEffect(() => {
+        if (!addedTags) {
+            getToken({skipCache: true}).then((token) => {
+                if (token) {        
+                    axios.get(`http://localhost:3000/tags?imageID=${id}`,  
+                        {headers:  { Authorization: `Bearer ${token}` }}).then(res => {
+                            setAddedTags(res.data);
+                    });
+                }
+            });
+        }
+    }, [addedTags, getToken, id]);
+
+    useEffect(() => {
+        if (id && !editImage) {
+            getToken({skipCache: true}).then((token) => {
+                if (token) {        
+                    axios.get(`http://localhost:3000/images/${id}`, 
+                        {headers:  { Authorization: `Bearer ${token}` }}).then(res => {
+                            setEditImage(res.data);
+                            setTitle(res.data.title);
+                            setSource(res.data.source);
+                    });
+                }
+            });
+        }
+    }, [id, editImage, getToken]);
+
+    useEffect(() => {
         const form = document.querySelector('form');
 
         function handleSubmit(ev: SubmitEvent) {
@@ -48,14 +81,33 @@ export default function EditImage() {
 
                 try {
                     getToken(({skipCache: true})).then((token) => {
-                        if (token) {        
-                            axios.post('http://localhost:3000/images/add', formData, 
-                            {headers:  { Authorization: `Bearer ${token}`, 
-                        "Content-Type": "multipart/form-data"}}).then(res => {
-                                if (res.status === 200) {
-                                    navigate('/gallery');
-                                }
-                            });
+                        if (token) {
+                            
+                            if (!id) {
+                                axios.post('http://localhost:3000/images/add', formData, 
+                                {headers:  { Authorization: `Bearer ${token}`, 
+                                "Content-Type": "multipart/form-data"}}).then(res => {
+                                    if (res.status === 200 && !res.data.includes("Title already exists")) {
+                                        console.log(url);
+                                        navigate(url);
+                                    }
+                                    else {
+                                        setError(res.data);
+                                    }
+                                });
+                            }
+                            else {
+                                axios.post(`http://localhost:3000/images/edit/${id}`, formData, 
+                                {headers:  { Authorization: `Bearer ${token}`, 
+                                "Content-Type": "multipart/form-data"}}).then(res => {
+                                    if (res.status === 200 && !res.data.includes("Title already exists")) {
+                                        navigate(url);
+                                    }
+                                    else {
+                                        setError(res.data);
+                                    }
+                                });
+                            }
                         }
                     });
                 }
@@ -67,18 +119,16 @@ export default function EditImage() {
                     console.log(err);
                 }
             }
-            else {
-                console.log("form is null?");
-            }
         }
         form?.addEventListener('submit', handleSubmit);
 
         return () => form?.removeEventListener("submit", handleSubmit);
 
-    }, [addedTags, navigate, submitable, title, getToken]);
+    }, [addedTags, navigate, submitable, title, getToken, id]);
 
     function addTagToImage(id: string, title: string, color: string) {
-        setAddedTags([...addedTags, {tag_id: id, title: title, color: color}]);
+        // created_at will be passed a date once user submits the form
+        setAddedTags([...addedTags, {tag_id: id, title: title, color: color, created_at: ""}]);
     }
 
     function removeTag(id : string) {
@@ -121,7 +171,7 @@ export default function EditImage() {
                 </button>
             </div>
             <div className="flex justify-around w-full">
-                <DragAndDrop fileRef={fileRef} imageRef={imageRef} setSubmitable={setSubmitable}/>
+                <DragAndDrop fileRef={fileRef} imageRef={imageRef} setTitle={setTitle} setSubmitable={setSubmitable} editImageURL={editImage ? editImage.url : undefined}/>
                 <div className="flex flex-col gap-16">
                     <div style={{display: error ? "block" : "none"}}>{error}</div>
                     <div className="flex flex-col gap-4">

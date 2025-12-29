@@ -1,55 +1,35 @@
 import { useAuth } from "@clerk/clerk-react";
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router";
+import { useSearchParams } from "react-router";
 import axios from "axios";
 import type { ImageType } from "../../types/ImageType";
 import { FaX } from "react-icons/fa6";
-import { FaArrowLeft, FaArrowRight, FaEllipsisH, FaEye } from "react-icons/fa";
+import { FaArrowLeft, FaArrowRight, FaEye, FaEyeSlash } from "react-icons/fa";
 import { assertIsNode } from "../../utils/utils";
 import type { TagType } from "../../types/TagType";
 import Tag from "../../components/Tag";
+import ImageOptions from "../../components/ImageOptions";
 
 interface ViewImageProp {
-    inGallery?: boolean
-    toPreviousImage?: () => void;
-    toNextImage?: () => void
+    id: string | null
+    setId: (value: React.SetStateAction<string | null>) => void
+    isFirstImage: (id: string | undefined) => boolean
+    isLastImage: (id: string | undefined) => boolean
+    deleteImage: (id: string) => void
+    toPreviousImage: (currentID : string | undefined) => void
+    toNextImage: (currentID : string | undefined) => void
 }
 
-export default function ViewImage({inGallery, toPreviousImage, toNextImage} : ViewImageProp) {
-    const { id } = useParams();
+export default function ViewImage({id, setId, isFirstImage, isLastImage, deleteImage, toPreviousImage, toNextImage} : ViewImageProp) {
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [imageInfoFromID, setImageInfoFromID] = useState<ImageType | null>(null);
     const { getToken } = useAuth();
-    const [imageInfo, setImageInfo] = useState<ImageType|null>(null);
     const [tags, setTags] = useState<TagType[]|null>(null);
     const [imageOptions, setImageOptions] = useState(false);
+    const [deletePopup, setDeletePopup] = useState(false);
     const [hideInfo, setHideInfo] = useState(false);
     const optionsRef = useRef<HTMLDivElement|null>(null);
-    
-    useEffect(() => {
-        getToken().then((token) => {
-            if (token && id && !imageInfo) {
-                axios.get(`http://localhost:3000/images/${id}`,
-                    {headers: {Authorization: `Bearer ${token}`}}
-                ).then(res => {
-                    if (typeof res.data === "object") {
-                        setImageInfo(res.data);
-                    }
-                })
-            }
-        })
-    }, [getToken, id, imageInfo]);
 
-    
-    useEffect(() => {
-        getToken().then((token) => {
-            if (token && id && !tags) {
-                axios.get(`http://localhost:3000/tags?imageID=${id}`,
-                    {headers: {Authorization: `Bearer ${token}`}}
-                ).then(res => {
-                    setTags(res.data);
-                })
-            }
-        })
-    }, [getToken, id, tags]);
 
     useEffect(() => {
         function handleClickOutside(event: Event) {
@@ -58,6 +38,7 @@ export default function ViewImage({inGallery, toPreviousImage, toNextImage} : Vi
 
                 if (optionsRef.current && !optionsRef.current.contains(event.target)) {
                     setImageOptions(false);
+                    setDeletePopup(false);
                 }
             }
             catch (err) {
@@ -69,48 +50,123 @@ export default function ViewImage({inGallery, toPreviousImage, toNextImage} : Vi
 
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
+
+    useEffect(() => {
+        try {
+            if (id && !imageInfoFromID) {
+                getToken().then((token) => {
+                    axios.get(`http://localhost:3000/images/${id}`, 
+                    {headers: {Authorization: `Bearer ${token}`}}).then((res) => {
+                        setImageInfoFromID(res.data);
+                    });
+                });
+            }
+        }
+        catch (err) {
+            console.log(err);
+        }
+    }, [id, imageInfoFromID, getToken]);
+
+    useEffect(() => {
+        try {
+            if (id && !tags) {
+                getToken().then((token) => {
+                    axios.get(`http://localhost:3000/tags?imageID=${id}`, 
+                    {headers: {Authorization: `Bearer ${token}`}}).then((res) => {
+                        setTags(res.data);
+                    });
+                });
+            }
+        }
+        catch (err) {
+            console.log(err);
+        }
+    }, [id, tags, getToken]);
+
+    async function handleDelete() {
+        const token = await getToken({skipCache: true});
+
+        try {
+            if (id) {
+                await axios.delete(`http://localhost:3000/images/delete/${id}`, 
+                {headers: {Authorization: `Bearer ${token}`}});
+            
+                setDeletePopup(false);
+                deleteImage(id);
+                closeView();
+            }
+        }
+        catch (err) {
+            console.log(err);
+        }
+    }
     
+       
+    function closeView() {
+        searchParams.delete("id");
+        setSearchParams(searchParams);
+        setId("");
+    }
+
+    function handleLeftArrowClick() {
+        if (!isFirstImage(imageInfoFromID?.image_id)) {
+            toPreviousImage(imageInfoFromID?.image_id);
+            setImageInfoFromID(null);
+            setTags(null);
+        }
+    }
+
+    function handleRightArrowClick() {
+        if (!isLastImage(imageInfoFromID?.image_id)) {
+            toNextImage(imageInfoFromID?.image_id);
+            setImageInfoFromID(null);
+            setTags(null);
+        }
+    }
+    
+
     return (
-        <div className="flex flex-col gap-12 p-4 w-full h-full">
+        <div className={id ? "absolute bg-white self-center flex flex-col p-4 w-full h-full" : "hidden"}>
             <div className="flex justify-between">
-                <FaX size={20} scale={1}/>  
-                <div>{imageInfo?.title}</div>
-                <div className="flex relative">
-                    <div className="flex flex-col absolute top-0">
-                        <div>Edit Image</div>
-                        <div className="text-red-500">Delete Image</div>
-                    </div>
+                <div className="flex">
                     <div className="flex gap-4">
-                        <div ref={optionsRef}>
-                            <FaEllipsisH onClick={() => setImageOptions(!imageOptions)} size={20} scale={20}/>
+                        {
+                            !hideInfo ? 
+                            <FaEyeSlash onClick={() => setHideInfo(!hideInfo)} size={20} scale={1} /> :
+                            <FaEye onClick={() => setHideInfo(!hideInfo)} size={20} scale={1} />
+                        }
+                        <ImageOptions optionsRef={optionsRef} hideInfo={hideInfo} imageOptions={imageOptions} 
+                        deletePopup={deletePopup} imageID={imageInfoFromID?.image_id} setImageOptions={setImageOptions} 
+                        setDeletePopup={setDeletePopup} handleDelete={handleDelete}/>
+                    </div>    
+                </div>  
+                <div className={hideInfo ? "hidden" : "pb-4"}>{imageInfoFromID?.title}</div>
+                <FaX className={hideInfo ? "hidden" : ""} onClick={() => closeView()} size={20} scale={1}/>
+            </div> 
+            <div className={`flex w-full h-full items-center justify-between`}>
+                <FaArrowLeft className={hideInfo ? "hidden" : "flex grow"} color={isFirstImage(imageInfoFromID?.image_id) ? "gainsboro" : "black"} onClick={() => handleLeftArrowClick()} size={20} scale={1} />
+                <div className="flex items-center flex-col gap-6">
+                    <img id={imageInfoFromID?.image_id} src={imageInfoFromID?.url} alt={imageInfoFromID?.title}  className={hideInfo ? "w-full h-full" : "w-[900px] h-[450px]"} />
+                    <div className={hideInfo ? "hidden" : "flex w-full justify-between"}>
+                        <div className="flex flex-col gap-4">
+                            <div>
+                                <div>Tags:</div>
+                                <div className="flex flex-wrap py-4 w-[500px] gap-4">
+                                    {
+                                        tags ? tags.map((tag) => <Tag key={tag.tag_id} id={tag.tag_id} title={tag.title} color={tag.color} addedTag={false} tagResult={false} />) 
+                                        : ""
+                                    }
+                                </div>
+                            </div>
                         </div>
-                        <FaEye onClick={() => setHideInfo(!hideInfo)} size={20} scale={1} />
-                    </div>                
-                </div>
-            </div>
-            <div className="flex justify-between">
-                <FaArrowLeft className={!inGallery ? "hidden" : ""} onClick={() => toPreviousImage?.()} size={20} scale={1} />
-                <img id={imageInfo?.id} src={imageInfo?.url} alt={imageInfo?.title} width={900} height={545}/>
-                <FaArrowRight className={!inGallery ? "hidden" : ""} onClick={() => toNextImage?.()} size={20} scale={1}/>
-            </div>
-            <div className="flex justify-between">
-                <div className="flex flex-col gap-4">
-                    <div>ID: ${imageInfo?.id}</div>
-                    <div>
-                        <div>Tags:</div>
-                        <div className="flex flex-wrap py-4 w-[500px] gap-4">
-                            {
-                                tags ? tags.map((tag) => <Tag key={tag.tag_id} id={tag.tag_id} title={tag.title} color={tag.color} addedTag={false} tagResult={false} />) 
-                                : ""
-                            }
+                        <div className="flex flex-col gap-4">
+                            <div>Date Uploaded:</div>
+                            <div>Source: {imageInfoFromID?.source}</div>
                         </div>
-                    </div>
+                    </div> 
                 </div>
-                <div className="flex flex-col gap-4">
-                    <div>Date Uploaded:</div>
-                    <div>Source: ${imageInfo?.source}</div>
-                </div>
-            </div>
+                <FaArrowRight className={hideInfo ? "hidden" : "flex grow"} color={isLastImage(imageInfoFromID?.image_id) ? "gainsboro" : "black"} onClick={() => handleRightArrowClick()} size={20} scale={1}/>
+            </div>  
         </div>
     )
 }

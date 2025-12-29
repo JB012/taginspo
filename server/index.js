@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const app = express();
 const port = 3000;
 const { pool } = require("./db");
+const { createDateTime } = require("./utils");
 const { verifyWebhook } = require('@clerk/express/webhooks');
 const { clerkClient, clerkMiddleware, getAuth } = require('@clerk/express');
 const images = require('./routes/images');
@@ -30,7 +31,14 @@ app.post('/api/webhooks', express.raw({ type: 'application/json' }), async (req,
 
     if (eventType === "user.created") {
         try {
-          await pool.query(`INSERT INTO users (user_id, deleted_at) VALUES (?, ?)`, [id, null]);
+          const [rows, fields] = await pool.query(`SELECT user_id FROM users WHERE user_id=?`, [id]);
+
+          if (rows.length > 0) {
+            await pool.query(`UPDATE users SET created_at=? AND deleted_at=? WHERE user_id=?`, [createDateTime(), null]);
+          }
+          else {
+            await pool.query(`INSERT INTO users (user_id, created_at, deleted_at) VALUES (?, ?, ?)`, [id, createDateTime(), null]);
+          }
         }
         catch (err) {
             console.error('Error verifying webhook:', err)
@@ -40,7 +48,7 @@ app.post('/api/webhooks', express.raw({ type: 'application/json' }), async (req,
     else if (eventType === "user.deleted") {
         try {
             pool.query(`UPDATE users SET deleted_at=? WHERE user_id=?`, 
-              [new Date().toISOString().slice(0, 19).replace('T', ' '), id]);
+              [createDateTime(), id]);
         }
         catch(err) {
             console.error('Error verifying webhook:', err)

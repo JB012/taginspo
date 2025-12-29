@@ -1,5 +1,6 @@
 const express = require('express');
 const { pool } = require("../db");
+const { createDateTime } = require("../utils");
 const { s3Client, cloudFront, createSignedURL } = require("../s3-cloudfront");
 const router = express.Router();
 const { clerkMiddleware, getAuth, clerkClient } =  require('@clerk/express')
@@ -25,19 +26,19 @@ router.get("/", async (req, res) => {
     
     if (isAuthenticated) {
         try {
-            const [rows, fields] = await pool.query(`SELECT * FROM images WHERE user_id=?`, [userId]);
+            const [rows, fields] = await pool.query(`SELECT * FROM images WHERE user_id=? ORDER BY created_at ASC`, [userId]);
 
             const imagesJSON = Object.values(JSON.parse(JSON.stringify(rows)));
             const imageURLs = [];
 
             if (imagesJSON.length > 0) {
                 for (const json of imagesJSON) {
-                    const signedURL = createSignedURL(json.title);
+                    //const signedURL = createSignedURL(json.title);
                     const [rows, fields] = await pool.query(`SELECT tag_id FROM users_images_tags WHERE user_id=? AND image_id=?`, [userId, json.image_id]);
 
                     const tagIDs = Object.values(JSON.parse(JSON.stringify(rows)));
                         
-                    imageURLs.push({id: json.image_id, title: json.title, url: signedURL, source: json.source, tagIDs: tagIDs});
+                    imageURLs.push({...json, url: undefined, tagIDs: tagIDs});
                     
                 }
 
@@ -70,9 +71,9 @@ router.get("/:id", async (req, res) => {
         const [[image], fields] = await pool.query(`SELECT * FROM images WHERE user_id=? AND image_id=?`, [userId, imageID]);
 
         
-        const signedURL = createSignedURL(image.title);
+        //const signedURL = createSignedURL(image.title);
 
-        return res.send({url: signedURL, ...image});
+        return res.send({url: url, ...image});
     }
     else {
         return res.status(401).send('User not authenticated');
@@ -81,7 +82,7 @@ router.get("/:id", async (req, res) => {
 })
 
 router.post("/add", upload.single('file'), async (req, res) => {
-    const { isAuthenticated, userId, sessionId } = getAuth(req);
+    const { isAuthenticated, userId, getToken } = getAuth(req);
     const imageID = v4();
     const title = req.body.title;
     const source = req.body.source;
@@ -93,7 +94,7 @@ router.post("/add", upload.single('file'), async (req, res) => {
             const [rows, fields] = await pool.query(`SELECT * FROM images WHERE user_id=? AND title=?`, [userId, title]);
             
             if (rows.length === 0) {
-                const command = new PutObjectCommand({
+                /* const command = new PutObjectCommand({
                     Bucket: 'www.taginspo.com',
                     Key: title,
                     Body: req.file.buffer,
@@ -101,16 +102,17 @@ router.post("/add", upload.single('file'), async (req, res) => {
                 });
                         
                 await s3Client.send(command);
+ */
+                const url = URL.createObjectURL(new Blob(req.file.buffer))
 
-                await pool.query('INSERT INTO images (user_id, image_id, title, source) VALUES (?, ?, ?, ?)', [userId, imageID, title, source]);
-            
-                const token = await clerkClient.sessions.getToken(sessionId);
-                        
+                await pool.query('INSERT INTO images (user_id, image_id, created_at, title, source) VALUES (?, ?, ?, ?, ?)', [userId, imageID, createDateTime(), title, source]);
+                
+                const token = await getToken();
+
                 await axios.post('http://localhost:3000/tags/add', {multipleTags: addedTags, imageID: imageID}, 
                     {headers: {Authorization: `Bearer ${token}`}}
                 );
 
-                
                 return res.send('Image successfully added');
             }
             else {
@@ -138,18 +140,45 @@ router.post("/add", upload.single('file'), async (req, res) => {
     }
 });
 
-router.post("/delete:id", async (req, res) => {
+router.post("/edit/:id", async (req, res) => {
+    const { isAuthenticated, userId, getToken } = getAuth(req);
+    const imageID = req.params.id;
+    const title = req.body.title;
+    const source = req.body.source;
+    const addedTags = req.body.addedTags;
+
+    if (isAuthenticated) {
+        try {
+            // check if any tags are changed or deleted 
+            await pool.query(`UPDATE images SET title=? AND source=? WHERE user_id=? AND image_id=?`
+                , [title, source, userId, imageID]);
+
+            const token = await getToken();
+
+            await axios.post("http://localhost:3000/tags/edit",{imageID: imageID, addedTags: addedTags}, 
+                {headers: {Authorization: `Bearer ${token}`}});
+        }
+        catch (err) {
+            console.log(err);
+        }
+    }
+    else {
+        return res.status(401).send('User not authenticated');
+    }
+})
+
+router.delete("/delete/:id", async (req, res) => {
     const imageID = req.params.id;
     const { isAuthenticated, userId } = getAuth(req);
     
     if (isAuthenticated) {
         try {
-            const [rows, fields] = await pool.query(`SELECT * FROM images WHERE userID=? AND image_id=?`, [userId, imageID]);
+            const [rows, fields] = await pool.query(`SELECT * FROM images WHERE user_id=? AND image_id=?`, [userId, imageID]);
             
             if (rows.length) {
                 const imageInfo = rows[0];
 
-                const s3Command = new DeleteObjectCommand({Bucket: bucketName, Key: imageInfo.title});
+                /* const s3Command = new DeleteObjectCommand({Bucket: bucketName, Key: imageInfo.title});
                 await s3Client.send(s3Command);
 
                 //Invalidating cloudfront cache for the image
@@ -167,7 +196,7 @@ router.post("/delete:id", async (req, res) => {
                 }
 
                 const invalidationCommand = new CreateInvalidationCommand(invalidateParams);
-                await cloudFront.send(invalidationCommand);
+                await cloudFront.send(invalidationCommand); */
 
                 await pool.query(`DELETE FROM images WHERE user_id=? AND image_id=?`, [userId, imageID]);
             

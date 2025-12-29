@@ -10,6 +10,7 @@ const dotenv = require('dotenv');
 const multer = require('multer');
 const { v4 } = require('uuid');
 const cors = require('cors');
+const { createDateTime } = require('../utils');
 const upload = multer({storage: multer.memoryStorage()});
 dotenv.config();
 
@@ -25,18 +26,20 @@ router.get('/', async (req, res) => {
         const imageID = req.query.imageID;
 
         if (!imageID) {    
-            const [rows, fields] = await pool.query(`SELECT tag_id, title, color FROM tags WHERE user_id=?`, [userId]);
+            const [rows, fields] = await pool.query(`SELECT * FROM tags WHERE user_id=?`, [userId]);
 
             return rows.length !== 0 ? res.send(rows) 
             : res.send('User has no tags added');
         }
         else {
-            const [tagIDs, fields] = await pool.query(`SELECT tag_id FROM users_images_tags WHERE user_id=? AND image_id=?`, [userId, imageID]);
+            const [rows, fields] = await pool.query(`SELECT tag_id FROM users_images_tags WHERE user_id=? AND image_id=?`, [userId, imageID]);
+
+            const tagIDs = rows.map((tagJSON) => tagJSON.tag_id);
 
             const allTags = [];
 
             for (const tagID of tagIDs) {
-                const [tag, fields] = await pool.query(`SElECT * FROM tags WHERE user_id=? AND tag_id=?`, [userId, tagID]);
+                const [tag, fields] = await pool.query(`SELECT * FROM tags WHERE user_id=? AND tag_id=?`, [userId, tagID]);
                 allTags.push(tag[0]);
             }
 
@@ -52,51 +55,72 @@ router.post('/add', async (req, res) => {
     const { isAuthenticated, userId } = getAuth(req);
 
     if (isAuthenticated) {
-        const multipleTags = req.body.multipleTags;
+        const multipleTags = JSON.parse(req.body.multipleTags);
+        const imageID = req.body.imageID;
 
-        if (!multipleTags) {
-            const title = req.body.title;
-            const color = req.body.color;
-            const tagID =  req.body.tagID;
-            
+        try {
+            for (const tag of multipleTags) {   
+                const title = tag.title;
+                const color = tag.color;
+                const tagID = tag.tag_id;
 
-            const [rows, fields] = await pool.query(`SELECT * FROM tags WHERE user_id=? AND title=?`, [userId, title]);
-
-            if (rows.length === 0) {
-                try {
-                    pool.query(`INSERT INTO tags (user_id, tag_id, title, color) VALUES (?, ?, ?, ?)`, [userId, tagID, title, color]);
-
-                    return res.send('Tag successfully added');
-                }
-                catch (err) {
-                    console.log(err);
-                }
-            }
-            else {
-                return res.send("Title already exists, please try again");
-            }     
-        }   
-        else {
-            const imageID = req.body.imageID;
-            try {
-                for (const tag of multipleTags) {   
-                    const title = tag.title;
-                    const color = tag.color;
-                    const tagID = tag.tag_id;
-
-                    const [tag, fields] = await pool.query(`SELECT * FROM tags WHERE tag_id=?`, [tag.tag_id]);
+                const [rows, fields] = await pool.query(`SELECT * FROM tags WHERE tag_id=?`, [tagID]);
+                
+                if (rows.length === 0) {
+                    await pool.query(`INSERT INTO tags (user_id, created_at, tag_id, title, color) VALUES (?, ?, ?, ?, ?)`, [userId, createDateTime(), tagID, title, color]);
                     
-                    if (!tag.length) {
-                        await pool.query(`INSERT INTO tags (user_id, tag_id, title, color) VALUES (?, ?, ?, ?)`, [userId, tagID, title, color]);
-                        await pool.query(`INSERT INTO users_images_tags (user_id, image_id, tag_id) VALUES (?, ?, ?)`, [userId, imageID, tag.tag_id]);
+                    if (imageID) {
+                        await pool.query(`INSERT INTO users_images_tags (user_id, image_id, tag_id) VALUES (?, ?, ?)`, [userId, imageID, tagID]);
                     }
                 }
+            }
 
-                return res.send('All tags have been added successfully');
+            return res.send('All tags have been added successfully');
+        }
+        catch (err) {
+            console.log(err);
+        }
+        
+    }
+    else {
+        return res.status(401).send('User not authenticated');
+    }
+});
+
+router.post('/edit', async (req, res) => {
+    const { isAuthenticated, userId } = getAuth(req);
+    const addedTags = JSON.parse(req.body.addedTags);
+    const imageID = req.body.imageID;
+    
+    if (isAuthenticated) {
+        if (imageID) {
+            const [rows, fields] = await pool.query(`SELECT * FROM users_images_tags WHERE user_id=? AND image_id=?`);
+            
+            const allTags = rows[0];
+            
+            //not in addedTags but in allTags
+            const tagsToRemove = allTags.filter((elemTag) => !addedTags.some((tag) => tag.tag_id === elemTag.tag_id));
+            
+            //in addedTags but not in allTags
+            const tagsToAdd = addedTags.filter((tag) => !allTags.includes(tag.tag_id));
+
+            const tagsAlreadyInImage = addedTags.filter((tag) => allTags.includes(tag.tag_id));
+
+            for (const tag of tagsToRemove) {
+                await pool.query(`DELETE FROM users_images_tags WHERE user_id=? AND tag_id=?`, [userId, tag.tag_id]);
             }
-            catch (err) {
-                console.log(err);
+
+             for (const tag of tagsAlreadyInImage) {
+                await pool.query(`UPDATE tags SET title=? AND color=? WHERE user_id=? AND tag_id=?`, [tag.title, tag.color, userId, tag.tag_id]);
             }
+
+            const token = await getToken();
+            
+            await axios.post("http://localhost:3000/tags/add", {multipleTags: tagsToAdd, imageID: imageID}, 
+                {headers: {Authorization: `Bearer ${token}`}}
+            );
+
+            return res.send(`Tag${addedTags.length > 1 ? "s" : ""} successfully edited`);
         }
     }
     else {

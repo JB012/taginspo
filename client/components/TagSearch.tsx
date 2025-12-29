@@ -72,13 +72,15 @@ export default function TagSearch({allTags, duplicateTag, addTagToImage} : TagSe
             setDuplicateTagError(false);
         }
 
-        const matchedTags = allTags?.filter(tag => tag.title.toLowerCase().startsWith(event.target.value.toLowerCase()));
+        if (allTags && allTags.length > 0) {
+            const matchedTags = allTags.filter(tag => tag.title.toLowerCase().startsWith(event.target.value.toLowerCase()));
 
-        if (matchedTags && matchedTags.length > 0) {
-            setTagSearchResults(matchedTags);
-        }
-        else {
-            setTagSearchResults([]);
+            if (matchedTags && matchedTags.length > 0) {
+                setTagSearchResults(matchedTags);
+            }
+            else {
+                setTagSearchResults([]);
+            }
         }
 
     }

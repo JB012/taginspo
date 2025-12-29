@@ -7,9 +7,9 @@ import { BrowserRouter, Routes, Route } from "react-router";
 import Gallery from './routes/Gallery.tsx'
 import EditImage from './routes/EditImage.tsx'
 import EditTag from './routes/EditTag.tsx'
-import ViewImage from './routes/ViewImage.tsx'
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+const URL = import.meta.env.VITE_DEFAULT_URL
 
 if (!PUBLISHABLE_KEY) {
   throw new Error('Missing Publishable Key')
@@ -18,13 +18,14 @@ if (!PUBLISHABLE_KEY) {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
-      <ClerkProvider signUpForceRedirectUrl={'/gallery'} signInForceRedirectUrl={'/gallery'} publishableKey={PUBLISHABLE_KEY}>
+      <ClerkProvider signUpForceRedirectUrl={URL} signInForceRedirectUrl={URL} publishableKey={PUBLISHABLE_KEY}>
           <Routes>
             <Route path='/' element={<Home />} />
             <Route path='/gallery' element={<Gallery />} />
-            <Route path='/editimage' element={< EditImage />} />
+            <Route path='/addimage' element={<EditImage />} />
+            <Route path='/editimage/:id' element={< EditImage />} />
+            <Route path='/addtag' element={< EditTag />} />
             <Route path='/edittag' element={< EditTag />} />
-            <Route path='/images/:id' element={<ViewImage />} />
           </Routes>
       </ClerkProvider>
     </BrowserRouter>

@@ -3,17 +3,21 @@ import { useEffect, useState } from "react";
 import { FaImage, FaList, FaPlusCircle, FaTag, FaWrench } from "react-icons/fa";
 import { FaMagnifyingGlass } from "react-icons/fa6";
 import axios from 'axios';
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import type { TagType } from "../../types/TagType";
 import type { ImageType } from "../../types/ImageType";
 import Tag from "../../components/Tag";
+import ViewImage from "./ViewImage";
 
 export default function Gallery() {
     const [input, setInput] = useState("");
-    const [galleryType, setGalleryType] = useState("Image");
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [id, setId] = useState(searchParams.get("id"));
+    const type = searchParams.get("type");
     // Initial state is null instead of empty array to prevent multiple axios calls from useEffect
     const [images, setImages] = useState<ImageType[]|null>(null);
     const [tags, setTags] = useState<TagType[]|null>(null);
+    //const [sortOptions, setSortOptions] = useState("");
     const navigate = useNavigate();
     const {getToken} = useAuth();
     useEffect(() => {
@@ -45,6 +49,16 @@ export default function Gallery() {
         }
     }, [getToken, images]);
 
+    function deleteImage(id : string) {
+        if (images) {
+            console.log(id);
+            setImages(images.filter((img) => img.image_id !== id));
+        }
+        else {
+            console.log("images null");
+        }
+    }
+
     useEffect(() => {
         if (!tags) {
             try {
@@ -66,6 +80,56 @@ export default function Gallery() {
         }
     }, [getToken, tags]);
 
+    function handleGalleryType() {
+        searchParams.set("type", type === "image" ? "tag" : "image");
+        setSearchParams(searchParams);
+    }
+
+    async function handleImageClick(id : string) {
+        searchParams.append("id", id);
+        setSearchParams(searchParams);
+        setId(id);
+    }
+
+    function toPreviousImage(currentID: string | undefined) {
+        if (images && currentID) {
+            const currentIndex = images.findIndex((img) => img.image_id === currentID);
+
+            if (currentIndex !== undefined && currentIndex - 1 >= 0) {                
+                searchParams.set("id", images[currentIndex-1].image_id);
+                setSearchParams(searchParams);
+                setId(images[currentIndex-1].image_id);
+            }
+        }
+    }
+
+    function toNextImage(currentID: string | undefined) {
+        if (images && currentID) {
+            const currentIndex = images.findIndex((img) => img.image_id === currentID);
+
+            if (currentIndex !== undefined && currentIndex + 1 <= images.length-1) {
+                searchParams.set("id", images[currentIndex+1].image_id);
+                setSearchParams(searchParams);
+                setId(images[currentIndex+1].image_id);
+            }
+        }
+    }
+
+    function isFirstImage(id: string | undefined) {
+        if (images && id && images.findIndex((tag) => tag.image_id === id) === 0) {
+            return true;
+        }
+
+        return false;
+    }
+
+    function isLastImage(id: string | undefined) {
+        if (images && id && images.findIndex((tag) => tag.image_id === id) === images.length-1) {
+            return true;
+        }
+
+        return false;
+    }
 
     return (
         <>
@@ -75,8 +139,8 @@ export default function Gallery() {
                     <div className="flex gap-5 items-center">
                         <div className="text-[36px] font-bold">TagInspo</div>
                         <div className="flex gap-8">
-                            <FaImage onClick={() => setGalleryType("Image")} className={galleryType === "Image" ? "border-b-4 border-b-cyan-300" : ""} size={20} scale={1} />
-                            <FaTag onClick={() => setGalleryType("Tag")} className={galleryType === "Tag" ? "border-b-4 border-b-cyan-300" : ""} size={20} scale={1} />
+                            <FaImage onClick={() => handleGalleryType()} className={type === "image" ? "border-b-4 border-b-cyan-300" : ""} size={20} scale={1} />
+                            <FaTag onClick={() => handleGalleryType()} className={type === "tag" ? "border-b-4 border-b-cyan-300" : ""} size={20} scale={1} />
                         </div>
                     </div>
                     <div className="flex items-center relative">
@@ -88,28 +152,29 @@ export default function Gallery() {
                  <div className="flex flex-col w-full">
                     <div className="flex w-full justify-between py-10 items-center">
                         <div className="flex items-center gap-8">
-                            <div className="text-[32px] font-bold">{galleryType === "Image" ? "Your images" : "Your tags"}</div>
-                            <FaPlusCircle onClick={() => navigate(galleryType === "Image" ? "/editimage" : "/edittag")} id="add-button" scale={1} size={20}/>
+                            <div className="text-[32px] font-bold">{type === "image" ? "Your images" : "Your tags"}</div>
+                            <FaPlusCircle onClick={() => navigate(type === "image" ? "/addimage" : "/addtag")} id="add-button" scale={1} size={20}/>
                             <FaWrench id="edit-button" scale={1} size={20} />
                         </div>
                         <FaList id="sort-button" size={20} scale={1}/>
                     </div>
                     {
-                        galleryType === "Image" ?    
-                        <div id="images-previews" className="flex w-full justify-center flex-wrap gap-25">
+                        type === "image" ?    
+                        <div id="images-previews" className="flex w-full items-center flex-wrap gap-25">
                             {
-                                images ? images.map((img) => <div className="cursor-pointer" onClick={() => navigate(`http://localhost:5173/images/${img.id}`)}><img id={img.id} key={img.id} src={img.url} alt={img.title} width={200} height={200} /></div>) : 
-                                'Click on the + button to add an image' 
+                                images && images.length ? images.map((img) => <div className="cursor-pointer" key={img.image_id} onClick={() => handleImageClick(img.image_id)}><img id={img.image_id} src={img.url} alt={img.title} width={200} height={200}/></div>) : 
+                                <div className="flex w-full justify-center">Click on the + button to add an image</div> 
                             }
                         </div> :
-                        <div id="tag-previews" style={{justifyContent: !tags ? "center" : "flex-start"}} className="flex w-full flex-wrap gap-25">
+                        <div id="tag-previews" style={{justifyContent: !tags ? "center" : "flex-start"}} className="flex w-full items-center flex-wrap gap-25">
                             {
-                                tags ? tags.map((tag) => <Tag key={tag.tag_id} id={tag.tag_id} title={tag.title} color={tag.color} addedTag={false} tagResult={false} />) 
-                                : 'Click on the + button to add a tag' 
+                                tags && tags.length ? tags.map((tag) => <Tag key={tag.tag_id} id={tag.tag_id} title={tag.title} color={tag.color} addedTag={false} tagResult={false} />) 
+                                : <div className="flex w-full justify-center">Click on the + button to add a tag</div> 
                             }
                         </div>
-                    }   
-                 </div>
+                    }
+                </div> 
+                <ViewImage id={id} setId={setId} isFirstImage={isFirstImage} isLastImage={isLastImage} toPreviousImage={toPreviousImage} toNextImage={toNextImage} deleteImage={deleteImage} />
             </div>
         </SignedIn>
         <SignedOut>
