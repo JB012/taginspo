@@ -68,10 +68,10 @@ router.post('/add', async (req, res) => {
                 
                 if (rows.length === 0) {
                     await pool.query(`INSERT INTO tags (user_id, created_at, tag_id, title, color) VALUES (?, ?, ?, ?, ?)`, [userId, createDateTime(), tagID, title, color]);
-                    
-                    if (imageID) {
+                }
+
+                if (imageID) {
                         await pool.query(`INSERT INTO users_images_tags (user_id, image_id, tag_id) VALUES (?, ?, ?)`, [userId, imageID, tagID]);
-                    }
                 }
             }
 

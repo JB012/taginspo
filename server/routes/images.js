@@ -103,7 +103,7 @@ router.post("/add", upload.single('file'), async (req, res) => {
                         
                 await s3Client.send(command);
  */
-                const url = URL.createObjectURL(new Blob(req.file.buffer))
+                //const url = URL.createObjectURL(new Blob(req.file.buffer))
 
                 await pool.query('INSERT INTO images (user_id, image_id, created_at, title, source) VALUES (?, ?, ?, ?, ?)', [userId, imageID, createDateTime(), title, source]);
                 

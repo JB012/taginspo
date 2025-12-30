@@ -9,6 +9,7 @@ import { assertIsNode } from "../../utils/utils";
 import type { TagType } from "../../types/TagType";
 import Tag from "../../components/Tag";
 import ImageOptions from "../../components/ImageOptions";
+import { useQuery } from "@tanstack/react-query";
 
 interface ViewImageProp {
     id: string | null
@@ -21,8 +22,13 @@ interface ViewImageProp {
 }
 
 export default function ViewImage({id, setId, isFirstImage, isLastImage, deleteImage, toPreviousImage, toNextImage} : ViewImageProp) {
+    const {isPending, isError, data, error} = useQuery({
+        queryKey: ["image", id],
+        queryFn: () => (id ? fetchImageByID(id) : null),
+        staleTime: 1000 * 60 * 10
+    });
+    
     const [searchParams, setSearchParams] = useSearchParams();
-    const [imageInfoFromID, setImageInfoFromID] = useState<ImageType | null>(null);
     const { getToken } = useAuth();
     const [tags, setTags] = useState<TagType[]|null>(null);
     const [imageOptions, setImageOptions] = useState(false);
@@ -30,6 +36,13 @@ export default function ViewImage({id, setId, isFirstImage, isLastImage, deleteI
     const [hideInfo, setHideInfo] = useState(false);
     const optionsRef = useRef<HTMLDivElement|null>(null);
 
+    async function fetchImageByID(id: string) {
+        const token = await getToken();
+        const response = await axios.get(`http://localhost:3000/images/${id}`, 
+        {headers: {Authorization: `Bearer ${token}`}});
+
+        return response.data;
+    }
 
     useEffect(() => {
         function handleClickOutside(event: Event) {
@@ -50,7 +63,7 @@ export default function ViewImage({id, setId, isFirstImage, isLastImage, deleteI
 
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
-
+/* 
     useEffect(() => {
         try {
             if (id && !imageInfoFromID) {
@@ -65,7 +78,7 @@ export default function ViewImage({id, setId, isFirstImage, isLastImage, deleteI
         catch (err) {
             console.log(err);
         }
-    }, [id, imageInfoFromID, getToken]);
+    }, [id, imageInfoFromID, getToken]); */
 
     useEffect(() => {
         try {
@@ -105,25 +118,34 @@ export default function ViewImage({id, setId, isFirstImage, isLastImage, deleteI
     function closeView() {
         searchParams.delete("id");
         setSearchParams(searchParams);
+        //setImageInfoFromID(null);
+        setTags(null);
         setId("");
     }
 
     function handleLeftArrowClick() {
-        if (!isFirstImage(imageInfoFromID?.image_id)) {
-            toPreviousImage(imageInfoFromID?.image_id);
-            setImageInfoFromID(null);
+        if (!isFirstImage(data.image_id)) {
+            toPreviousImage(data.image_id);
+           // setImageInfoFromID(null);
             setTags(null);
         }
     }
 
     function handleRightArrowClick() {
-        if (!isLastImage(imageInfoFromID?.image_id)) {
-            toNextImage(imageInfoFromID?.image_id);
-            setImageInfoFromID(null);
+        if (!isLastImage(data.image_id)) {
+            toNextImage(data.image_id);
+            //setImageInfoFromID(null);
             setTags(null);
         }
     }
     
+    if (isPending) {
+        return <span>Loading...</span>
+    }
+
+    if (isError) {
+        return <span>Error: {error.message}</span>
+    }
 
     return (
         <div className={id ? "absolute bg-white self-center flex flex-col p-4 w-full h-full" : "hidden"}>
@@ -136,17 +158,17 @@ export default function ViewImage({id, setId, isFirstImage, isLastImage, deleteI
                             <FaEye onClick={() => setHideInfo(!hideInfo)} size={20} scale={1} />
                         }
                         <ImageOptions optionsRef={optionsRef} hideInfo={hideInfo} imageOptions={imageOptions} 
-                        deletePopup={deletePopup} imageID={imageInfoFromID?.image_id} setImageOptions={setImageOptions} 
+                        deletePopup={deletePopup} imageID={data?.image_id} setImageOptions={setImageOptions} 
                         setDeletePopup={setDeletePopup} handleDelete={handleDelete}/>
                     </div>    
                 </div>  
-                <div className={hideInfo ? "hidden" : "pb-4"}>{imageInfoFromID?.title}</div>
+                <div className={hideInfo ? "hidden" : "pb-4"}>{data?.title}</div>
                 <FaX className={hideInfo ? "hidden" : ""} onClick={() => closeView()} size={20} scale={1}/>
             </div> 
             <div className={`flex w-full h-full items-center justify-between`}>
-                <FaArrowLeft className={hideInfo ? "hidden" : "flex grow"} color={isFirstImage(imageInfoFromID?.image_id) ? "gainsboro" : "black"} onClick={() => handleLeftArrowClick()} size={20} scale={1} />
+                <FaArrowLeft className={hideInfo ? "hidden" : "flex grow"} color={isFirstImage(data?.image_id) ? "gainsboro" : "black"} onClick={() => handleLeftArrowClick()} size={20} scale={1} />
                 <div className="flex items-center flex-col gap-6">
-                    <img id={imageInfoFromID?.image_id} src={imageInfoFromID?.url} alt={imageInfoFromID?.title}  className={hideInfo ? "w-full h-full" : "w-[900px] h-[450px]"} />
+                    <img id={data?.image_id} src={data?.url} alt={data?.title}  className={hideInfo ? "w-full h-full" : "w-[900px] h-[450px]"} />
                     <div className={hideInfo ? "hidden" : "flex w-full justify-between"}>
                         <div className="flex flex-col gap-4">
                             <div>
@@ -161,11 +183,11 @@ export default function ViewImage({id, setId, isFirstImage, isLastImage, deleteI
                         </div>
                         <div className="flex flex-col gap-4">
                             <div>Date Uploaded:</div>
-                            <div>Source: {imageInfoFromID?.source}</div>
+                            <div>Source: {data?.source}</div>
                         </div>
                     </div> 
                 </div>
-                <FaArrowRight className={hideInfo ? "hidden" : "flex grow"} color={isLastImage(imageInfoFromID?.image_id) ? "gainsboro" : "black"} onClick={() => handleRightArrowClick()} size={20} scale={1}/>
+                <FaArrowRight className={hideInfo ? "hidden" : "flex grow"} color={isLastImage(data?.image_id) ? "gainsboro" : "black"} onClick={() => handleRightArrowClick()} size={20} scale={1}/>
             </div>  
         </div>
     )
