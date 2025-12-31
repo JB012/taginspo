@@ -1,8 +1,7 @@
 import { useAuth } from "@clerk/clerk-react";
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
-import axios from "axios";
-import type { ImageType } from "../../types/ImageType";
+import axios from "axios"; 
 import { FaX } from "react-icons/fa6";
 import { FaArrowLeft, FaArrowRight, FaEye, FaEyeSlash } from "react-icons/fa";
 import { assertIsNode } from "../../utils/utils";

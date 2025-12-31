@@ -14,9 +14,11 @@ export default function Gallery() {
     const [searchParams, setSearchParams] = useSearchParams();
     const [id, setId] = useState(searchParams.get("id"));
     const type = searchParams.get("type");
+    const queryString = searchParams.get("query");
     // Initial state is null instead of empty array to prevent multiple axios calls from useEffect
     const [images, setImages] = useState<ImageType[]|null>(null);
     const [tags, setTags] = useState<TagType[]|null>(null);
+    const [queryImages, setQueryImages] = useState<ImageType[]|null>(null);
     //const [sortOptions, setSortOptions] = useState("");
     const navigate = useNavigate();
     const {getToken} = useAuth();
@@ -81,6 +83,11 @@ export default function Gallery() {
     }, [getToken, tags]);
 
     function handleGalleryType() {
+        const keys = [...searchParams.keys()];
+        for (const key of keys) {
+            searchParams.delete(key);
+        }
+
         searchParams.set("type", type === "image" ? "tag" : "image");
         setSearchParams(searchParams);
     }
@@ -131,6 +138,11 @@ export default function Gallery() {
         return false;
     }
 
+    function addQueryString(query: string) {
+        searchParams.append("query", query);
+        setSearchParams(searchParams);
+    }
+
     return (
         <>
         <SignedIn>
@@ -160,19 +172,25 @@ export default function Gallery() {
                     </div>
                     {
                         type === "image" ?    
-                        <div id="images-previews" className="flex w-full items-center flex-wrap gap-25">
+                        <div id="images-previews" className={queryString ? "hidden" : "flex w-full items-center flex-wrap gap-25"}>
                             {
                                 images && images.length ? images.map((img) => <div className="cursor-pointer" key={img.image_id} onClick={() => handleImageClick(img.image_id)}><img id={img.image_id} src={img.url} alt={img.title} width={200} height={200}/></div>) : 
                                 <div className="flex w-full justify-center">Click on the + button to add an image</div> 
                             }
                         </div> :
-                        <div id="tag-previews" style={{justifyContent: !tags ? "center" : "flex-start"}} className="flex w-full items-center flex-wrap gap-25">
+                        <div id="tag-previews" style={{justifyContent: !tags ? "center" : "flex-start"}} className={queryString ? "hidden" : "flex w-full items-center flex-wrap gap-25"}>
                             {
-                                tags && tags.length ? tags.map((tag) => <Tag key={tag.tag_id} id={tag.tag_id} title={tag.title} color={tag.color} addedTag={false} tagResult={false} />) 
+                                tags && tags.length ? tags.map((tag) => <Tag addQueryString={addQueryString} key={tag.tag_id} id={tag.tag_id} title={tag.title} color={tag.color} addedTag={false} tagResult={false} />) 
                                 : <div className="flex w-full justify-center">Click on the + button to add a tag</div> 
                             }
                         </div>
                     }
+                    
+                    <div id="query-images" className={queryImages ? "" : "hidden"}>
+                        {
+                            queryImages?.map((img) => <div className="cursor-pointer" key={img.image_id} onClick={() => handleImageClick(img.image_id)}><img id={img.image_id} src={img.url} alt={img.title} width={200} height={200}/></div>)
+                        }
+                    </div>
                 </div> 
                 <ViewImage id={id} setId={setId} isFirstImage={isFirstImage} isLastImage={isLastImage} toPreviousImage={toPreviousImage} toNextImage={toNextImage} deleteImage={deleteImage} />
             </div>

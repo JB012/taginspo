@@ -8,6 +8,7 @@ interface TagProp {
     color: string, 
     addedTag: boolean, 
     tagResult: boolean,
+    addQueryString?: (query: string) => void,
     removeTag?: (id: string) => void,
     editTag?: (id: string, title: string, color: string) => void,
     duplicateTag?: ( title : string, id?: string) => boolean,
@@ -16,7 +17,7 @@ interface TagProp {
 
 
 export default function Tag({id, title, color, addedTag, tagResult,
-    removeTag, editTag, duplicateTag, handleAddTag} : TagProp) {
+    addQueryString, removeTag, editTag, duplicateTag, handleAddTag} : TagProp) {
     const [edit, setEdit] = useState(false);
     const [options, setOptions] = useState(false);
     const [editTitle, setEditTitle] = useState(title);
@@ -68,6 +69,8 @@ export default function Tag({id, title, color, addedTag, tagResult,
         if (tagResult) {
             handleAddTag?.(title, color, false, id);
         }
+
+        addQueryString?.(title);
     }
 
     function handleColorChange(event : React.ChangeEvent<HTMLInputElement>) {
