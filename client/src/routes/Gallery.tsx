@@ -1,5 +1,5 @@
 import { SignedIn, SignedOut, UserButton, useAuth } from "@clerk/clerk-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FaImage, FaList, FaPlusCircle, FaTag, FaWrench } from "react-icons/fa";
 import { FaMagnifyingGlass } from "react-icons/fa6";
 import axios from 'axios';
@@ -18,10 +18,68 @@ export default function Gallery() {
     // Initial state is null instead of empty array to prevent multiple axios calls from useEffect
     const [images, setImages] = useState<ImageType[]|null>(null);
     const [tags, setTags] = useState<TagType[]|null>(null);
-    const [queryImages, setQueryImages] = useState<ImageType[]|null>(null);
+    const queryImages = useMemo(() => {
+        return images?.filter((img) => { if (queryString) img.tagIDs.includes(queryString)});
+    }, [images, queryString]);
     //const [sortOptions, setSortOptions] = useState("");
     const navigate = useNavigate();
     const {getToken} = useAuth();
+
+
+
+    function getMatchedImages(query: string) {
+        if (query)
+    }
+    function handleQueryImages(query: string) : ImageType[] {
+        const queryResult : ImageType[] = [];
+        
+        if (queryImages && query && images && tags) {
+            const findTag = tags.find((tag) => tag.title === query);
+            
+            if (findTag) {
+                const matchedImages = images.filter((img) => img.tagIDs.includes(findTag.tag_id) || img.title.includes(query));
+                queryResult.push(...matchedImages);
+            }
+
+            // Checking if there's a match for each word in the query. Could make this a recursive call
+            const queryWords = query.split(' ');
+
+            if (queryWords.length > 1) {
+                for (const queryWord of queryWords) {
+                    queryResult.push(...handleQueryImages(queryWord));
+                    
+                    /* const findTag = tags.find((tag) => tag.title === queryWord);
+                    if (findTag) {
+                        const matchedImages = images.filter((img) => img.tagIDs.includes(findTag.tag_id) || img.title.includes(queryWord));
+                        queryResult.push(...matchedImages);
+                    } */
+                }
+            }
+        }
+        
+        return queryResult;
+    }
+
+    async function retrieveImages() {
+        const token = await getToken();
+        const res = await axios.get('http://localhost:3000/images', 
+            {headers: { Authorization: `Bearer ${token}` }});
+
+        if (typeof res.data === "object") {
+            setImages(res.data);
+        }
+    }
+
+    async function retrieveTags() {
+        const token = await getToken();
+        const res = await axios.get('http://localhost:3000/tags', 
+            {headers: { Authorization: `Bearer ${token}` }});
+
+        if (typeof res.data === "object") {
+            setTags(res.data);
+        }
+    }
+
     useEffect(() => {
         if (!images) {
             try {
