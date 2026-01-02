@@ -28,8 +28,7 @@ router.get('/', async (req, res) => {
         if (!imageID) {    
             const [rows, fields] = await pool.query(`SELECT * FROM tags WHERE user_id=?`, [userId]);
 
-            return rows.length !== 0 ? res.send(rows) 
-            : res.send('User has no tags added');
+            return res.send(rows);
         }
         else {
             const [rows, fields] = await pool.query(`SELECT tag_id FROM users_images_tags WHERE user_id=? AND image_id=?`, [userId, imageID]);

@@ -36,14 +36,14 @@ router.get("/", async (req, res) => {
                     //const signedURL = createSignedURL(json.title);
                     const [rows, fields] = await pool.query(`SELECT tag_id FROM users_images_tags WHERE user_id=? AND image_id=?`, [userId, json.image_id]);
 
-                    const tagIDs = Object.values(JSON.parse(JSON.stringify(rows)));
+                    const tagIDs = Object.values(JSON.parse(JSON.stringify(rows))).map((json) => json.tag_id);
                         
                     imageURLs.push({...json, url: undefined, tagIDs: tagIDs});
                     
-                }
-
-                return res.send(imageURLs);     
+                }   
             }
+            
+            return res.send(imageURLs);  
         }
         catch(err) {
             if (err instanceof NoSuchKey) {

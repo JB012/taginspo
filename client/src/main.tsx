@@ -11,7 +11,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 const URL = import.meta.env.VITE_DEFAULT_URL
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 10 //10 minutes
+    }
+  }
+});
 
 if (!PUBLISHABLE_KEY) {
   throw new Error('Missing Publishable Key')

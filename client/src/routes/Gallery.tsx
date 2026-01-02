@@ -1,58 +1,51 @@
 import { SignedIn, SignedOut, UserButton, useAuth } from "@clerk/clerk-react";
-import { useEffect, useMemo, useState } from "react";
+import { useContext, useState } from "react";
 import { FaImage, FaList, FaPlusCircle, FaTag, FaWrench } from "react-icons/fa";
-import { FaMagnifyingGlass } from "react-icons/fa6";
 import axios from 'axios';
 import { useNavigate, useSearchParams } from "react-router";
 import type { TagType } from "../../types/TagType";
 import type { ImageType } from "../../types/ImageType";
 import Tag from "../../components/Tag";
+import SearchBar from "../../components/SearchBar";
 import ViewImage from "./ViewImage";
+import { useQuery } from "@tanstack/react-query";
+import { QueryClientContext } from "@tanstack/react-query";
 
 export default function Gallery() {
+    const queryClient = useContext(QueryClientContext);
+    
+    const imageQuery = useQuery({
+        queryKey: ["images"],
+        queryFn: () => retrieveImages()
+    });
+
+    const tagQuery = useQuery({
+        queryKey: ["tags"],
+        queryFn: () => retrieveTags()
+    });
+
+    const images : ImageType[] = imageQuery.data;
+    const tags : TagType[] = tagQuery.data;
     const [input, setInput] = useState("");
     const [searchParams, setSearchParams] = useSearchParams();
     const [id, setId] = useState(searchParams.get("id"));
     const type = searchParams.get("type");
-    const queryString = searchParams.get("query");
-    // Initial state is null instead of empty array to prevent multiple axios calls from useEffect
-    const [images, setImages] = useState<ImageType[]|null>(null);
-    const [tags, setTags] = useState<TagType[]|null>(null);
-    const queryImages = useMemo(() => {
-        return images?.filter((img) => { if (queryString) img.tagIDs.includes(queryString)});
-    }, [images, queryString]);
-    //const [sortOptions, setSortOptions] = useState("");
+    const queries = searchParams.getAll("query");
+    const queryImages = getMatchedImages();
     const navigate = useNavigate();
     const {getToken} = useAuth();
 
-
-
-    function getMatchedImages(query: string) {
-        if (query)
-    }
-    function handleQueryImages(query: string) : ImageType[] {
+    function getMatchedImages() : ImageType[] {
         const queryResult : ImageType[] = [];
         
-        if (queryImages && query && images && tags) {
-            const findTag = tags.find((tag) => tag.title === query);
-            
-            if (findTag) {
-                const matchedImages = images.filter((img) => img.tagIDs.includes(findTag.tag_id) || img.title.includes(query));
-                queryResult.push(...matchedImages);
-            }
-
-            // Checking if there's a match for each word in the query. Could make this a recursive call
-            const queryWords = query.split(' ');
-
-            if (queryWords.length > 1) {
-                for (const queryWord of queryWords) {
-                    queryResult.push(...handleQueryImages(queryWord));
-                    
-                    /* const findTag = tags.find((tag) => tag.title === queryWord);
-                    if (findTag) {
-                        const matchedImages = images.filter((img) => img.tagIDs.includes(findTag.tag_id) || img.title.includes(queryWord));
-                        queryResult.push(...matchedImages);
-                    } */
+        if (images && tags) {
+            for (const query of queries) {
+                const findTag = tags.find((tag) => tag.title === query);
+                
+                if (findTag) {
+                    const matchedImages = images.filter((img) => img.tagIDs.includes(findTag.tag_id) || img.title.includes(query));
+                    console.log(matchedImages);
+                    queryResult.push(...matchedImages);
                 }
             }
         }
@@ -65,9 +58,7 @@ export default function Gallery() {
         const res = await axios.get('http://localhost:3000/images', 
             {headers: { Authorization: `Bearer ${token}` }});
 
-        if (typeof res.data === "object") {
-            setImages(res.data);
-        }
+        return res.data;        
     }
 
     async function retrieveTags() {
@@ -75,89 +66,38 @@ export default function Gallery() {
         const res = await axios.get('http://localhost:3000/tags', 
             {headers: { Authorization: `Bearer ${token}` }});
 
-        if (typeof res.data === "object") {
-            setTags(res.data);
-        }
+        return res.data;
     }
-
-    useEffect(() => {
-        if (!images) {
-            try {
-                getToken({skipCache: true}).then((token) => {
-                    if (token) {
-                        axios
-                        .get('http://localhost:3000/images', {headers: { Authorization: `Bearer ${token}` }})
-                        .then((res) => {
-                            if (typeof res.data === "object") {
-                                setImages(res.data);
-                            }
-                        });
-
-                        axios
-                        .get('http://localhost:3000/tags', {headers: { Authorization: `Bearer ${token}` }})
-                        .then((res) => {
-                            if (typeof res.data === "object") {
-                                setTags(res.data);
-                            }
-                        });
-                    }
-                });
-            }
-            catch (err) {
-                console.log(err);
-            }
-        }
-    }, [getToken, images]);
 
     function deleteImage(id : string) {
-        if (images) {
-            console.log(id);
-            setImages(images.filter((img) => img.image_id !== id));
-        }
-        else {
-            console.log("images null");
-        }
+        queryClient?.setQueryData(["images"], (prev : ImageType[]) => prev.filter((img) => img.image_id !== id));
     }
 
-    useEffect(() => {
-        if (!tags) {
-            try {
-                getToken({skipCache: true}).then((token) => {
-                    if (token) {
-                        axios
-                        .get('http://localhost:3000/tags', {headers: { Authorization: `Bearer ${token}` }})
-                        .then((res) => {
-                            if (typeof res.data === "object") {
-                                setTags(res.data);
-                            }
-                        });
-                    }
-                });
-            }
-            catch (err) {
-                console.log(err);
-            }
-        }
-    }, [getToken, tags]);
-
-    function handleGalleryType() {
+    function clearURLParams() {
         const keys = [...searchParams.keys()];
         for (const key of keys) {
             searchParams.delete(key);
         }
+    }
 
+    function handleGalleryType() {
+        clearURLParams();
+       
         searchParams.set("type", type === "image" ? "tag" : "image");
         setSearchParams(searchParams);
     }
 
     async function handleImageClick(id : string) {
+        clearURLParams();
+
+        searchParams.set("type", "image");
         searchParams.append("id", id);
         setSearchParams(searchParams);
         setId(id);
     }
 
     function toPreviousImage(currentID: string | undefined) {
-        if (images && currentID) {
+        if (currentID) {
             const currentIndex = images.findIndex((img) => img.image_id === currentID);
 
             if (currentIndex !== undefined && currentIndex - 1 >= 0) {                
@@ -169,7 +109,7 @@ export default function Gallery() {
     }
 
     function toNextImage(currentID: string | undefined) {
-        if (images && currentID) {
+        if (currentID) {
             const currentIndex = images.findIndex((img) => img.image_id === currentID);
 
             if (currentIndex !== undefined && currentIndex + 1 <= images.length-1) {
@@ -181,22 +121,16 @@ export default function Gallery() {
     }
 
     function isFirstImage(id: string | undefined) {
-        if (images && id && images.findIndex((tag) => tag.image_id === id) === 0) {
-            return true;
-        }
-
-        return false;
+        return typeof id !== "undefined" && images.findIndex((tag) => tag.image_id === id) === 0;
     }
 
     function isLastImage(id: string | undefined) {
-        if (images && id && images.findIndex((tag) => tag.image_id === id) === images.length-1) {
-            return true;
-        }
-
-        return false;
+        return typeof id !== "undefined" && images.findIndex((tag) => tag.image_id === id) === images.length-1;
     }
 
     function addQueryString(query: string) {
+        clearURLParams();
+
         searchParams.append("query", query);
         setSearchParams(searchParams);
     }
@@ -213,44 +147,43 @@ export default function Gallery() {
                             <FaTag onClick={() => handleGalleryType()} className={type === "tag" ? "border-b-4 border-b-cyan-300" : ""} size={20} scale={1} />
                         </div>
                     </div>
-                    <div className="flex items-center relative">
-                        <input className="flex outline outline-black rounded-full w-[600px] px-12 h-[39px]" value={input} onChange={(e) => setInput(e.target.value)} />
-                        <FaMagnifyingGlass className="absolute left-5" scale={1}/>
-                    </div>
+                    <SearchBar input={input} handleInput={(userInput : string) => setInput(userInput)} />
                     <UserButton></UserButton>
                  </header>
                  <div className="flex flex-col w-full">
                     <div className="flex w-full justify-between py-10 items-center">
                         <div className="flex items-center gap-8">
-                            <div className="text-[32px] font-bold">{type === "image" ? "Your images" : "Your tags"}</div>
-                            <FaPlusCircle onClick={() => navigate(type === "image" ? "/addimage" : "/addtag")} id="add-button" scale={1} size={20}/>
-                            <FaWrench id="edit-button" scale={1} size={20} />
+                            <div className="text-[32px] font-bold">{queries.length === 0 ? type === "image" ? "Your images" : "Your tags" : "Search results"}</div>
+                            <div className={queries.length ? "hidden" : "flex gap-8"}>
+                                <FaPlusCircle onClick={() => navigate(type === "image" ? "/addimage" : "/addtag")} id="add-button" scale={1} size={20}/>
+                                <FaWrench id="edit-button" scale={1} size={20} />
+                            </div>
                         </div>
                         <FaList id="sort-button" size={20} scale={1}/>
                     </div>
                     {
                         type === "image" ?    
-                        <div id="images-previews" className={queryString ? "hidden" : "flex w-full items-center flex-wrap gap-25"}>
+                        <div id="images-previews" className={queries.length ? "hidden" : "flex w-full items-center flex-wrap gap-25"}>
                             {
-                                images && images.length ? images.map((img) => <div className="cursor-pointer" key={img.image_id} onClick={() => handleImageClick(img.image_id)}><img id={img.image_id} src={img.url} alt={img.title} width={200} height={200}/></div>) : 
+                                images.length ? images.map((img) => <div className="cursor-pointer" key={img.image_id} onClick={() => handleImageClick(img.image_id)}><img id={img.image_id} src={img.url} alt={img.title} width={200} height={200}/></div>) : 
                                 <div className="flex w-full justify-center">Click on the + button to add an image</div> 
                             }
                         </div> :
-                        <div id="tag-previews" style={{justifyContent: !tags ? "center" : "flex-start"}} className={queryString ? "hidden" : "flex w-full items-center flex-wrap gap-25"}>
+                        <div id="tag-previews" style={{justifyContent: !tags ? "center" : "flex-start"}} className={queries.length ? "hidden" : "flex w-full items-center flex-wrap gap-25"}>
                             {
-                                tags && tags.length ? tags.map((tag) => <Tag addQueryString={addQueryString} key={tag.tag_id} id={tag.tag_id} title={tag.title} color={tag.color} addedTag={false} tagResult={false} />) 
+                                tags.length ? tags.map((tag) => <Tag addQueryString={addQueryString} key={tag.tag_id} id={tag.tag_id} title={tag.title} color={tag.color} addedTag={false} tagResult={false} />) 
                                 : <div className="flex w-full justify-center">Click on the + button to add a tag</div> 
                             }
                         </div>
                     }
                     
-                    <div id="query-images" className={queryImages ? "" : "hidden"}>
+                    <div id="query-images" className={queries.length ? "flex w-full items-center flex-wrap gap-25" : "hidden"}>
                         {
                             queryImages?.map((img) => <div className="cursor-pointer" key={img.image_id} onClick={() => handleImageClick(img.image_id)}><img id={img.image_id} src={img.url} alt={img.title} width={200} height={200}/></div>)
                         }
                     </div>
                 </div> 
-                <ViewImage id={id} setId={setId} isFirstImage={isFirstImage} isLastImage={isLastImage} toPreviousImage={toPreviousImage} toNextImage={toNextImage} deleteImage={deleteImage} />
+                <ViewImage id={id} clearID={() => setId("")} isFirstImage={isFirstImage} isLastImage={isLastImage} toPreviousImage={toPreviousImage} toNextImage={toNextImage} deleteImage={deleteImage} />
             </div>
         </SignedIn>
         <SignedOut>
