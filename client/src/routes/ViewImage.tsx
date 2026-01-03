@@ -21,6 +21,8 @@ interface ViewImageProp {
     toNextImage: (currentID : string | undefined) => void
 }
 
+
+// TODO: Arrow keys
 export default function ViewImage({id, clearID, isFirstImage, isLastImage, deleteImage, toPreviousImage, toNextImage} : ViewImageProp) {
     const imageQuery = useQuery({
         queryKey: ["image", id],
@@ -133,8 +135,8 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
             </div> 
             <div className={`flex w-full h-full items-center justify-between`}>
                 <FaArrowLeft className={hideInfo ? "hidden" : "flex grow"} color={isFirstImage(imageData?.image_id) ? "gainsboro" : "black"} onClick={() => handleLeftArrowClick()} size={20} scale={1} />
-                <div className="flex items-center flex-col gap-6">
-                    <img id={imageData?.image_id} src={imageData?.url} alt={imageData?.title}  className={hideInfo ? "w-full h-full" : "w-[900px] h-[450px]"} />
+                <div className={`flex items-center flex-col gap-6 ${hideInfo ? " w-full h-full" : ""}`}>
+                    <img id={imageData?.image_id} src={imageData?.url} alt={imageData?.title} className={hideInfo ? "w-full h-full" : "w-[900px] h-[450px]"} />
                     <div className={hideInfo ? "hidden" : "flex w-full justify-between"}>
                         <div className="flex flex-col gap-4">
                             <div>

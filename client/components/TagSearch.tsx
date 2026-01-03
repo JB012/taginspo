@@ -12,6 +12,7 @@ interface TagSearchProp {
     addTagToImage : (id: string, title: string, color: string) => void
 }
 
+// TODO: Arrow keys
 export default function TagSearch({allTags, duplicateTag, addTagToImage} : TagSearchProp) {
     const [tagInput, setTagInput] = useState('');
     const [addTag, setAddTag] = useState(false);
