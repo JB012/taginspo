@@ -14,8 +14,12 @@ interface GalleryHeaderProp {
 
 export default function GalleryHeader({type, images, tags, handleGalleryType} : GalleryHeaderProp) {
     const [input, setInput] = useState("");
+    const [searchType, setSearchType] = useState("tag");
     const [searchBarResults, setSearchBarResults] = useState<Array<ImageType | TagType>>([]);
 
+    // Move input handling and search type to search bar and remove images and tags prop. header shouldn't
+    // change unless changing gallery type 
+     
     function handleInput(input : string) {
         setInput(input);
 
@@ -38,6 +42,10 @@ export default function GalleryHeader({type, images, tags, handleGalleryType} : 
 
     }
 
+    function handleType() {
+        setSearchType(searchType === "image" ? "tag" : "image");
+    }
+
     return (
         <header className="flex w-full justify-between items-center">
             <div className="flex gap-5 items-center">
@@ -47,7 +55,7 @@ export default function GalleryHeader({type, images, tags, handleGalleryType} : 
                     <FaTag onClick={() => handleGalleryType()} className={type === "tag" ? "border-b-4 border-b-cyan-300" : ""} size={20} scale={1} />
                 </div>
             </div>
-            <SearchBar input={input} handleInput={handleInput} />
+            <SearchBar searchType={searchType} handleType={handleType} input={input} handleInput={handleInput} />
             <UserButton></UserButton>
         </header>
     )
