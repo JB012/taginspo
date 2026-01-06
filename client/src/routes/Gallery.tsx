@@ -1,39 +1,31 @@
-import { SignedIn, SignedOut, useAuth } from "@clerk/clerk-react";
+import { SignedIn, SignedOut } from "@clerk/clerk-react";
 import { useContext, useState } from "react";
 import { FaList, FaPlusCircle, FaWrench } from "react-icons/fa";
-import axios from 'axios';
 import { useNavigate, useSearchParams } from "react-router";
 import type { TagType } from "../../types/TagType";
 import type { ImageType } from "../../types/ImageType";
+import useImages from '../../utils/useImages';
+import useTags from '../../utils/useTags';
 import Tag from "../../components/Tag";
 import Image from "../../components/Image";
 import GalleryHeader from "../../components/GalleryHeader";
 import ViewImage from "./ViewImage";
-import { useQuery } from "@tanstack/react-query";
 import { QueryClientContext } from "@tanstack/react-query";
 
 export default function Gallery() {
     const queryClient = useContext(QueryClientContext);
-    
-    const imageQuery = useQuery({
-        queryKey: ["images"],
-        queryFn: () => retrieveImages()
-    });
-
-    const tagQuery = useQuery({
-        queryKey: ["tags"],
-        queryFn: () => retrieveTags()
-    });
-
-    const images : ImageType[] = imageQuery.data;
-    const tags : TagType[] = tagQuery.data;
     const [searchParams, setSearchParams] = useSearchParams();
     const [id, setId] = useState(searchParams.get("id"));
     const type = searchParams.get("type");
     const queries = searchParams.getAll("query");
-    const queryImages = getMatchedImages();
     const navigate = useNavigate();
-    const {getToken} = useAuth();
+
+    const imageQuery = useImages();
+    const tagQuery = useTags();
+    const images : ImageType[] = imageQuery.data;
+    const tags : TagType[] = tagQuery.data;
+
+    const queryImages = getMatchedImages();
 
     function getMatchedImages() : ImageType[] {
         const queryResult : ImageType[] = [];
@@ -44,29 +36,12 @@ export default function Gallery() {
                 
                 if (findTag) {
                     const matchedImages = images.filter((img) => img.tagIDs.includes(findTag.tag_id) || img.title.includes(query));
-                    console.log(matchedImages);
                     queryResult.push(...matchedImages);
                 }
             }
         }
         
         return queryResult;
-    }
-
-    async function retrieveImages() {
-        const token = await getToken();
-        const res = await axios.get('http://localhost:3000/images', 
-            {headers: { Authorization: `Bearer ${token}` }});
-
-        return res.data;        
-    }
-
-    async function retrieveTags() {
-        const token = await getToken();
-        const res = await axios.get('http://localhost:3000/tags', 
-            {headers: { Authorization: `Bearer ${token}` }});
-
-        return res.data;
     }
 
     function deleteImage(id : string) {
@@ -139,7 +114,7 @@ export default function Gallery() {
         <>
         <SignedIn>
             <div className="flex flex-col w-full h-full px-16">
-                 <GalleryHeader type={type} images={images} tags={tags} handleGalleryType={handleGalleryType} />
+                 <GalleryHeader type={type} handleGalleryType={handleGalleryType} />
                  <div className="flex flex-col w-full">
                     <div className="flex w-full justify-between py-10 items-center">
                         <div className="flex items-center gap-8">

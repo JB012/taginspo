@@ -1,51 +1,13 @@
 import {FaImage, FaTag} from 'react-icons/fa6'
 import SearchBar from './SearchBar'
 import { UserButton } from '@clerk/clerk-react'
-import { useState } from 'react'
-import type { ImageType } from '../types/ImageType'
-import type { TagType } from '../types/TagType'
 
 interface GalleryHeaderProp {
     type: string | null
-    images: Array<ImageType>
-    tags: Array<TagType>
     handleGalleryType: () => void
 }
 
-export default function GalleryHeader({type, images, tags, handleGalleryType} : GalleryHeaderProp) {
-    const [input, setInput] = useState("");
-    const [searchType, setSearchType] = useState("tag");
-    const [searchBarResults, setSearchBarResults] = useState<Array<ImageType | TagType>>([]);
-
-    // Move input handling and search type to search bar and remove images and tags prop. header shouldn't
-    // change unless changing gallery type 
-     
-    function handleInput(input : string) {
-        setInput(input);
-
-        const filteredTags = tags.filter((tag) => tag.title.toLowerCase().includes(input.toLowerCase()));
-
-        const filteredImages = images.filter((image) => {
-            const result = image.title.toLowerCase().includes(input.toLowerCase());
-            let matchesFilteredTag = false;
-
-            for (const tagID of image.tagIDs) {
-                if (filteredTags.find((tag) => tag.tag_id === tagID)) {
-                    matchesFilteredTag = true;
-                }
-            }
-
-            return result || matchesFilteredTag;
-        });
-    
-        setSearchBarResults([...filteredImages, ...filteredTags]);
-
-    }
-
-    function handleType() {
-        setSearchType(searchType === "image" ? "tag" : "image");
-    }
-
+export default function GalleryHeader({type, handleGalleryType} : GalleryHeaderProp) {
     return (
         <header className="flex w-full justify-between items-center">
             <div className="flex gap-5 items-center">
@@ -55,7 +17,7 @@ export default function GalleryHeader({type, images, tags, handleGalleryType} : 
                     <FaTag onClick={() => handleGalleryType()} className={type === "tag" ? "border-b-4 border-b-cyan-300" : ""} size={20} scale={1} />
                 </div>
             </div>
-            <SearchBar searchType={searchType} handleType={handleType} input={input} handleInput={handleInput} />
+            <SearchBar />
             <UserButton></UserButton>
         </header>
     )
