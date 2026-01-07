@@ -1,5 +1,5 @@
 import { SignedIn, SignedOut } from "@clerk/clerk-react";
-import { useContext, useState } from "react";
+import { useCallback, useContext, useState } from "react";
 import { FaList, FaPlusCircle, FaWrench } from "react-icons/fa";
 import { useNavigate, useSearchParams } from "react-router";
 import type { TagType } from "../../types/TagType";
@@ -20,11 +20,26 @@ export default function Gallery() {
     const queries = searchParams.getAll("query");
     const navigate = useNavigate();
 
+    const clearURLParams = useCallback(() => {
+        const keys = [...searchParams.keys()];
+        for (const key of keys) {
+            searchParams.delete(key);
+        }
+    }, [searchParams]);
+
+    const handleImageClick = useCallback((id : string) => {
+        clearURLParams();
+
+        searchParams.set("type", "image");
+        searchParams.append("id", id);
+        setSearchParams(searchParams);
+        setId(id);
+    }, [searchParams, clearURLParams, setSearchParams]);
+
     const imageQuery = useImages();
     const tagQuery = useTags();
     const images : ImageType[] = imageQuery.data;
     const tags : TagType[] = tagQuery.data;
-
     const queryImages = getMatchedImages();
 
     function getMatchedImages() : ImageType[] {
@@ -48,27 +63,11 @@ export default function Gallery() {
         queryClient?.setQueryData(["images"], (prev : ImageType[]) => prev.filter((img) => img.image_id !== id));
     }
 
-    function clearURLParams() {
-        const keys = [...searchParams.keys()];
-        for (const key of keys) {
-            searchParams.delete(key);
-        }
-    }
-
     function handleGalleryType() {
         clearURLParams();
        
         searchParams.set("type", type === "image" ? "tag" : "image");
         setSearchParams(searchParams);
-    }
-
-    function handleImageClick(id : string) {
-        clearURLParams();
-
-        searchParams.set("type", "image");
-        searchParams.append("id", id);
-        setSearchParams(searchParams);
-        setId(id);
     }
 
     function toPreviousImage(currentID: string | undefined) {
@@ -114,7 +113,7 @@ export default function Gallery() {
         <>
         <SignedIn>
             <div className="flex flex-col w-full h-full px-16">
-                 <GalleryHeader type={type} handleGalleryType={handleGalleryType} />
+                 <GalleryHeader type={type} handleImageClick={handleImageClick} handleGalleryType={handleGalleryType} />
                  <div className="flex flex-col w-full">
                     <div className="flex w-full justify-between py-10 items-center">
                         <div className="flex items-center gap-8">
