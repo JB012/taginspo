@@ -17,7 +17,7 @@ export default function Gallery() {
     const [searchParams, setSearchParams] = useSearchParams();
     const [id, setId] = useState(searchParams.get("id"));
     const type = searchParams.get("type");
-    const queries = searchParams.getAll("query");
+    const query = searchParams.get("query");
     const navigate = useNavigate();
 
     const clearURLParams = useCallback(() => {
@@ -36,24 +36,53 @@ export default function Gallery() {
         setId(id);
     }, [searchParams, clearURLParams, setSearchParams]);
 
+    const addQueryString = useCallback((query: string) => {
+        clearURLParams();
+
+        let existingQuery = searchParams.get('query');
+        if (existingQuery) {
+            existingQuery += `&${query}`;
+            searchParams.set('query', existingQuery);
+        }
+        else {
+            searchParams.set('query', query);
+        }
+
+        setSearchParams(searchParams);
+    }, [clearURLParams, searchParams, setSearchParams]);
+
     const imageQuery = useImages();
     const tagQuery = useTags();
     const images : ImageType[] = imageQuery.data;
     const tags : TagType[] = tagQuery.data;
     const queryImages = getMatchedImages();
 
+    function containsAllTags(imageTagIDs: string[], queryTagIDs: string[]) : boolean {
+        for (const id of queryTagIDs) {
+            if (!imageTagIDs.includes(id)) {
+                return false;
+            }
+        } 
+
+        return true;
+    }
+
     function getMatchedImages() : ImageType[] {
         const queryResult : ImageType[] = [];
-        
-        if (images && tags) {
+        const tagIDs : string[] = [];
+        if (images && tags && query) {
+            const queries = query.split('&');
+            
             for (const query of queries) {
                 const findTag = tags.find((tag) => tag.title === query);
                 
                 if (findTag) {
-                    const matchedImages = images.filter((img) => img.tagIDs.includes(findTag.tag_id) || img.title.includes(query));
-                    queryResult.push(...matchedImages);
+                    tagIDs.push(findTag.tag_id);
                 }
             }
+
+            const matchedImages = images.filter((img) => containsAllTags(img.tagIDs, tagIDs));
+            queryResult.push(...matchedImages);
         }
         
         return queryResult;
@@ -102,23 +131,16 @@ export default function Gallery() {
         return typeof id !== "undefined" && images?.findIndex((tag) => tag.image_id === id) === images.length-1;
     }
 
-    function addQueryString(query: string) {
-        clearURLParams();
-
-        searchParams.append("query", query);
-        setSearchParams(searchParams);
-    }
-
     return (
         <>
         <SignedIn>
             <div className="flex flex-col w-full h-full px-16">
-                 <GalleryHeader type={type} handleImageClick={handleImageClick} handleGalleryType={handleGalleryType} />
+                 <GalleryHeader type={type} addQueryString={addQueryString} handleImageClick={handleImageClick} handleGalleryType={handleGalleryType} />
                  <div className="flex flex-col w-full">
                     <div className="flex w-full justify-between py-10 items-center">
                         <div className="flex items-center gap-8">
-                            <div className="text-[32px] font-bold">{queries.length === 0 ? type === "image" ? "Your images" : "Your tags" : "Search results"}</div>
-                            <div className={queries.length ? "hidden" : "flex gap-8"}>
+                            <div className="text-[32px] font-bold">{!query ? type === "image" ? "Your images" : "Your tags" : "Search results"}</div>
+                            <div className={query ? "hidden" : "flex gap-8"}>
                                 <FaPlusCircle onClick={() => navigate(type === "image" ? "/addimage" : "/addtag")} id="add-button" scale={1} size={20}/>
                                 <FaWrench id="edit-button" scale={1} size={20} />
                             </div>
@@ -127,22 +149,23 @@ export default function Gallery() {
                     </div>
                     {
                         type === "image" ?    
-                        <div id="images-previews" className={queries.length ? "hidden" : "flex w-full items-center flex-wrap gap-25"}>
+                        <div id="images-previews" className={query ? "hidden" : "flex w-full items-center flex-wrap gap-25"}>
                             {
                                 images && images.length ? images.map((img) => <Image image_id={img.image_id} key={img.image_id} url={img.url} title={img.title} handleImageClick={handleImageClick} />) : 
                                 <div className="flex w-full justify-center">Click on the + button to add an image</div> 
                             }
                         </div> :
-                        <div id="tag-previews" style={{justifyContent: !tags ? "center" : "flex-start"}} className={queries.length ? "hidden" : "flex w-full items-center flex-wrap gap-25"}>
+                        <div id="tag-previews" style={{justifyContent: !tags ? "center" : "flex-start"}} className={query ? "hidden" : "flex w-full items-center flex-wrap gap-25"}>
                             {
                                 tags && tags.length ? tags.map((tag) => <Tag addQueryString={addQueryString} key={tag.tag_id} id={tag.tag_id} title={tag.title} color={tag.color} addedTag={false} tagResult={false} />) 
                                 : <div className="flex w-full justify-center">Click on the + button to add a tag</div> 
                             }
                         </div>
                     }
-                    <div id="query-images" className={queries.length ? "flex w-full items-center flex-wrap gap-25" : "hidden"}>
+                    <div id="query-images" className={query ? "flex w-full items-center flex-wrap gap-25" : "hidden"}>
                         {
-                            queryImages?.map((img) => <div className="cursor-pointer" key={img.image_id} onClick={() => handleImageClick(img.image_id)}><img id={img.image_id} src={img.url} alt={img.title} width={200} height={200}/></div>)
+                            queryImages && queryImages.length ? queryImages.map((img) => <Image image_id={img.image_id} key={img.image_id} url={img.url} title={img.title} handleImageClick={handleImageClick} />)
+                            : `No results for ${query?.replace('&', ' ')}`
                         }
                     </div>
                 </div> 

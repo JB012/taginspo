@@ -1,14 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState } from "react";
-import { FaTag, FaImage } from "react-icons/fa6"
+import { FaTag, FaImage, FaCircleXmark } from "react-icons/fa6"
 import { RxTriangleDown } from "react-icons/rx";
 import { assertIsNode } from "../utils/utils";
 import type { TagType } from "../types/TagType";
 import type { ImageType } from "../types/ImageType";
 import useImages from "../utils/useImages";
 import useTags from "../utils/useTags";
+import { FaSearch } from "react-icons/fa";
 
-export default function SearchBar({handleImageClick} : {handleImageClick: (id: string) => void}) {    
+interface SearchBarProp {
+    handleImageClick: (id: string) => void
+    addQueryString: (query: string) => void
+}
+export default function SearchBar({handleImageClick, addQueryString} : SearchBarProp) { 
     const [input, setInput] = useState(""); 
     const [searchType, setSearchType] = useState("tag");
     const [showList, setShowList] = useState(false);
@@ -119,11 +124,18 @@ export default function SearchBar({handleImageClick} : {handleImageClick: (id: s
         }
     }
 
-    //TODO: Add search and x icon
+    function handleSearch() {
+        addQueryString(input.trim().replace(' ', '&'));
+        setInput('');
+        setSearchBarResults([]);
+    }
+
     return ( 
         <div className="flex flex-col">
             <div className="flex items-center relative">
-                <input value={input} onFocus={() => setResultsView(true)} onChange={(e) => handleInput(e.target.value)} className="flex outline outline-black rounded-full w-[600px] pl-20 pr-5 h-[39px]" />        
+                <input value={input} onFocus={() => setResultsView(true)} onChange={(e) => handleInput(e.target.value)} className="flex outline outline-black rounded-full w-[600px] pl-20 pr-25 h-[39px]" />        
+                <FaCircleXmark onClick={() => setInput("")} size={20} className="absolute right-15"/>
+                <FaSearch onClick={() => handleSearch()} size={20} className="absolute right-5" />
                 <div id="selected-option" className="absolute left-5 flex items-center gap-2">
                     <RxTriangleDown id="open-search-type-list" onClick={() => setShowList(!showList)} size={18} scale={1} />
                     <div ref={listRef} id="search-type-list" className={`flex ${searchType === "tag" ? "flex-col bg-green-300" : "flex-col-reverse bg-blue-300"} absolute left-5 -top-2 gap-5 p-2 rounded-full`}>

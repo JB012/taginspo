@@ -87,7 +87,7 @@ export default function TagSearch({allTags, duplicateTag, addTagToImage} : TagSe
     }
 
     function handleConfirm() {
-        if (tagInput !== "") {
+        if (tagInput !== "" && !tagInput.includes('&')) {
             setAddTag(false);
             handleAddTag(tagInput, color, true);
         }
@@ -105,7 +105,7 @@ export default function TagSearch({allTags, duplicateTag, addTagToImage} : TagSe
             <div id="tag-input-container" className={addTag ? "flex flex-col" : "hidden"}>
                 <div className="flex gap-6">
                     <div className="flex gap-4">
-                        <input value={tagInput} onChange={handleTagSearch} placeholder="Enter tag here" multiple={false} className="w-[243px] h-[30px] rounded-full px-3 outline outline-black" />
+                        <input value={tagInput} onChange={handleTagSearch} color={tagInput.includes('&') ? 'red' : 'black'} placeholder="Enter tag here" multiple={false} className="w-[243px] h-[30px] rounded-full px-3 outline outline-black" />
                         <input type="color" value={color} onChange={(e) => setColor(e.target.value)} />
                     </div>
                     <div className="flex justify-between w-[60px]">

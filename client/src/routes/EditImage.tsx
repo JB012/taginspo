@@ -128,7 +128,7 @@ export default function EditImage() {
 
     function addTagToImage(id: string, title: string, color: string) {
         // created_at will be passed a date once user submits the form
-        setAddedTags([...addedTags, {tag_id: id, title: title, color: color, created_at: ""}]);
+        setAddedTags([...addedTags, {tag_id: id, title: title.trim().replace(' ', '_'), color: color, created_at: ""}]);
     }
 
     function removeTag(id : string) {

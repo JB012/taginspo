@@ -6,9 +6,10 @@ interface GalleryHeaderProp {
     type: string | null
     handleImageClick: (id: string) => void
     handleGalleryType: () => void
+    addQueryString: (query: string) => void
 }
 
-export default function GalleryHeader({type, handleImageClick, handleGalleryType} : GalleryHeaderProp) {
+export default function GalleryHeader({type, handleImageClick, addQueryString, handleGalleryType} : GalleryHeaderProp) {
     return (
         <header className="flex w-full justify-between items-center">
             <div className="flex gap-5 items-center">
@@ -18,7 +19,7 @@ export default function GalleryHeader({type, handleImageClick, handleGalleryType
                     <FaTag onClick={() => handleGalleryType()} className={type === "tag" ? "border-b-4 border-b-cyan-300" : ""} size={20} scale={1} />
                 </div>
             </div>
-            <SearchBar handleImageClick={handleImageClick} />
+            <SearchBar handleImageClick={handleImageClick} addQueryString={addQueryString} />
             <UserButton></UserButton>
         </header>
     )
