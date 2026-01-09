@@ -18,8 +18,12 @@ dotenv.config();
 
 router.use(cors());
 router.use(clerkMiddleware());
-router.use(bodyParser.urlencoded({extended:false}));
-router.use(bodyParser.json())
+
+router.use(bodyParser.json());
+router.use(bodyParser.urlencoded());
+router.use(bodyParser.urlencoded({extended:true}));
+
+
 
 router.get("/", async (req, res) => {
     const { isAuthenticated, userId } = getAuth(req);
@@ -68,12 +72,15 @@ router.get("/:id", async (req, res) => {
     if (isAuthenticated) {
         const imageID = req.params.id;
 
-        const [[image], fields] = await pool.query(`SELECT * FROM images WHERE user_id=? AND image_id=?`, [userId, imageID]);
+        const [[image]] = await pool.query(`SELECT * FROM images WHERE user_id=? AND image_id=?`, [userId, imageID]);
 
-        
+        const [rows] = await pool.query(`SELECT tag_id FROM users_images_tags WHERE user_id=? AND image_id=?`, [userId, imageID]);
+
+        const tagIDs = Object.values(JSON.parse(JSON.stringify(rows))).map((json) => json.tag_id);
+                        
         //const signedURL = createSignedURL(image.title);
 
-        return res.send({url: url, ...image});
+        return res.send({url: url, tagIDs: tagIDs, ...image});
     }
     else {
         return res.status(401).send('User not authenticated');
@@ -143,23 +150,25 @@ router.post("/add", upload.single('file'), async (req, res) => {
 router.post("/edit/:id", async (req, res) => {
     const { isAuthenticated, userId, getToken } = getAuth(req);
     const imageID = req.params.id;
-    const title = req.body.title;
     const source = req.body.source;
     const addedTags = req.body.addedTags;
+    const title = req.body.title;
 
     if (isAuthenticated) {
         try {
-            // check if any tags are changed or deleted 
-            await pool.query(`UPDATE images SET title=? AND source=? WHERE user_id=? AND image_id=?`
+            // check if any tags are changed or deleted
+            await pool.query(`UPDATE images SET title=?, source=? WHERE user_id=? AND image_id=?`
                 , [title, source, userId, imageID]);
 
             const token = await getToken();
 
             await axios.post("http://localhost:3000/tags/edit",{imageID: imageID, addedTags: addedTags}, 
                 {headers: {Authorization: `Bearer ${token}`}});
+            
+            return res.send('Image successfully edited');
         }
         catch (err) {
-            console.log(err);
+            //console.log(err);
         }
     }
     else {

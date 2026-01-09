@@ -1,5 +1,5 @@
 import { FaArrowLeft } from "react-icons/fa";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import type { TagType } from '../../types/TagType';
 import type { ImageType } from "../../types/ImageType";
@@ -8,15 +8,19 @@ import DragAndDrop from '../../components/DragAndDrop';
 import TagSearch from '../../components/TagSearch';
 import axios from "axios";
 import { useAuth } from "@clerk/clerk-react";
+import useTags from "../../utils/useTags";
+import { QueryClientContext } from "@tanstack/react-query";
 
 const url = import.meta.env.VITE_DEFAULT_URL;
 
 export default function EditImage() {
+    const queryClient = useContext(QueryClientContext);
     const { id } = useParams();
     const [editImage, setEditImage] = useState<ImageType | null>(null);
     const [title, setTitle] = useState('');
     const [source, setSource] = useState('');
-    const [allTags, setAllTags] = useState<Array<TagType> | null>(null);
+    const tagQuery = useTags();
+    const allTags : TagType[] = tagQuery.data;
     const [addedTags, setAddedTags] = useState<Array<TagType>>([]);
     const imageRef = useRef<HTMLImageElement | null>(null);
     const [submitable, setSubmitable] = useState(false);
@@ -26,45 +30,25 @@ export default function EditImage() {
     const {getToken} = useAuth();
 
     useEffect(() => {
-        if (!allTags) {
-            getToken({skipCache: true}).then((token) => {
-                if (token) {        
-                    axios.get('http://localhost:3000/tags', 
-                        {headers:  { Authorization: `Bearer ${token}` }}).then(res => {
-                            setAllTags(res.data);
-                    });
+        async function retrieveImageData() {
+            if (id && !editImage) {
+                const token = await getToken();
+                if (token) {
+                    const res = await axios.get(`http://localhost:3000/images/${id}`, 
+                        {headers:  { Authorization: `Bearer ${token}` }});
+                    const imageData : ImageType = res.data;
+                    
+                    setEditImage(imageData);
+                    setTitle(imageData.title);
+                    setSource(imageData.source);
+                    setAddedTags(allTags.filter((tag) => imageData.tagIDs.includes(tag.tag_id)));  
                 }
-            });
+            }
         }
-    }, [allTags, getToken]);
 
-    useEffect(() => {
-        if (!addedTags) {
-            getToken({skipCache: true}).then((token) => {
-                if (token) {        
-                    axios.get(`http://localhost:3000/tags?imageID=${id}`,  
-                        {headers:  { Authorization: `Bearer ${token}` }}).then(res => {
-                            setAddedTags(res.data);
-                    });
-                }
-            });
-        }
-    }, [addedTags, getToken, id]);
+        retrieveImageData();
 
-    useEffect(() => {
-        if (id && !editImage) {
-            getToken({skipCache: true}).then((token) => {
-                if (token) {        
-                    axios.get(`http://localhost:3000/images/${id}`, 
-                        {headers:  { Authorization: `Bearer ${token}` }}).then(res => {
-                            setEditImage(res.data);
-                            setTitle(res.data.title);
-                            setSource(res.data.source);
-                    });
-                }
-            });
-        }
-    }, [id, editImage, getToken]);
+    }, [id, editImage, getToken, allTags]);
 
     useEffect(() => {
         const form = document.querySelector('form');
@@ -80,43 +64,55 @@ export default function EditImage() {
                 formData.append("addedTags", JSON.stringify(addedTags));
 
                 try {
-                    getToken(({skipCache: true})).then((token) => {
+                    async function addImageBackEnd() {
+                        const token = await getToken();
+
                         if (token) {
-                            
-                            if (!id) {
-                                axios.post('http://localhost:3000/images/add', formData, 
-                                {headers:  { Authorization: `Bearer ${token}`, 
-                                "Content-Type": "multipart/form-data"}}).then(res => {
-                                    if (res.status === 200 && !res.data.includes("Title already exists")) {
-                                        console.log(url);
-                                        navigate(url);
-                                    }
-                                    else {
-                                        setError(res.data);
-                                    }
-                                });
+                            const res = await axios.post('http://localhost:3000/images/add', formData, 
+                            {headers:  { Authorization: `Bearer ${token}`, 
+                            "Content-Type": "multipart/form-data"}});
+
+                            if (res.status === 200 && !res.data.includes("Title already exists")) {
+                                await queryClient?.refetchQueries();
+                                navigate(url);
                             }
                             else {
-                                axios.post(`http://localhost:3000/images/edit/${id}`, formData, 
-                                {headers:  { Authorization: `Bearer ${token}`, 
-                                "Content-Type": "multipart/form-data"}}).then(res => {
-                                    if (res.status === 200 && !res.data.includes("Title already exists")) {
-                                        navigate(url);
-                                    }
-                                    else {
-                                        setError(res.data);
-                                    }
-                                });
+                                console.log('in func')
+                                setError(res.data);
                             }
                         }
-                    });
+                    }
+
+                    async function editImageBackEnd() {
+                        const token = await getToken();
+                        //TODO: Tag duplicates occurring while editing image.
+                        if (token) {
+                            const res = await axios.post(`http://localhost:3000/images/edit/${id}`, {title: title, source: 'fuck', addedTags: JSON.stringify(addedTags)}, 
+                                {headers:  { Authorization: `Bearer ${token}`}});
+                            
+                            if (res.status === 200 && !res.data.includes("Title already exists")) {
+                                await queryClient?.refetchQueries();    
+                                navigate(url);
+                            }
+                            else {
+                                setError(res.data);
+                            }
+                        }
+                    }
+                    
+                    if (!id) {
+                        addImageBackEnd();
+                    }
+                    else {
+                        editImageBackEnd();
+                    }
                 }
                 catch (err) {
+                    console.log('in catch');
                     if (err instanceof Error) {
                         setError(err.message);
                         setSubmitable(false);
                     }
-                    console.log(err);
                 }
             }
         }
@@ -124,7 +120,7 @@ export default function EditImage() {
 
         return () => form?.removeEventListener("submit", handleSubmit);
 
-    }, [addedTags, navigate, submitable, title, getToken, id]);
+    }, [addedTags, navigate, submitable, title, getToken, id, queryClient]);
 
     function addTagToImage(id: string, title: string, color: string) {
         // created_at will be passed a date once user submits the form
@@ -136,9 +132,7 @@ export default function EditImage() {
     }
 
     function editTag(id: string, title: string, color: string) {
-        setAddedTags(addedTags.map(tag => {
-            // changedTitle is needed for the case that a tag's color is the only thing
-            // that needs to be changed. Since the tag's already in addedTags, 
+        setAddedTags(addedTags.map(tag => { 
             if (tag.tag_id === id) {
                 tag.title = title;
                 tag.color = color;

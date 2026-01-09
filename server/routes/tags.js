@@ -11,6 +11,8 @@ const multer = require('multer');
 const { v4 } = require('uuid');
 const cors = require('cors');
 const { createDateTime } = require('../utils');
+const axios = require('axios');
+
 const upload = multer({storage: multer.memoryStorage()});
 dotenv.config();
 
@@ -87,15 +89,13 @@ router.post('/add', async (req, res) => {
 });
 
 router.post('/edit', async (req, res) => {
-    const { isAuthenticated, userId } = getAuth(req);
+    const { isAuthenticated, userId, getToken } = getAuth(req);
     const addedTags = JSON.parse(req.body.addedTags);
     const imageID = req.body.imageID;
     
     if (isAuthenticated) {
         if (imageID) {
-            const [rows, fields] = await pool.query(`SELECT * FROM users_images_tags WHERE user_id=? AND image_id=?`);
-            
-            const allTags = rows[0];
+            const [allTags, fields] = await pool.query(`SELECT tag_id FROM tags WHERE user_id=?`, [userId]);
             
             //not in addedTags but in allTags
             const tagsToRemove = allTags.filter((elemTag) => !addedTags.some((tag) => tag.tag_id === elemTag.tag_id));
@@ -106,18 +106,20 @@ router.post('/edit', async (req, res) => {
             const tagsAlreadyInImage = addedTags.filter((tag) => allTags.includes(tag.tag_id));
 
             for (const tag of tagsToRemove) {
-                await pool.query(`DELETE FROM users_images_tags WHERE user_id=? AND tag_id=?`, [userId, tag.tag_id]);
+                await pool.query(`DELETE FROM users_images_tags WHERE user_id=? AND image_id=? AND tag_id=?`, [userId, imageID, tag.tag_id]);
             }
 
              for (const tag of tagsAlreadyInImage) {
-                await pool.query(`UPDATE tags SET title=? AND color=? WHERE user_id=? AND tag_id=?`, [tag.title, tag.color, userId, tag.tag_id]);
+                await pool.query(`UPDATE tags SET title=? AND color=? WHERE user_id=? AND image_id=? AND tag_id=?`, [tag.title, tag.color, userId, imageID, tag.tag_id]);
             }
 
-            const token = await getToken();
+            if (tagsToAdd.length > 0) {
+                const token = await getToken();
             
-            await axios.post("http://localhost:3000/tags/add", {multipleTags: tagsToAdd, imageID: imageID}, 
-                {headers: {Authorization: `Bearer ${token}`}}
-            );
+                await axios.post("http://localhost:3000/tags/add", {multipleTags: JSON.stringify(tagsToAdd), imageID: imageID}, 
+                    {headers: {Authorization: `Bearer ${token}`}}
+                );
+            }
 
             return res.send(`Tag${addedTags.length > 1 ? "s" : ""} successfully edited`);
         }
