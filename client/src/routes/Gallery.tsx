@@ -19,6 +19,7 @@ export default function Gallery() {
     const type = searchParams.get("type");
     const query = searchParams.get("query");
     const navigate = useNavigate();
+    const [editMode, setEditMode] = useState(false);
 
     const clearURLParams = useCallback(() => {
         const keys = [...searchParams.keys()];
@@ -141,8 +142,11 @@ export default function Gallery() {
                         <div className="flex items-center gap-8">
                             <div className="text-[32px] font-bold">{!query ? type === "image" ? "Your images" : "Your tags" : "Search results"}</div>
                             <div className={query ? "hidden" : "flex gap-8"}>
-                                <FaPlusCircle onClick={() => navigate(type === "image" ? "/addimage" : "/addtag")} id="add-button" scale={1} size={20}/>
-                                <FaWrench id="edit-button" scale={1} size={20} />
+                                <FaPlusCircle className={type !== "image" ? "hidden" : ""} onClick={() => navigate("/addimage")} id="add-button" scale={1} size={20}/>
+                                <div className="flex items-center gap-4">
+                                    <FaWrench className={type !== "tag" ? "hidden" : ""} stroke={editMode ? "#7FEF9A" : "black"} strokeWidth={editMode ? 50 : 0} onClick={() => setEditMode(!editMode)} id="edit-button" scale={1} size={20} />
+                                    {editMode ? <div>Select a tag to edit</div> : <div></div>}
+                                </div>
                             </div>
                         </div>
                         <FaList id="sort-button" size={20} scale={1}/>
@@ -157,7 +161,7 @@ export default function Gallery() {
                         </div> :
                         <div id="tag-previews" style={{justifyContent: !tags ? "center" : "flex-start"}} className={query ? "hidden" : "flex w-full items-center flex-wrap gap-25"}>
                             {
-                                tags && tags.length ? tags.map((tag) => <Tag addQueryString={addQueryString} key={tag.tag_id} id={tag.tag_id} title={tag.title} color={tag.color} addedTag={false} tagResult={false} />) 
+                                tags && tags.length ? tags.map((tag) => <Tag editMode={editMode} addQueryString={addQueryString} key={tag.tag_id} id={tag.tag_id} title={tag.title} color={tag.color} addedTag={false} tagResult={false} />) 
                                 : <div className="flex w-full justify-center">Click on the + button to add a tag</div> 
                             }
                         </div>

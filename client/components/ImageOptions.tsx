@@ -3,7 +3,6 @@ import { useNavigate } from "react-router";
 
 interface ImageOptionsProp {
     optionsRef: {current: HTMLDivElement | null}
-    hideInfo: boolean
     imageOptions: boolean
     deletePopup: boolean
     imageID: string | undefined
@@ -13,12 +12,12 @@ interface ImageOptionsProp {
 
 }
 
-export default function ImageOptions({optionsRef, hideInfo, imageOptions, deletePopup, imageID, setImageOptions, setDeletePopup, handleDelete} : ImageOptionsProp) {
+export default function ImageOptions({optionsRef, imageOptions, deletePopup, imageID, setImageOptions, setDeletePopup, handleDelete} : ImageOptionsProp) {
     const navigate = useNavigate();
 
     return (
         <div className="relative" ref={optionsRef}>
-            <FaEllipsisH className={hideInfo ? "hidden" : ""} onClick={() => setImageOptions(!imageOptions)} size={20} scale={20}/>
+            <FaEllipsisH onClick={() => setImageOptions(!imageOptions)} size={20} scale={20}/>
             <div className={imageOptions ? "flex flex-col absolute top-1 left-6 w-[110px] bg-white outline" : "hidden"}>
                 <div onClick={() => {if (imageID) navigate(`http://localhost:5173/editimage/${imageID}`)}} className="cursor-pointer p-2">Edit Image</div>
                 <hr />

@@ -34,7 +34,7 @@ createRoot(document.getElementById('root')!).render(
               <Route path='/addimage' element={<EditImage />} />
               <Route path='/editimage/:id' element={< EditImage />} />
               <Route path='/addtag' element={< EditTag />} />
-              <Route path='/edittag' element={< EditTag />} />
+              <Route path='/edittag/:id' element={< EditTag />} />
             </Routes>
           </QueryClientProvider>
       </ClerkProvider>

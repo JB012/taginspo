@@ -46,8 +46,12 @@ export default function TagSearch({allTags, duplicateTag, addTagToImage} : TagSe
     function handleAddTag(title: string, color: string, edit: boolean, id=v4()) {
         const hasDuplicate = edit ? !duplicateTag(title, id) : !duplicateTag(title);
         if (hasDuplicate) {
-            if (title.trim()) {
-                addTagToImage(id, title, color);    
+            if (title.trim() && allTags) {
+                const existingTagWithTitle = allTags.find((tag) => tag.title === title);
+                
+                addTagToImage(existingTagWithTitle ? existingTagWithTitle.tag_id : id, 
+                    title, existingTagWithTitle ? existingTagWithTitle.color : color);
+
                 setTagInput("");
                 setTagSearchResults([]);
                 setAddTag(false);
@@ -105,7 +109,7 @@ export default function TagSearch({allTags, duplicateTag, addTagToImage} : TagSe
             <div id="tag-input-container" className={addTag ? "flex flex-col" : "hidden"}>
                 <div className="flex gap-6">
                     <div className="flex gap-4">
-                        <input value={tagInput} onChange={handleTagSearch} color={tagInput.includes('&') ? 'red' : 'black'} placeholder="Enter tag here" multiple={false} className="w-[243px] h-[30px] rounded-full px-3 outline outline-black" />
+                        <input value={tagInput} onChange={handleTagSearch} style={{color: tagInput.includes('&') ? "red" : "black"}} placeholder="Enter tag here" multiple={false} className="w-[243px] h-[30px] rounded-full px-3 outline outline-black" />
                         <input type="color" value={color} onChange={(e) => setColor(e.target.value)} />
                     </div>
                     <div className="flex justify-between w-[60px]">

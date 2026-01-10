@@ -87,7 +87,8 @@ export default function EditImage() {
                         const token = await getToken();
                         //TODO: Tag duplicates occurring while editing image.
                         if (token) {
-                            const res = await axios.post(`http://localhost:3000/images/edit/${id}`, {title: title, source: 'fuck', addedTags: JSON.stringify(addedTags)}, 
+                            const res = await axios.post(`http://localhost:3000/images/edit/${id}`, 
+                                {title: title, source: source, addedTags: JSON.stringify(addedTags)}, 
                                 {headers:  { Authorization: `Bearer ${token}`}});
                             
                             if (res.status === 200 && !res.data.includes("Title already exists")) {
@@ -120,7 +121,7 @@ export default function EditImage() {
 
         return () => form?.removeEventListener("submit", handleSubmit);
 
-    }, [addedTags, navigate, submitable, title, getToken, id, queryClient]);
+    }, [addedTags, navigate, submitable, title, getToken, id, queryClient, source]);
 
     function addTagToImage(id: string, title: string, color: string) {
         // created_at will be passed a date once user submits the form

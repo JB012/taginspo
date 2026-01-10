@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { FaCheck, FaEllipsis, FaX } from "react-icons/fa6";
 import {assertIsNode, hexToHSL} from '../utils/utils.ts';
+import { useNavigate } from "react-router";
 
 interface TagProp {
     id: string, 
@@ -8,6 +9,7 @@ interface TagProp {
     color: string, 
     addedTag: boolean, 
     tagResult: boolean,
+    editMode?: boolean,
     addQueryString?: (query: string) => void,
     removeTag?: (id: string) => void,
     editTag?: (id: string, title: string, color: string) => void,
@@ -16,7 +18,7 @@ interface TagProp {
 }
 
 
-export default function Tag({id, title, color, addedTag, tagResult,
+export default function Tag({id, title, color, addedTag, tagResult, editMode,
     addQueryString, removeTag, editTag, duplicateTag, handleAddTag} : TagProp) {
     const [edit, setEdit] = useState(false);
     const [options, setOptions] = useState(false);
@@ -25,6 +27,7 @@ export default function Tag({id, title, color, addedTag, tagResult,
     const [colorLightness, setColorLightness] = useState(hexToHSL(color)?.l ?? 100);
     const optionsRef = useRef<HTMLDivElement | null>(null);
     const tagRef = useRef<HTMLDivElement | null>(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         function handleClickOutside(event: Event) {
@@ -66,11 +69,19 @@ export default function Tag({id, title, color, addedTag, tagResult,
     }
 
     function handleClick() {
+        // Tag search result when adding an image
         if (tagResult) {
             handleAddTag?.(title, color, false, id);
         }
 
-        addQueryString?.(title);
+        if (editMode) {
+            navigate(`/edittag/${id}`);
+        }
+        else {
+            // Clicked tag in "Your tags" section in gallery
+            addQueryString?.(title);
+        }
+        
     }
 
     function handleColorChange(event : React.ChangeEvent<HTMLInputElement>) {

@@ -101,6 +101,7 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
         searchParams.delete("id");
         setSearchParams(searchParams);
         clearID();
+        setHideInfo(false);
     }
 
     function handleLeftArrowClick() {
@@ -125,28 +126,26 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
                             <FaEyeSlash onClick={() => setHideInfo(!hideInfo)} size={20} scale={1} /> :
                             <FaEye onClick={() => setHideInfo(!hideInfo)} size={20} scale={1} />
                         }
-                        <ImageOptions optionsRef={optionsRef} hideInfo={hideInfo} imageOptions={imageOptions} 
+                        <ImageOptions optionsRef={optionsRef} imageOptions={imageOptions} 
                         deletePopup={deletePopup} imageID={imageData?.image_id} setImageOptions={setImageOptions} 
                         setDeletePopup={setDeletePopup} handleDelete={handleDelete}/>
                     </div>    
                 </div>  
                 <div className={hideInfo ? "hidden" : "pb-4"}>{imageData?.title}</div>
-                <FaX className={hideInfo ? "hidden" : ""} onClick={() => closeView()} size={20} scale={1}/>
+                <FaX onClick={() => closeView()} size={20} scale={1}/>
             </div> 
             <div className={`flex w-full h-full items-center justify-between`}>
-                <FaArrowLeft className={hideInfo ? "hidden" : "flex grow"} color={isFirstImage(imageData?.image_id) ? "gainsboro" : "black"} onClick={() => handleLeftArrowClick()} size={20} scale={1} />
+                <FaArrowLeft color={isFirstImage(imageData?.image_id) ? "gainsboro" : "black"} onClick={() => handleLeftArrowClick()} size={20} scale={1} />
                 <div className={`flex items-center flex-col gap-6 ${hideInfo ? " w-full h-full" : ""}`}>
-                    <img id={imageData?.image_id} src={imageData?.url} alt={imageData?.title} className={hideInfo ? "w-full h-full" : "w-[900px] h-[450px]"} />
+                    <img id={imageData?.image_id} src={imageData?.url} alt={imageData?.title} className={`${hideInfo ? "fixed top-1/8 " : ""}w-[900px] h-[450px]`} />
                     <div className={hideInfo ? "hidden" : "flex w-full justify-between"}>
-                        <div className="flex flex-col gap-4">
-                            <div>
-                                <div>Tags:</div>
-                                <div className="flex flex-wrap py-4 w-[500px] gap-4">
-                                    {
-                                        tags ? tags.map((tag) => <Tag key={tag.tag_id} id={tag.tag_id} title={tag.title} color={tag.color} addedTag={false} tagResult={false} />) 
-                                        : ""
-                                    }
-                                </div>
+                        <div className="flex flex-col">
+                            <div>Tags:</div>
+                            <div className="flex flex-wrap py-4 w-[500px] gap-4">
+                                {
+                                    tags ? tags.map((tag) => <Tag key={tag.tag_id} id={tag.tag_id} title={tag.title} color={tag.color} addedTag={false} tagResult={false} />) 
+                                    : ""
+                                }
                             </div>
                         </div>
                         <div className="flex flex-col gap-4">
@@ -155,7 +154,7 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
                         </div>
                     </div> 
                 </div>
-                <FaArrowRight className={hideInfo ? "hidden" : "flex grow"} color={isLastImage(imageData?.image_id) ? "gainsboro" : "black"} onClick={() => handleRightArrowClick()} size={20} scale={1}/>
+                <FaArrowRight color={isLastImage(imageData?.image_id) ? "gainsboro" : "black"} onClick={() => handleRightArrowClick()} size={20} scale={1}/>
             </div>  
         </div>
     )
