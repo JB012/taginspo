@@ -157,13 +157,15 @@ router.post('/edit', async (req, res) => {
     }
 });
 
-router.post('/delete', async (req, res) => {
+router.delete('/delete/:id', async (req, res) => {
     const { isAuthenticated, userId } = getAuth(req);
-    const tagID = req.body.tagID;
+    const tagID = req.params.id;
 
     if (isAuthenticated) {
         try {
             await pool.query(`DELETE FROM tags WHERE user_id=? AND tag_id=?`, [userId, tagID]);
+
+            return res.send('Tag successfully deleted');
         }
         catch (err) {
             console.log(err);
