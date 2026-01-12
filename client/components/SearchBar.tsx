@@ -68,24 +68,50 @@ export default function SearchBar({handleImageClick, addQueryString} : SearchBar
         return tags.includes(tag);
     }
 
+    const handleSearch = useCallback(() => {
+        if (input) {
+            addQueryString(input.trim().replace(' ', '&'));
+            setInput('');
+            setSearchBarResults([]);
+        }
+    }, [addQueryString, input]);
+
     useEffect(() => {
         function handleArrow(event : KeyboardEvent) {
-            if (resultsView && event.key === "ArrowUp") {
+            if (searchBarResults.length > 0 && event.key === "ArrowUp") {
                 if (currentIndex > 0) {
+                    const elem = searchBarResults[currentIndex - 1];
+                    const divElem : HTMLElement | null = document.getElementById(`div-${isImage(elem) ? elem.image_id : elem.tag_id}`);
+
+                    if (divElem) {
+                        divElem.focus();
+                    }
+
                     setCurrentIndex(currentIndex - 1);
                 }
             }
-            else if (resultsView && event.key === "ArrowDown") {
+            else if (searchBarResults.length > 0 && event.key === "ArrowDown") {
                 if (currentIndex < searchBarResults.length - 1) {
+                    const elem = searchBarResults[currentIndex + 1];
+                    const divElem : HTMLElement | null = document.getElementById(`div-${isImage(elem) ? elem.image_id : elem.tag_id}`);
+
+                    if (divElem) {
+                        divElem.focus();
+                    }
+
                     setCurrentIndex(currentIndex + 1);
                 }
             }
-            else if (resultsView && event.key === "Enter") {
-                const elem = searchBarResults[currentIndex];
-                const divElem : HTMLDivElement | null = document.querySelector(`#${isImage(elem) ? elem.image_id : elem.tag_id}`);
-                console.log(divElem);
-                if (divElem) {
-                    divElem.click();
+            else if (event.key === "Enter") {
+                if (searchBarResults.length > 0) {    
+                    const elem = searchBarResults[currentIndex];
+                    const divElem : HTMLElement | null = document.getElementById(`div-${isImage(elem) ? elem.image_id : elem.tag_id}`);
+                    if (divElem) {
+                        divElem.click();
+                    }
+                }
+                else {
+                    handleSearch();
                 }
                 
             }    
@@ -95,7 +121,7 @@ export default function SearchBar({handleImageClick, addQueryString} : SearchBar
 
         return () => document.removeEventListener('keydown', handleArrow);
 
-    }, [currentIndex, isImage, resultsView, searchBarResults, searchBarResults.length]);
+    }, [currentIndex, handleSearch, isImage, searchBarResults, searchBarResults.length]);
 
 
     function numImagesforTag(tagID: string) {
@@ -116,11 +142,11 @@ export default function SearchBar({handleImageClick, addQueryString} : SearchBar
         if (searchType === "tag") {
             const words = input.split(' ');
             const recentWordinInput = words[words.length - 1];
-            const filteredTags = tags.filter((tag) => tag.title.toLowerCase().includes(recentWordinInput.toLowerCase()));
+            const filteredTags = tags.filter((tag) => tag.title.toLowerCase().startsWith(recentWordinInput.toLowerCase()));
             setSearchBarResults(filteredTags);
         }
         else {    
-            const filteredImages = images.filter((image) => image.title.toLowerCase().includes(input.toLowerCase()));
+            const filteredImages = images.filter((image) => image.title.toLowerCase().startsWith(input.toLowerCase()));
             setSearchBarResults(filteredImages);   
         }
     }
@@ -131,21 +157,21 @@ export default function SearchBar({handleImageClick, addQueryString} : SearchBar
         
         setInput(inputArr.join(' ') + ' ');
         setSearchBarResults([]);
-        setResultsView(false);
+        setCurrentIndex(0);
     }
 
     function handleSearchView(elem : ImageType | TagType, index : number) {
         if (isImage(elem)) {
-            return (<div onClick={() => handleImageClick(elem.image_id)} id={elem.image_id} key={elem.image_id} className={`flex justify-between cursor-pointer p-1.5 ${currentIndex === index ? 'backdrop-brightness-95' : ''} hover:backdrop-brightness-95`}>
+            return (<div tabIndex={0} onClick={() => handleImageClick(elem.image_id)} id={`div-${elem.image_id}`} key={elem.image_id} className={`flex focus:outline-0 justify-between cursor-pointer p-1.5 ${currentIndex === index ? 'backdrop-brightness-95' : ''} hover:backdrop-brightness-95`}>
                         <div className="flex items-center gap-4">
                             <FaImage color="blue" size={20} scale={1} />
                             <div>{elem.title}</div>
                         </div>
-                        <div>{elem.created_at}</div>
+                        <div>{`${elem.created_at.substring(5, 7)}\\${elem.created_at.substring(8, 10)}\\${elem.created_at.substring(0,4)}`}</div>
                     </div>)
         }
         else if (isTag(elem)) {
-            return (<div onClick={() => handleTagClick(elem.title)} id={elem.tag_id} key={elem.tag_id} className={`flex justify-between cursor-pointer p-1.5 ${currentIndex === index ? 'backdrop-brightness-95' : ''}  hover:backdrop-brightness-95`}>
+            return (<div tabIndex={0} onClick={() => handleTagClick(elem.title)} id={`div-${elem.tag_id}`} key={elem.tag_id} className={`flex justify-between focus:outline-0 cursor-pointer p-1.5 ${currentIndex === index ? 'backdrop-brightness-95' : ''}  hover:backdrop-brightness-95`}>
                         <div className="flex items-center gap-4">
                             <FaTag color={elem.color} strokeWidth={10} stroke={elem.color === "#ffffff" ? 'black' : undefined} size={20} scale={1} />
                             <div>{elem.title}</div>
@@ -153,12 +179,6 @@ export default function SearchBar({handleImageClick, addQueryString} : SearchBar
                         <div className="text-gray-500">{`${numImagesforTag(elem.tag_id)} images`}</div>
                     </div>)
         }
-    }
-
-    function handleSearch() {
-        addQueryString(input.trim().replace(' ', '&'));
-        setInput('');
-        setSearchBarResults([]);
     }
 
     return ( 
@@ -175,9 +195,9 @@ export default function SearchBar({handleImageClick, addQueryString} : SearchBar
                     </div>
                 </div>
             </div>
-            <div ref={resultsRef} className={!resultsView ? "hidden" : "absolute w-[600px] top-12 left-145 text-ellipsis overflow-hidden whitespace-nowrap bg-white shadow rounded-3xl flex flex-col"}>
+            <div ref={resultsRef} className={!resultsView ? "hidden" : "absolute w-[600px] max-h-[200px] top-12 left-145 text-ellipsis overflow-x-hidden overflow-y-auto whitespace-nowrap bg-white shadow rounded-3xl flex flex-col"}>
                 {
-                    searchBarResults.length ? searchBarResults.slice(0, 11).map((elem, index) => handleSearchView(elem, index)) : ''
+                    searchBarResults.length ? searchBarResults.map((elem, index) => handleSearchView(elem, index)) : ''
                 }
             </div>
         </div>

@@ -30,7 +30,7 @@ router.get("/", async (req, res) => {
     
     if (isAuthenticated) {
         try {
-            const [rows, fields] = await pool.query(`SELECT * FROM images WHERE user_id=? ORDER BY created_at ASC`, [userId]);
+            const [rows, fields] = await pool.query(`SELECT * FROM images WHERE user_id=? ORDER BY created_at DESC`, [userId]);
 
             const imagesJSON = Object.values(JSON.parse(JSON.stringify(rows)));
             const imageURLs = [];
@@ -157,8 +157,8 @@ router.post("/edit/:id", async (req, res) => {
     if (isAuthenticated) {
         try {
             // check if any tags are changed or deleted
-            await pool.query(`UPDATE images SET title=?, source=? WHERE user_id=? AND image_id=?`
-                , [title, source, userId, imageID]);
+            await pool.query(`UPDATE images SET title=?, source=?, edited_at=? WHERE user_id=? AND image_id=?`
+                , [title, source, createDateTime(), userId, imageID]);
 
             const token = await getToken();
 

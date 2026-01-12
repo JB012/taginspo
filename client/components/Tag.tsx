@@ -94,7 +94,7 @@ export default function Tag({id, title, color, addedTag, tagResult, editMode,
     }
 
     return (
-        <div id="tag-container" onClick={() => handleClick()} ref={addedTag && edit ? tagRef : undefined} className="flex gap-1">
+        <div tabIndex={0} id={id} onClick={() => handleClick()} ref={addedTag && edit ? tagRef : undefined} className="flex gap-1 focus:outline-0">
             <div className="text-center cursor-pointer rounded-full h-6 px-3" style={{backgroundColor: editColor, 
             outline: color === "#ffffff" ? "1px solid black" : "", color: "black"}}>
                 {

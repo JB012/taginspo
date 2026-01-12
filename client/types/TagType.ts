@@ -3,4 +3,5 @@ export interface TagType {
     title: string,
     color: string
     created_at: string,
+    edited_at: string | null
 }

@@ -9,7 +9,7 @@ interface ImageProp {
 
 export default function Image({image_id, url, title, handleImageClick} : ImageProp) {
     return (
-        <div className="cursor-pointer" key={image_id} onClick={() => handleImageClick(image_id)}>
+        <div id={image_id} className="cursor-pointer" key={image_id} onClick={() => handleImageClick(image_id)}>
             <img id={image_id} src={url} alt={title} width={200} height={200}/>
         </div>
     )

@@ -132,7 +132,7 @@ router.post('/edit', async (req, res) => {
             }
 
              for (const tag of tagsAlreadyInImage) {
-                await pool.query(`UPDATE tags SET title=?, color=? WHERE user_id=? AND tag_id=?`, [tag.title, tag.color, userId, tag.tag_id]);
+                await pool.query(`UPDATE tags SET title=?, color=?, edited_at=? WHERE user_id=? AND tag_id=?`, [tag.title, tag.color, createDateTime(), userId, tag.tag_id]);
             }
 
             if (tagsToAdd.length > 0) {

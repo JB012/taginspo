@@ -51,6 +51,20 @@ export default function EditImage() {
     }, [id, editImage, getToken, allTags]);
 
     useEffect(() => {
+        function handleEnter(event : KeyboardEvent) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+
+                return false;
+            }
+        }
+        
+        window.addEventListener('keydown', handleEnter);
+
+        return () => window.removeEventListener('keydown', handleEnter);
+    });
+
+    useEffect(() => {
         const form = document.querySelector('form');
 
         function handleSubmit(ev: SubmitEvent) {
@@ -77,7 +91,6 @@ export default function EditImage() {
                                 navigate(url);
                             }
                             else {
-                                console.log('in func')
                                 setError(res.data);
                             }
                         }
@@ -109,7 +122,6 @@ export default function EditImage() {
                     }
                 }
                 catch (err) {
-                    console.log('in catch');
                     if (err instanceof Error) {
                         setError(err.message);
                         setSubmitable(false);
@@ -117,6 +129,7 @@ export default function EditImage() {
                 }
             }
         }
+
         form?.addEventListener('submit', handleSubmit);
 
         return () => form?.removeEventListener("submit", handleSubmit);
@@ -125,7 +138,7 @@ export default function EditImage() {
 
     function addTagToImage(id: string, title: string, color: string) {
         // created_at will be passed a date once user submits the form
-        setAddedTags([...addedTags, {tag_id: id, title: title.trim().replace(' ', '_'), color: color, created_at: ""}]);
+        setAddedTags([...addedTags, {tag_id: id, title: title.trim().replace(' ', '_'), color: color, created_at: "", edited_at: null}]);
     }
 
     function removeTag(id : string) {
@@ -157,7 +170,7 @@ export default function EditImage() {
     }
 
     return (
-        <form encType="multipart/form-data" method="post" className="flex flex-col p-4 gap-10 w-full h-full">
+        <form onSubmit={(e) => {e.preventDefault(); return false}} encType="multipart/form-data" method="post" className="flex flex-col p-4 gap-4 w-full h-full">
             <div className="flex w-full justify-between">
                 <FaArrowLeft onClick={() => navigate(-1)} data-testid="cancel-image" size={20} scale={1} />
                 <button className="rounded-full p-4" style={{backgroundColor:  submitable ? "cyan" : "gainsboro", 
