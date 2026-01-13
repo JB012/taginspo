@@ -74,9 +74,9 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
             }
         }
 
-        document.addEventListener("mousedown", handleClickOutside);
+        window.addEventListener("mousedown", handleClickOutside);
 
-        return () => document.removeEventListener("mousedown", handleClickOutside);
+        return () => window.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
     async function handleDelete() {

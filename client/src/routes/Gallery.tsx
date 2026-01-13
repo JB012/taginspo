@@ -8,6 +8,7 @@ import useImages from '../../utils/useImages';
 import useTags from '../../utils/useTags';
 import Tag from "../../components/Tag";
 import Image from "../../components/Image";
+import SortOptions from "../../components/SortOptions";
 import GalleryHeader from "../../components/GalleryHeader";
 import ViewImage from "./ViewImage";
 import { QueryClientContext } from "@tanstack/react-query";
@@ -20,6 +21,8 @@ export default function Gallery() {
     const query = searchParams.get("query");
     const navigate = useNavigate();
     const [editMode, setEditMode] = useState(false);
+    const [currentOption, setCurrentOption] = useState('created_at');
+    const [viewSortOptions, setViewSortOptions] = useState(false);
 
     const clearURLParams = useCallback(() => {
         const keys = [...searchParams.keys()];
@@ -89,6 +92,25 @@ export default function Gallery() {
         return queryResult;
     }
 
+    function sortList(a: ImageType | TagType, b: ImageType | TagType) {
+        if (currentOption === "created_at") {
+            const dA = new Date(a.created_at);
+            const dB = new Date(a.created_at);
+            
+            console.log(dA.getTime());
+            return dA.getTime() - dB.getTime();
+        }
+        else if (currentOption === "edited_at") {
+            const dA = new Date(a.created_at);
+            const dB = new Date(a.created_at);
+            
+            return dA.getTime() - dB.getTime();
+        }
+        
+        return a.title.toLowerCase().localeCompare(b.title.toLowerCase());
+        
+    }
+
     function deleteImage(id : string) {
         queryClient?.setQueryData(["images"], (prev : ImageType[]) => prev.filter((img) => img.image_id !== id));
     }
@@ -149,13 +171,17 @@ export default function Gallery() {
                                 </div>
                             </div>
                         </div>
-                        <FaList id="sort-button" size={20} scale={1}/>
+                        <div className="flex gap-4">
+                            <FaList onClick={() => setViewSortOptions(!viewSortOptions)} id="sort-button" size={20} scale={1} />
+                            <SortOptions viewSortOptions={viewSortOptions} currentOption={currentOption} closeView={() => setViewSortOptions(false)} handleChangeOption={(option : string) => {setCurrentOption(option)}} />
+                        
+                        </div> 
                     </div>
                     {
                         type === "image" ?    
                         <div id="images-previews" className={query ? "hidden" : "flex w-full items-center flex-wrap gap-25"}>
                             {
-                                images && images.length ? images.map((img) => <Image image_id={img.image_id} key={img.image_id} url={img.url} title={img.title} handleImageClick={handleImageClick} />) : 
+                                images && images.length ? images.sort(sortList).map((img) => <Image image_id={img.image_id} key={img.image_id} url={img.url} title={img.title} handleImageClick={handleImageClick} />) : 
                                 <div className="flex w-full justify-center">Click on the + button to add an image</div> 
                             }
                         </div> :
