@@ -42,6 +42,9 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
     const [deletePopup, setDeletePopup] = useState(false);
     const [hideInfo, setHideInfo] = useState(false);
     const optionsRef = useRef<HTMLDivElement|null>(null);
+    const leftRef = useRef<HTMLDivElement | null>(null);
+    const rightRef = useRef<HTMLDivElement | null>(null);
+    const imgRef = useRef<HTMLImageElement | null>(null);
 
     async function fetchImageByID(id: string) {
         const token = await getToken();
@@ -79,6 +82,48 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
         return () => window.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
+    useEffect(() => {
+        function handleArrowMouseDown(e : Event) {
+            try {
+                assertIsNode(e.target);
+
+                if (leftRef.current && imgRef.current && leftRef.current.contains(e.target) ||
+                    rightRef.current && imgRef.current && rightRef.current.contains(e.target)) {
+                    imgRef.current.style.display = "none";
+                    imgRef.current.style.opacity = "0%";
+                }
+            }
+            catch(e) {
+                console.log(e);
+            }
+        }
+
+        window.addEventListener('mousedown', handleArrowMouseDown);
+
+        return () => window.removeEventListener('mousedown', handleArrowMouseDown);
+    }, []);
+
+     useEffect(() => {
+        function handleArrowMouseUp(e : Event) {
+            try {
+                assertIsNode(e.target);
+
+                if (leftRef.current && imgRef.current && leftRef.current.contains(e.target) ||
+                    rightRef.current && imgRef.current && rightRef.current.contains(e.target)) {
+                    imgRef.current.style.display = "block";
+                    imgRef.current.style.opacity = "100%";
+                }
+            }
+            catch(e) {
+                console.log(e);
+            }
+        }
+
+        window.addEventListener('mouseup', handleArrowMouseUp);
+
+        return () => window.removeEventListener('mouseup', handleArrowMouseUp);
+    }, []);
+
     async function handleDelete() {
         const token = await getToken({skipCache: true});
 
@@ -106,6 +151,7 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
 
     function handleLeftArrowClick() {
         if (!isFirstImage(imageData?.image_id)) {
+
             toPreviousImage(imageData?.image_id);
         }
     }
@@ -135,9 +181,9 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
                 <FaX onClick={() => closeView()} size={20} scale={1}/>
             </div> 
             <div className={`flex w-full h-full items-center justify-between`}>
-                <FaArrowLeft color={isFirstImage(imageData?.image_id) ? "gainsboro" : "black"} onClick={() => handleLeftArrowClick()} size={20} scale={1} />
+                <div ref={leftRef} onClick={() => handleLeftArrowClick()}><FaArrowLeft color={isFirstImage(imageData?.image_id) ? "gainsboro" : "black"} size={20} scale={1} /></div>
                 <div className={`flex items-center flex-col gap-6 ${hideInfo ? " w-full h-full" : ""}`}>
-                    <img id={imageData?.image_id} src={imageData?.url} alt={imageData?.title} className={`${hideInfo ? "fixed top-1/8 " : ""}w-[900px] h-[450px]`} />
+                    <img ref={imgRef} id={imageData?.image_id} src={imageData?.url} alt={imageData?.title} className={`${hideInfo ? "fixed top-1/8 " : ""}w-[900px] h-[450px] transition-all delay-175 origin-center transition-discrete`} />
                     <div className={hideInfo ? "hidden" : "flex w-full justify-between"}>
                         <div className="flex flex-col">
                             <div>Tags:</div>
@@ -154,7 +200,7 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
                         </div>
                     </div> 
                 </div>
-                <FaArrowRight color={isLastImage(imageData?.image_id) ? "gainsboro" : "black"} onClick={() => handleRightArrowClick()} size={20} scale={1}/>
+                <div ref={rightRef} onClick={() => handleRightArrowClick()}><FaArrowRight color={isLastImage(imageData?.image_id) ? "gainsboro" : "black"} onClick={() => handleRightArrowClick()} size={20} scale={1}/></div>
             </div>  
         </div>
     )

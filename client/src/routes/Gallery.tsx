@@ -1,7 +1,7 @@
 import { SignedIn, SignedOut } from "@clerk/clerk-react";
 import { useCallback, useContext, useState } from "react";
 import { FaList, FaPlusCircle, FaWrench } from "react-icons/fa";
-import { useNavigate, useSearchParams } from "react-router";
+import { Navigate, useNavigate, useSearchParams } from "react-router";
 import type { TagType } from "../../types/TagType";
 import type { ImageType } from "../../types/ImageType";
 import useImages from '../../utils/useImages';
@@ -95,16 +95,16 @@ export default function Gallery() {
     function sortList(a: ImageType | TagType, b: ImageType | TagType) {
         if (currentOption === "created_at") {
             const dA = new Date(a.created_at);
-            const dB = new Date(a.created_at);
+            const dB = new Date(b.created_at);
             
-            console.log(dA.getTime());
-            return dA.getTime() - dB.getTime();
+            return dB.getTime() - dA.getTime();
+            
         }
         else if (currentOption === "edited_at") {
             const dA = new Date(a.created_at);
-            const dB = new Date(a.created_at);
+            const dB = new Date(b.created_at);
             
-            return dA.getTime() - dB.getTime();
+            return dB.getTime() - dA.getTime();
         }
         
         return a.title.toLowerCase().localeCompare(b.title.toLowerCase());
@@ -203,7 +203,7 @@ export default function Gallery() {
             </div>
         </SignedIn>
         <SignedOut>
-            Log in on the home page
+            <Navigate to={'/'} />
         </SignedOut>
         </>
     )
