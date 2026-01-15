@@ -16,14 +16,13 @@ import { QueryClientContext } from "@tanstack/react-query";
 export default function Gallery() {
     const queryClient = useContext(QueryClientContext);
     const [searchParams, setSearchParams] = useSearchParams();
-    const [id, setId] = useState(searchParams.get("id"));
     const type = searchParams.get("type");
     const query = searchParams.get("query");
     const navigate = useNavigate();
     const [editMode, setEditMode] = useState(false);
     const [currentOption, setCurrentOption] = useState('created_at');
     const [viewSortOptions, setViewSortOptions] = useState(false);
-
+    
     const clearURLParams = useCallback(() => {
         const keys = [...searchParams.keys()];
         for (const key of keys) {
@@ -37,7 +36,6 @@ export default function Gallery() {
         searchParams.set("type", "image");
         searchParams.append("id", id);
         setSearchParams(searchParams);
-        setId(id);
     }, [searchParams, clearURLParams, setSearchParams]);
 
     const addQueryString = useCallback((query: string) => {
@@ -129,7 +127,6 @@ export default function Gallery() {
             if (currentIndex !== undefined && currentIndex - 1 >= 0) {                
                 searchParams.set("id", images[currentIndex-1].image_id);
                 setSearchParams(searchParams);
-                setId(images[currentIndex-1].image_id);
             }
         }
     }
@@ -141,7 +138,6 @@ export default function Gallery() {
             if (currentIndex !== undefined && currentIndex + 1 <= images.length-1) {
                 searchParams.set("id", images[currentIndex+1].image_id);
                 setSearchParams(searchParams);
-                setId(images[currentIndex+1].image_id);
             }
         }
     }
@@ -152,6 +148,25 @@ export default function Gallery() {
 
     function isLastImage(id: string | undefined) {
         return typeof id !== "undefined" && images?.findIndex((tag) => tag.image_id === id) === images.length-1;
+    }
+
+    function tagsToString(tagIDs: string[]) {
+        let res = '';
+
+        for (const tagID of tagIDs) {
+            const findTag = tags.find((tag) => tag.tag_id === tagID);
+
+            if (findTag) {
+                res += `${findTag.title} `;
+            }
+        }
+
+        return res.trimEnd();
+    }
+
+    function clearID() {
+        searchParams.delete("id");
+        setSearchParams(searchParams);
     }
 
     return (
@@ -181,7 +196,7 @@ export default function Gallery() {
                         type === "image" ?    
                         <div id="images-previews" className={query ? "hidden" : "flex w-full items-center flex-wrap gap-25"}>
                             {
-                                images && images.length ? images.sort(sortList).map((img) => <Image image_id={img.image_id} key={img.image_id} url={img.url} title={img.title} handleImageClick={handleImageClick} />) : 
+                                images && images.length ? images.sort(sortList).map((img) => <Image image_id={img.image_id} key={img.image_id} url={img.url} alt={`${img.title} ${tagsToString(img.tagIDs)}`} handleImageClick={handleImageClick} />) : 
                                 <div className="flex w-full justify-center">Click on the + button to add an image</div> 
                             }
                         </div> :
@@ -194,12 +209,12 @@ export default function Gallery() {
                     }
                     <div id="query-images" className={query ? "flex w-full items-center flex-wrap gap-25" : "hidden"}>
                         {
-                            queryImages && queryImages.length ? queryImages.map((img) => <Image image_id={img.image_id} key={img.image_id} url={img.url} title={img.title} handleImageClick={handleImageClick} />)
+                            queryImages && queryImages.length ? queryImages.map((img) => <Image image_id={img.image_id} key={img.image_id} url={img.url} alt={`${img.title} ${tagsToString(img.tagIDs)}`} handleImageClick={handleImageClick} />)
                             : `No results for ${query?.replace('&', ' ')}`
                         }
                     </div>
                 </div> 
-                <ViewImage id={id} clearID={() => setId("")} isFirstImage={isFirstImage} isLastImage={isLastImage} toPreviousImage={toPreviousImage} toNextImage={toNextImage} deleteImage={deleteImage} />
+                <ViewImage id={searchParams.get('id')} clearID={clearID} isFirstImage={isFirstImage} isLastImage={isLastImage} toPreviousImage={toPreviousImage} toNextImage={toNextImage} deleteImage={deleteImage} tagsToString={tagsToString} />
             </div>
         </SignedIn>
         <SignedOut>

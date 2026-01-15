@@ -14,7 +14,9 @@ const URL = import.meta.env.VITE_DEFAULT_URL
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 10 //10 minutes
+      staleTime: 1000 * 60 * 10, //10 minutes
+      gcTime: 1000 * 60 * 10,
+      refetchInterval: 1000 * 60 * 10
     }
   }
 });

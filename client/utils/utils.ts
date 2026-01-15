@@ -8,6 +8,14 @@ export function isDragEvent(e: Event): e is DragEvent {
     return e.type === "drag";
 }
 
+export function formatDateTime(date : string | undefined) {
+    if (date) {
+        return `${date.substring(5, 7)}/${date.substring(8, 10)}/${date.substring(0,4)}`;
+    }
+
+    return "";
+}
+
 export function hexToHSL(hex : string) {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
 

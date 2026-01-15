@@ -1,10 +1,9 @@
 import { useAuth } from "@clerk/clerk-react";
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router";
 import axios from "axios"; 
 import { FaX } from "react-icons/fa6";
 import { FaArrowLeft, FaArrowRight, FaEye, FaEyeSlash } from "react-icons/fa";
-import { assertIsNode } from "../../utils/utils";
+import { assertIsNode, formatDateTime } from "../../utils/utils";
 import type { TagType } from "../../types/TagType";
 import Tag from "../../components/Tag";
 import ImageOptions from "../../components/ImageOptions";
@@ -19,11 +18,10 @@ interface ViewImageProp {
     deleteImage: (id: string) => void
     toPreviousImage: (currentID : string | undefined) => void
     toNextImage: (currentID : string | undefined) => void
+    tagsToString: (tagIDs : string[]) => string
 }
 
-
-// TODO: Arrow keys
-export default function ViewImage({id, clearID, isFirstImage, isLastImage, deleteImage, toPreviousImage, toNextImage} : ViewImageProp) {
+export default function ViewImage({id, clearID, isFirstImage, isLastImage, deleteImage, toPreviousImage, toNextImage, tagsToString} : ViewImageProp) {
     const imageQuery = useQuery({
         queryKey: ["image", id],
         queryFn: () => (id ? fetchImageByID(id) : null)
@@ -36,7 +34,6 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
 
     const imageData : ImageType | null = imageQuery.data;
     const tags : TagType[] | null = tagQuery.data;
-    const [searchParams, setSearchParams] = useSearchParams();
     const { getToken } = useAuth();
     const [imageOptions, setImageOptions] = useState(false);
     const [deletePopup, setDeletePopup] = useState(false);
@@ -44,7 +41,6 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
     const optionsRef = useRef<HTMLDivElement|null>(null);
     const leftRef = useRef<HTMLDivElement | null>(null);
     const rightRef = useRef<HTMLDivElement | null>(null);
-    const imgRef = useRef<HTMLImageElement | null>(null);
 
     async function fetchImageByID(id: string) {
         const token = await getToken();
@@ -82,46 +78,23 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
         return () => window.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
+
     useEffect(() => {
-        function handleArrowMouseDown(e : Event) {
-            try {
-                assertIsNode(e.target);
-
-                if (leftRef.current && imgRef.current && leftRef.current.contains(e.target) ||
-                    rightRef.current && imgRef.current && rightRef.current.contains(e.target)) {
-                    imgRef.current.style.display = "none";
-                    imgRef.current.style.opacity = "0%";
-                }
+        function handleKeyDown(e : KeyboardEvent) {
+            if (e.key === "Escape") {
+                (document.querySelector('#close-view') as HTMLDivElement).click();
             }
-            catch(e) {
-                console.log(e);
+            else if (e.key === "ArrowLeft") {
+                (document.querySelector('#arrow-left') as HTMLDivElement).click();
+            }
+            else if (e.key === "ArrowRight") {
+                (document.querySelector('#arrow-right') as HTMLDivElement).click();
             }
         }
 
-        window.addEventListener('mousedown', handleArrowMouseDown);
+        window.addEventListener('keydown', handleKeyDown);
 
-        return () => window.removeEventListener('mousedown', handleArrowMouseDown);
-    }, []);
-
-     useEffect(() => {
-        function handleArrowMouseUp(e : Event) {
-            try {
-                assertIsNode(e.target);
-
-                if (leftRef.current && imgRef.current && leftRef.current.contains(e.target) ||
-                    rightRef.current && imgRef.current && rightRef.current.contains(e.target)) {
-                    imgRef.current.style.display = "block";
-                    imgRef.current.style.opacity = "100%";
-                }
-            }
-            catch(e) {
-                console.log(e);
-            }
-        }
-
-        window.addEventListener('mouseup', handleArrowMouseUp);
-
-        return () => window.removeEventListener('mouseup', handleArrowMouseUp);
+        return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
 
     async function handleDelete() {
@@ -143,15 +116,12 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
     }
     
     function closeView() {
-        searchParams.delete("id");
-        setSearchParams(searchParams);
         clearID();
         setHideInfo(false);
     }
 
     function handleLeftArrowClick() {
-        if (!isFirstImage(imageData?.image_id)) {
-
+       if (!isFirstImage(imageData?.image_id)) {
             toPreviousImage(imageData?.image_id);
         }
     }
@@ -159,7 +129,7 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
     function handleRightArrowClick() {
         if (!isLastImage(imageData?.image_id)) {
             toNextImage(imageData?.image_id);
-        }
+        }     
     }
 
     return (
@@ -178,29 +148,30 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
                     </div>    
                 </div>  
                 <div className={hideInfo ? "hidden" : "pb-4"}>{imageData?.title}</div>
-                <FaX onClick={() => closeView()} size={20} scale={1}/>
+                <div id="close-view" onClick={() => closeView()}><FaX size={20} scale={1}/></div>
             </div> 
             <div className={`flex w-full h-full items-center justify-between`}>
-                <div ref={leftRef} onClick={() => handleLeftArrowClick()}><FaArrowLeft color={isFirstImage(imageData?.image_id) ? "gainsboro" : "black"} size={20} scale={1} /></div>
-                <div className={`flex items-center flex-col gap-6 ${hideInfo ? " w-full h-full" : ""}`}>
-                    <img ref={imgRef} id={imageData?.image_id} src={imageData?.url} alt={imageData?.title} className={`${hideInfo ? "fixed top-1/8 " : ""}w-[900px] h-[450px] transition-all delay-175 origin-center transition-discrete`} />
-                    <div className={hideInfo ? "hidden" : "flex w-full justify-between"}>
-                        <div className="flex flex-col">
-                            <div>Tags:</div>
-                            <div className="flex flex-wrap py-4 w-[500px] gap-4">
-                                {
-                                    tags ? tags.map((tag) => <Tag key={tag.tag_id} id={tag.tag_id} title={tag.title} color={tag.color} addedTag={false} tagResult={false} />) 
-                                    : ""
-                                }
-                            </div>
+                <div id="arrow-left" className="fixed top-1/2 left-4" ref={leftRef} onClick={() => handleLeftArrowClick()}>
+                    <FaArrowLeft color={isFirstImage(imageData?.image_id) ? "gainsboro" : "black"} size={20} scale={1} />
+                </div>
+                <div className={`flex justify-end items-center flex-col gap-6 w-full h-full mx-72 pb-12`}>
+                    <img id={imageData?.image_id} src={imageData?.url} alt={`${imageData?.title} ${tagsToString(imageData?.tagIDs ?? [])}`} className={`fixed top-1/8 left-1/5 w-[925px] h-[450px]`} />
+                    <div className={hideInfo ? "hidden" : "flex justify-between w-full"}>
+                        <div className="flex flex-wrap py-4 w-[500px] gap-4">
+                            {
+                                tags ? tags.map((tag) => <Tag key={tag.tag_id} id={tag.tag_id} title={tag.title} color={tag.color} addedTag={false} tagResult={false} />) 
+                                : ""
+                            }
                         </div>
-                        <div className="flex flex-col gap-4">
-                            <div>Date Uploaded:</div>
-                            <div>Source: {imageData?.source}</div>
+                        <div className="flex text-gray-400 flex-col gap-4">
+                            <div className={imageData?.created_at ? "self-end" : "hidden"}>Date Uploaded: {formatDateTime(imageData?.created_at)}</div>
+                            <div className={imageData?.source ? "" : "hidden"}>Source: {imageData?.source}</div>
                         </div>
                     </div> 
                 </div>
-                <div ref={rightRef} onClick={() => handleRightArrowClick()}><FaArrowRight color={isLastImage(imageData?.image_id) ? "gainsboro" : "black"} onClick={() => handleRightArrowClick()} size={20} scale={1}/></div>
+                <div id="arrow-right" className="fixed top-1/2 right-3" ref={rightRef} onClick={() => handleRightArrowClick()}>
+                    <FaArrowRight color={isLastImage(imageData?.image_id) ? "gainsboro" : "black"} onClick={() => handleRightArrowClick()} size={20} scale={1}/>
+                </div>
             </div>  
         </div>
     )

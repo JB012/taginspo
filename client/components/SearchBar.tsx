@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FaTag, FaImage, FaCircleXmark } from "react-icons/fa6"
 import { RxTriangleDown } from "react-icons/rx";
-import { assertIsNode } from "../utils/utils";
+import { assertIsNode, formatDateTime } from "../utils/utils";
 import type { TagType } from "../types/TagType";
 import type { ImageType } from "../types/ImageType";
 import useImages from "../utils/useImages";
@@ -167,7 +167,7 @@ export default function SearchBar({handleImageClick, addQueryString} : SearchBar
                             <FaImage color="blue" size={20} scale={1} />
                             <div>{elem.title}</div>
                         </div>
-                        <div>{`${elem.created_at.substring(5, 7)}\\${elem.created_at.substring(8, 10)}\\${elem.created_at.substring(0,4)}`}</div>
+                        <div>{`${formatDateTime(elem.created_at)}`}</div>
                     </div>)
         }
         else if (isTag(elem)) {
