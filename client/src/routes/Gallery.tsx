@@ -1,17 +1,18 @@
-import { SignedIn, SignedOut } from "@clerk/clerk-react";
+import { SignedIn, SignedOut, useAuth } from "@clerk/clerk-react";
 import { useCallback, useContext, useState } from "react";
 import { FaList, FaPlusCircle, FaWrench } from "react-icons/fa";
 import { Navigate, useNavigate, useSearchParams } from "react-router";
 import type { TagType } from "../../types/TagType";
 import type { ImageType } from "../../types/ImageType";
-import useImages from '../../utils/useImages';
 import useTags from '../../utils/useTags';
 import Tag from "../../components/Tag";
 import Image from "../../components/Image";
 import SortOptions from "../../components/SortOptions";
 import GalleryHeader from "../../components/GalleryHeader";
+import Pagination from '../../components/Pagination';
 import ViewImage from "./ViewImage";
-import { QueryClientContext } from "@tanstack/react-query";
+import { keepPreviousData, QueryClientContext, useQuery } from "@tanstack/react-query";
+import axios from "axios";
 
 export default function Gallery() {
     const queryClient = useContext(QueryClientContext);
@@ -20,8 +21,24 @@ export default function Gallery() {
     const query = searchParams.get("query");
     const navigate = useNavigate();
     const [editMode, setEditMode] = useState(false);
+    const [page, setPage] = useState(0);
     const [currentOption, setCurrentOption] = useState('created_at');
     const [viewSortOptions, setViewSortOptions] = useState(false);
+    const {getToken} = useAuth();
+    
+    async function retrieveImages(page = 0) {
+        const token = await getToken();
+        const res = await axios.get(`http://localhost:3000/images?page=${page}`, 
+            {headers: {Authorization: `Bearer ${token}`}});
+        
+        return res.data;       
+    }
+    
+    const imagesPageQuery = useQuery({
+        queryKey: ['images', page],
+        queryFn: () => retrieveImages(page),
+        placeholderData: keepPreviousData,
+    });
     
     const clearURLParams = useCallback(() => {
         const keys = [...searchParams.keys()];
@@ -53,9 +70,8 @@ export default function Gallery() {
         setSearchParams(searchParams);
     }, [clearURLParams, searchParams, setSearchParams]);
 
-    const imageQuery = useImages();
     const tagQuery = useTags();
-    const images : ImageType[] = imageQuery.data;
+    const images : ImageType[] = imagesPageQuery.data?.data ?? [];
     const tags : TagType[] = tagQuery.data;
     const queryImages = getMatchedImages();
 
@@ -142,6 +158,25 @@ export default function Gallery() {
         }
     }
 
+    function toNextPage() {
+        const maxPages = imagesPageQuery.data.meta.maxPages;
+        if (!imagesPageQuery.isPlaceholderData && page + 1 <= maxPages ) {
+            setPage((old) => old + 1);
+        }
+    }
+
+    function toPreviousPage() {
+        setPage(Math.max(page - 1, 0));
+    }
+
+    function toNthPage(n : number) {
+        const totalPages = imagesPageQuery.data.meta.totalPages;
+
+        if (n <= totalPages) {
+            setPage(n);
+        }
+    }
+
     function isFirstImage(id: string | undefined) {
         return typeof id !== "undefined" && images?.findIndex((tag) => tag.image_id === id) === 0;
     }
@@ -169,6 +204,15 @@ export default function Gallery() {
         setSearchParams(searchParams);
     }
 
+    if (imagesPageQuery.isPending) {
+        return (
+            <div>
+            <svg className="mr-3 size-5 animate-spin ..." viewBox="0 0 24 24">
+            </svg>
+            Loading...
+            </div>
+        )
+    }
     return (
         <>
         <SignedIn>
@@ -215,6 +259,7 @@ export default function Gallery() {
                     </div>
                 </div> 
                 <ViewImage id={searchParams.get('id')} clearID={clearID} isFirstImage={isFirstImage} isLastImage={isLastImage} toPreviousImage={toPreviousImage} toNextImage={toNextImage} deleteImage={deleteImage} tagsToString={tagsToString} />
+                <Pagination page={page} toPreviousPage={toPreviousPage} toNextPage={toNextPage} toNthPage={toNthPage} meta={imagesPageQuery.data?.meta} />
             </div>
         </SignedIn>
         <SignedOut>

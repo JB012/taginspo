@@ -24,40 +24,79 @@ router.use(bodyParser.urlencoded());
 router.use(bodyParser.urlencoded({extended:true}));
 
 
+async function formatImageJSON(imageJSON, userId) {
+    const images = [];
+
+    for (const json of imageJSON) {
+        //const signedURL = createSignedURL(json.title);
+        const [rows, fields] = await pool.query(`SELECT tag_id FROM users_images_tags WHERE user_id=? AND image_id=?`, [userId, json.image_id]);
+
+        const tagIDs = Object.values(JSON.parse(JSON.stringify(rows))).map((json) => json.tag_id);
+            
+        images.push({...json, url: undefined, tagIDs: tagIDs});
+    }
+    
+    return images;
+}
 
 router.get("/", async (req, res) => {
     const { isAuthenticated, userId } = getAuth(req);
     
     if (isAuthenticated) {
-        try {
-            const [rows, fields] = await pool.query(`SELECT * FROM images WHERE user_id=? ORDER BY created_at DESC`, [userId]);
+        let currentPageNum = Number(req.query.page);
 
-            const imagesJSON = Object.values(JSON.parse(JSON.stringify(rows)));
-            const imageURLs = [];
+        if (!isNaN(currentPageNum)) {
+            const limit = 20;
 
-            if (imagesJSON.length > 0) {
-                for (const json of imagesJSON) {
-                    //const signedURL = createSignedURL(json.title);
-                    const [rows, fields] = await pool.query(`SELECT tag_id FROM users_images_tags WHERE user_id=? AND image_id=?`, [userId, json.image_id]);
+            try {
+                const [rows] = await pool.query(`SELECT COUNT(*) as count FROM images`);
 
-                    const tagIDs = Object.values(JSON.parse(JSON.stringify(rows))).map((json) => json.tag_id);
-                        
-                    imageURLs.push({...json, url: undefined, tagIDs: tagIDs});
+                const totalCount = rows[0].count;
+
+                const totalPages = Math.ceil(totalCount / 20);
+
+                if (currentPageNum <= totalPages) {
+                    const offset = currentPageNum === 0 ? 0 : (currentPageNum * limit) + 1;
+
+                    const [rows] = await pool.query(`SELECT * FROM images WHERE user_id=? LIMIT ${limit} OFFSET ${offset}`, [userId]);                    
+                    const imagesJSON = Object.values(JSON.parse(JSON.stringify(rows)));
+                    const images = await formatImageJSON(imagesJSON, userId);
                     
-                }   
+                    const meta = {
+                        "page": currentPageNum,
+                        "size": limit,
+                        "totalPages": totalPages 
+                    }
+
+                    res.send({data: images, meta: meta});
+                }
+                else {
+                    res.status(404).send('Page not found');
+                }
             }
-            
-            return res.send(imageURLs);  
-        }
-        catch(err) {
-            if (err instanceof NoSuchKey) {
-                console.error(`Error from S3 while getting object "${key}" from "${bucketName}". No such key exists.`);
-            } 
-            else if (err instanceof S3ServiceException) {
-                console.error( `Error from S3 while getting object from ${bucketName}.  ${err.name}: ${err.message}`);
-            } 
-            else {
+            catch (err) {
                 console.log(err);
+            }
+        }
+        else {
+            try {
+                const [rows, fields] = await pool.query(`SELECT * FROM images WHERE user_id=? ORDER BY created_at DESC`, [userId]);
+
+                const imagesJSON = Object.values(JSON.parse(JSON.stringify(rows)));
+                const images = await formatImageJSON(imagesJSON, userId);
+            
+                return res.send(images);  
+            }
+            catch(err) {
+                if (err instanceof NoSuchKey) {
+                    console.error(`Error from S3 while getting object "${key}" from "${bucketName}". No such key exists.`);
+                } 
+                else if (err instanceof S3ServiceException) {
+                    console.error( `Error from S3 while getting object from ${bucketName}.  ${err.name}: ${err.message}`);
+                } 
+                else {
+                    console.log(err);
+                }
             }
         }
     }
