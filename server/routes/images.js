@@ -53,12 +53,12 @@ router.get("/", async (req, res) => {
 
                 const totalCount = rows[0].count;
 
-                const totalPages = Math.ceil(totalCount / 20);
+                const totalPages = Math.ceil(totalCount / limit);
 
                 if (currentPageNum <= totalPages) {
                     const offset = currentPageNum === 0 ? 0 : (currentPageNum * limit) + 1;
 
-                    const [rows] = await pool.query(`SELECT * FROM images WHERE user_id=? LIMIT ${limit} OFFSET ${offset}`, [userId]);                    
+                    const [rows] = await pool.query(`SELECT * FROM images WHERE user_id=? ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`, [userId]);                    
                     const imagesJSON = Object.values(JSON.parse(JSON.stringify(rows)));
                     const images = await formatImageJSON(imagesJSON, userId);
                     

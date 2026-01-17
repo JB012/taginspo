@@ -20,10 +20,10 @@ export default function Pagination({page, meta, toPreviousPage, toNextPage, toNt
         
         if (currPage < totalPages) {
             if (currPage + 10 <= totalPages) {
-                arr = [...Array(10).keys()].map( i => (currPage + i));
+                arr = [...Array(10).keys()].map( i => (currPage + i - 1));
             }
             else {
-                arr = [...Array(totalPages - currPage).keys()].map(i => (currPage + i));
+                arr = [...Array(totalPages).keys()];
             }
         }
 

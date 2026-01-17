@@ -159,8 +159,9 @@ export default function Gallery() {
     }
 
     function toNextPage() {
-        const maxPages = imagesPageQuery.data.meta.maxPages;
-        if (!imagesPageQuery.isPlaceholderData && page + 1 <= maxPages ) {
+        const totalPages = imagesPageQuery.data.meta.totalPages;
+
+        if (!imagesPageQuery.isPlaceholderData && page + 1 < totalPages) {
             setPage((old) => old + 1);
         }
     }
