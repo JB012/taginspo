@@ -170,14 +170,6 @@ export default function Gallery() {
         setPage(Math.max(page - 1, 0));
     }
 
-    function toNthPage(n : number) {
-        const totalPages = imagesPageQuery.data.meta.totalPages;
-
-        if (n <= totalPages) {
-            setPage(n);
-        }
-    }
-
     function isFirstImage(id: string | undefined) {
         return typeof id !== "undefined" && images?.findIndex((tag) => tag.image_id === id) === 0;
     }
@@ -260,7 +252,7 @@ export default function Gallery() {
                     </div>
                 </div> 
                 <ViewImage id={searchParams.get('id')} clearID={clearID} isFirstImage={isFirstImage} isLastImage={isLastImage} toPreviousImage={toPreviousImage} toNextImage={toNextImage} deleteImage={deleteImage} tagsToString={tagsToString} />
-                <Pagination page={page} toPreviousPage={toPreviousPage} toNextPage={toNextPage} toNthPage={toNthPage} meta={imagesPageQuery.data?.meta} />
+                <Pagination page={page} toPreviousPage={toPreviousPage} toNextPage={toNextPage} meta={imagesPageQuery.data?.meta} />
             </div>
         </SignedIn>
         <SignedOut>
