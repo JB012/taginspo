@@ -133,7 +133,7 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
     }
 
     return (
-        <div className={id ? "absolute bg-white self-center flex flex-col p-4 w-full h-full" : "hidden"}>
+        <div className={id ? "fixed bg-white self-center flex flex-col p-4 w-full h-full" : "hidden"}>
             <div className="flex justify-between">
                 <div className="flex">
                     <div className="flex gap-4">

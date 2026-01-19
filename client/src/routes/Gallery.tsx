@@ -1,5 +1,5 @@
-import { SignedIn, SignedOut, useAuth } from "@clerk/clerk-react";
-import { useCallback, useContext, useState } from "react";
+import { SignedIn, SignedOut } from "@clerk/clerk-react";
+import { useCallback, useContext, useState, useMemo } from "react";
 import { FaList, FaPlusCircle, FaWrench } from "react-icons/fa";
 import { Navigate, useNavigate, useSearchParams } from "react-router";
 import type { TagType } from "../../types/TagType";
@@ -11,8 +11,8 @@ import SortOptions from "../../components/SortOptions";
 import GalleryHeader from "../../components/GalleryHeader";
 import Pagination from '../../components/Pagination';
 import ViewImage from "./ViewImage";
-import { keepPreviousData, QueryClientContext, useQuery } from "@tanstack/react-query";
-import axios from "axios";
+import { QueryClientContext } from "@tanstack/react-query";
+import useImages from "../../utils/useImages";
 
 export default function Gallery() {
     const queryClient = useContext(QueryClientContext);
@@ -22,24 +22,68 @@ export default function Gallery() {
     const navigate = useNavigate();
     const [editMode, setEditMode] = useState(false);
     const [page, setPage] = useState(0);
+    const imageLimitPerPage = 2;
+    const tagsLimitPerPage = 40;
+    const offset = page === 0 ? 0 : (page * (type === "image" ? imageLimitPerPage : tagsLimitPerPage)) + 1;
     const [currentOption, setCurrentOption] = useState('created_at');
     const [viewSortOptions, setViewSortOptions] = useState(false);
-    const {getToken} = useAuth();
+    const imageQuery = useImages();    
+    const tagQuery = useTags();
+    const images : ImageType[] = useMemo(() => {
+        return imageQuery.data ?? [];
+    }, [imageQuery.data]);
     
-    async function retrieveImages(page = 0) {
-        const token = await getToken();
-        const res = await axios.get(`http://localhost:3000/images?page=${page}`, 
-            {headers: {Authorization: `Bearer ${token}`}});
-        
-        return res.data;       
+    const tags : TagType[] = useMemo(() => {
+        return tagQuery.data ?? [];
+    }, [tagQuery.data]);
+
+    function containsAllTags(imageTagIDs: string[], queryTagIDs: string[]) : boolean {
+        for (const id of queryTagIDs) {
+            if (!imageTagIDs.includes(id)) {
+                return false;
+            }
+        } 
+
+        return true;
     }
     
-    const imagesPageQuery = useQuery({
-        queryKey: ['images', page],
-        queryFn: () => retrieveImages(page),
-        placeholderData: keepPreviousData,
-    });
-    
+    const getMatchedImages = useCallback(() => {
+        const queryResult : ImageType[] = [];
+        const tagIDs : string[] = [];
+        if (images && tags && query) {
+            const queries = query.split('&');
+            
+            for (const query of queries) {
+                const findTag = tags.find((tag) => tag.title === query);
+                
+                if (findTag) {
+                    tagIDs.push(findTag.tag_id);
+                }
+            }
+
+            const matchedImages = images.filter((img) => containsAllTags(img.tagIDs, tagIDs));
+            queryResult.push(...matchedImages);
+        }
+        
+        return queryResult;
+    }, [images, query, tags]);
+
+    const queryImages = getMatchedImages();
+
+    const totalPages = useMemo(() => {
+        const imagesPerPage = 20;
+        const tagsPerPage = 40;
+        if (type === "images") {
+            return Math.ceil(images.length / imagesPerPage);
+        }
+        else if (type === "tags") {
+            return Math.ceil(images.length / tagsPerPage);
+        }
+
+        return Math.ceil(queryImages.length / imagesPerPage);
+        
+    }, [images.length, queryImages.length, type]);
+
     const clearURLParams = useCallback(() => {
         const keys = [...searchParams.keys()];
         for (const key of keys) {
@@ -70,41 +114,6 @@ export default function Gallery() {
         setSearchParams(searchParams);
     }, [clearURLParams, searchParams, setSearchParams]);
 
-    const tagQuery = useTags();
-    const images : ImageType[] = imagesPageQuery.data?.data ?? [];
-    const tags : TagType[] = tagQuery.data;
-    const queryImages = getMatchedImages();
-
-    function containsAllTags(imageTagIDs: string[], queryTagIDs: string[]) : boolean {
-        for (const id of queryTagIDs) {
-            if (!imageTagIDs.includes(id)) {
-                return false;
-            }
-        } 
-
-        return true;
-    }
-
-    function getMatchedImages() : ImageType[] {
-        const queryResult : ImageType[] = [];
-        const tagIDs : string[] = [];
-        if (images && tags && query) {
-            const queries = query.split('&');
-            
-            for (const query of queries) {
-                const findTag = tags.find((tag) => tag.title === query);
-                
-                if (findTag) {
-                    tagIDs.push(findTag.tag_id);
-                }
-            }
-
-            const matchedImages = images.filter((img) => containsAllTags(img.tagIDs, tagIDs));
-            queryResult.push(...matchedImages);
-        }
-        
-        return queryResult;
-    }
 
     function sortList(a: ImageType | TagType, b: ImageType | TagType) {
         if (currentOption === "created_at") {
@@ -134,6 +143,7 @@ export default function Gallery() {
        
         searchParams.set("type", type === "image" ? "tag" : "image");
         setSearchParams(searchParams);
+        setPage(0);
     }
 
     function toPreviousImage(currentID: string | undefined) {
@@ -159,9 +169,7 @@ export default function Gallery() {
     }
 
     function toNextPage() {
-        const totalPages = imagesPageQuery.data.meta.totalPages;
-
-        if (!imagesPageQuery.isPlaceholderData && page + 1 < totalPages) {
+        if (page + 1 < totalPages) {
             setPage((old) => old + 1);
         }
     }
@@ -197,19 +205,11 @@ export default function Gallery() {
         setSearchParams(searchParams);
     }
 
-    if (imagesPageQuery.isPending) {
-        return (
-            <div>
-            <svg className="mr-3 size-5 animate-spin ..." viewBox="0 0 24 24">
-            </svg>
-            Loading...
-            </div>
-        )
-    }
+    
     return (
         <>
         <SignedIn>
-            <div className="flex flex-col w-full h-full px-16">
+            <div className={`flex ${searchParams.get("id") ? "fixed" : ""} flex-col w-full h-full px-16`}>
                  <GalleryHeader type={type} addQueryString={addQueryString} handleImageClick={handleImageClick} handleGalleryType={handleGalleryType} />
                  <div className="flex flex-col w-full">
                     <div className="flex w-full justify-between py-10 items-center">
@@ -231,28 +231,28 @@ export default function Gallery() {
                     </div>
                     {
                         type === "image" ?    
-                        <div id="images-previews" className={query ? "hidden" : "flex w-full items-center flex-wrap gap-25"}>
+                        <div id="images-previews" className={query ? "hidden" : "grid grid-cols-5 w-full"}>
                             {
-                                images && images.length ? images.sort(sortList).map((img) => <Image image_id={img.image_id} key={img.image_id} url={img.url} alt={`${img.title} ${tagsToString(img.tagIDs)}`} handleImageClick={handleImageClick} />) : 
+                                images && images.length ? images.sort(sortList).slice(offset, offset + imageLimitPerPage).map((img) => <Image image_id={img.image_id} key={img.image_id} url={img.url} alt={`${img.title} ${tagsToString(img.tagIDs)}`} handleImageClick={handleImageClick} />) : 
                                 <div className="flex w-full justify-center">Click on the + button to add an image</div> 
                             }
                         </div> :
                         <div id="tag-previews" style={{justifyContent: !tags ? "center" : "flex-start"}} className={query ? "hidden" : "flex w-full items-center flex-wrap gap-25"}>
                             {
-                                tags && tags.length ? tags.map((tag) => <Tag editMode={editMode} addQueryString={addQueryString} key={tag.tag_id} id={tag.tag_id} title={tag.title} color={tag.color} addedTag={false} tagResult={false} />) 
+                                tags && tags.length ? tags.sort(sortList).slice(offset, offset + tagsLimitPerPage).map((tag) => <Tag editMode={editMode} addQueryString={addQueryString} key={tag.tag_id} id={tag.tag_id} title={tag.title} color={tag.color} addedTag={false} tagResult={false} />) 
                                 : <div className="flex w-full justify-center">Click on the + button to add a tag</div> 
                             }
                         </div>
                     }
-                    <div id="query-images" className={query ? "flex w-full items-center flex-wrap gap-25" : "hidden"}>
+                    <div id="query-images" className={query ? "grid grid-cols-5 w-full" : "hidden"}>
                         {
-                            queryImages && queryImages.length ? queryImages.map((img) => <Image image_id={img.image_id} key={img.image_id} url={img.url} alt={`${img.title} ${tagsToString(img.tagIDs)}`} handleImageClick={handleImageClick} />)
+                            queryImages && queryImages.length ? queryImages.sort(sortList).slice(offset, offset + imageLimitPerPage).map((img) => <Image image_id={img.image_id} key={img.image_id} url={img.url} alt={`${img.title} ${tagsToString(img.tagIDs)}`} handleImageClick={handleImageClick} />)
                             : `No results for ${query?.replace('&', ' ')}`
                         }
                     </div>
                 </div> 
                 <ViewImage id={searchParams.get('id')} clearID={clearID} isFirstImage={isFirstImage} isLastImage={isLastImage} toPreviousImage={toPreviousImage} toNextImage={toNextImage} deleteImage={deleteImage} tagsToString={tagsToString} />
-                <Pagination page={page} toPreviousPage={toPreviousPage} toNextPage={toNextPage} meta={imagesPageQuery.data?.meta} />
+                <Pagination page={page} toPreviousPage={toPreviousPage} toNextPage={toNextPage} totalPages={totalPages} />
             </div>
         </SignedIn>
         <SignedOut>

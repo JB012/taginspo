@@ -46,7 +46,7 @@ router.get("/", async (req, res) => {
         let currentPageNum = Number(req.query.page);
 
         if (!isNaN(currentPageNum)) {
-            const limit = 20;
+            const limit = 10;
 
             try {
                 const [rows] = await pool.query(`SELECT COUNT(*) as count FROM images`);

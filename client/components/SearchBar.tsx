@@ -104,6 +104,7 @@ export default function SearchBar({handleImageClick, addQueryString} : SearchBar
             }
             else if (event.key === "Enter") {
                 if (searchBarResults.length > 0) {    
+                    // Clicking tag
                     const elem = searchBarResults[currentIndex];
                     const divElem : HTMLElement | null = document.getElementById(`div-${isImage(elem) ? elem.image_id : elem.tag_id}`);
                     if (divElem) {
