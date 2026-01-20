@@ -183,9 +183,9 @@ export default function SearchBar({handleImageClick, addQueryString} : SearchBar
     }
 
     return ( 
-        <div className="flex flex-col">
+        <div className="flex shrink flex-col">
             <div className="flex items-center relative">
-                <input value={input} onFocus={() => setResultsView(true)} onChange={(e) => handleInput(e.target.value)} className="flex outline outline-black rounded-full w-[600px] pl-20 pr-25 h-[39px]" />        
+                <input value={input} onFocus={() => setResultsView(true)} onChange={(e) => handleInput(e.target.value)} className="flex outline outline-black rounded-full xl:w-[600px] lg:w-[400px] md:w-[300px] pl-20 pr-25 h-[39px]" />        
                 <FaCircleXmark onClick={() => setInput("")} size={20} className="absolute right-15"/>
                 <FaSearch onClick={() => handleSearch()} size={20} className="absolute right-5" />
                 <div id="selected-option" className="absolute left-5 flex items-center gap-2">

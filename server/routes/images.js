@@ -43,62 +43,26 @@ router.get("/", async (req, res) => {
     const { isAuthenticated, userId } = getAuth(req);
     
     if (isAuthenticated) {
-        let currentPageNum = Number(req.query.page);
+        try {
+            const [rows, fields] = await pool.query(`SELECT * FROM images WHERE user_id=? ORDER BY created_at DESC`, [userId]);
 
-        if (!isNaN(currentPageNum)) {
-            const limit = 10;
-
-            try {
-                const [rows] = await pool.query(`SELECT COUNT(*) as count FROM images`);
-
-                const totalCount = rows[0].count;
-
-                const totalPages = Math.ceil(totalCount / limit);
-
-                if (currentPageNum <= totalPages) {
-                    const offset = currentPageNum === 0 ? 0 : (currentPageNum * limit) + 1;
-
-                    const [rows] = await pool.query(`SELECT * FROM images WHERE user_id=? ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`, [userId]);                    
-                    const imagesJSON = Object.values(JSON.parse(JSON.stringify(rows)));
-                    const images = await formatImageJSON(imagesJSON, userId);
-                    
-                    const meta = {
-                        "page": currentPageNum,
-                        "size": limit,
-                        "totalPages": totalPages 
-                    }
-
-                    res.send({data: images, meta: meta});
-                }
-                else {
-                    res.status(404).send('Page not found');
-                }
-            }
-            catch (err) {
+            const imagesJSON = Object.values(JSON.parse(JSON.stringify(rows)));
+            const images = await formatImageJSON(imagesJSON, userId);
+        
+            return res.send(images);  
+        }
+        catch(err) {
+            if (err instanceof NoSuchKey) {
+                console.error(`Error from S3 while getting object "${key}" from "${bucketName}". No such key exists.`);
+            } 
+            else if (err instanceof S3ServiceException) {
+                console.error( `Error from S3 while getting object from ${bucketName}.  ${err.name}: ${err.message}`);
+            } 
+            else {
                 console.log(err);
             }
         }
-        else {
-            try {
-                const [rows, fields] = await pool.query(`SELECT * FROM images WHERE user_id=? ORDER BY created_at DESC`, [userId]);
-
-                const imagesJSON = Object.values(JSON.parse(JSON.stringify(rows)));
-                const images = await formatImageJSON(imagesJSON, userId);
-            
-                return res.send(images);  
-            }
-            catch(err) {
-                if (err instanceof NoSuchKey) {
-                    console.error(`Error from S3 while getting object "${key}" from "${bucketName}". No such key exists.`);
-                } 
-                else if (err instanceof S3ServiceException) {
-                    console.error( `Error from S3 while getting object from ${bucketName}.  ${err.name}: ${err.message}`);
-                } 
-                else {
-                    console.log(err);
-                }
-            }
-        }
+        
     }
     else {
         return res.status(401).send('User not authenticated');

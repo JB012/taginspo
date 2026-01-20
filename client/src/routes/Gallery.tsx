@@ -22,7 +22,7 @@ export default function Gallery() {
     const navigate = useNavigate();
     const [editMode, setEditMode] = useState(false);
     const [page, setPage] = useState(0);
-    const imageLimitPerPage = 2;
+    const imageLimitPerPage = 20;
     const tagsLimitPerPage = 40;
     const offset = page === 0 ? 0 : (page * (type === "image" ? imageLimitPerPage : tagsLimitPerPage)) + 1;
     const [currentOption, setCurrentOption] = useState('created_at');
@@ -71,18 +71,16 @@ export default function Gallery() {
     const queryImages = getMatchedImages();
 
     const totalPages = useMemo(() => {
-        const imagesPerPage = 20;
-        const tagsPerPage = 40;
-        if (type === "images") {
-            return Math.ceil(images.length / imagesPerPage);
+        if (type === "image") {
+            return Math.ceil(images.length / imageLimitPerPage);
         }
-        else if (type === "tags") {
-            return Math.ceil(images.length / tagsPerPage);
+        else if (type === "tag") {
+            return Math.ceil(tags.length / tagsLimitPerPage);
         }
 
-        return Math.ceil(queryImages.length / imagesPerPage);
+        return Math.ceil(queryImages.length / imageLimitPerPage);
         
-    }, [images.length, queryImages.length, type]);
+    }, [images.length, queryImages.length, tags.length, type]);
 
     const clearURLParams = useCallback(() => {
         const keys = [...searchParams.keys()];
@@ -205,7 +203,6 @@ export default function Gallery() {
         setSearchParams(searchParams);
     }
 
-    
     return (
         <>
         <SignedIn>
@@ -231,10 +228,20 @@ export default function Gallery() {
                     </div>
                     {
                         type === "image" ?    
-                        <div id="images-previews" className={query ? "hidden" : "grid grid-cols-5 w-full"}>
+                        <div id="images-previews" className={query ? "hidden" : "grid lg:grid-cols-5 md:grid-cols-4 sm:grid-cols-3 w-full"}>
                             {
-                                images && images.length ? images.sort(sortList).slice(offset, offset + imageLimitPerPage).map((img) => <Image image_id={img.image_id} key={img.image_id} url={img.url} alt={`${img.title} ${tagsToString(img.tagIDs)}`} handleImageClick={handleImageClick} />) : 
-                                <div className="flex w-full justify-center">Click on the + button to add an image</div> 
+                                !imageQuery.isPending ?
+                                (
+                                    images && images.length ? images.sort(sortList).slice(offset, offset + imageLimitPerPage).map((img) => <Image image_id={img.image_id} key={img.image_id} url={img.url} alt={`${img.title} ${tagsToString(img.tagIDs)}`} handleImageClick={handleImageClick} />) : 
+                                    <div className="flex w-full justify-center">Click on the + button to add an image</div>
+                                )  
+                                :
+                                (
+                                    <svg className="absolute top-1/2 left-1/2 animate-spin -ml-1 mr-3 h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                )
                             }
                         </div> :
                         <div id="tag-previews" style={{justifyContent: !tags ? "center" : "flex-start"}} className={query ? "hidden" : "flex w-full items-center flex-wrap gap-25"}>
@@ -244,7 +251,7 @@ export default function Gallery() {
                             }
                         </div>
                     }
-                    <div id="query-images" className={query ? "grid grid-cols-5 w-full" : "hidden"}>
+                    <div id="query-images" className={query ? "grid grid-cols-5 lg:grid-cols-4 w-full" : "hidden"}>
                         {
                             queryImages && queryImages.length ? queryImages.sort(sortList).slice(offset, offset + imageLimitPerPage).map((img) => <Image image_id={img.image_id} key={img.image_id} url={img.url} alt={`${img.title} ${tagsToString(img.tagIDs)}`} handleImageClick={handleImageClick} />)
                             : `No results for ${query?.replace('&', ' ')}`
