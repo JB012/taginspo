@@ -7,7 +7,7 @@ interface PaginationProp {
 
 export default function Pagination({page, totalPages, toPreviousPage, toNextPage} : PaginationProp) {
     return (
-         <div className="max-w-7xl mx-auto my-18 px-4 text-gray-600 md:px-8">
+         <div className="max-w-7xl mx-auto my-12 px-4 text-gray-600 md:px-8">
             <div className="flex gap-4 items-center justify-between text-sm text-gray-600 font-medium">
                 <button onClick={() => toPreviousPage()} disabled={page === 0} className="px-4 py-2 border rounded-lg duration-150 hover:bg-gray-50">
                     Previous

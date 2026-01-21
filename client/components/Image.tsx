@@ -9,8 +9,8 @@ interface ImageProp {
 
 export default function Image({image_id, url, alt, handleImageClick} : ImageProp) {
     return (
-        <div id={image_id} className="cursor-pointer" key={image_id} onClick={() => handleImageClick(image_id)}>
-            <img id={image_id} src={url} alt={alt} width={200} height={200}/>
+        <div id={image_id} className="flex justify-center items-center cursor-pointer m-2 w-[200px] h-[200px] xxs:w-32 xxs:h-32" key={image_id} onClick={() => handleImageClick(image_id)}>
+            <img className="max-w-[200px] max-h-[200px] xxs:max-w-32 xxs:max-h-32 object-contain" id={image_id} src={url} alt={alt} />
         </div>
     )
 }

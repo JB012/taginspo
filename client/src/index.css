@@ -1,25 +1,8 @@
 @import "tailwindcss";
 
-@media (width <= 920px) {
-    .feature {
-        display: flex;
-        flex-direction: column;
-        text-align: center;
-        gap: 100px;
-    }
-
-    #feature-2 {
-        display: flex;
-        flex-direction: column-reverse;
-    }
-}
-
-@media (width <= 608px) {
-    #hook-section {
-        display: flex;
-        flex-direction: column;
-        padding-bottom: 100px;
-    }
+@theme {
+    --breakpoint-xs: 30rem;
+    --breakpoint-xxs: 20rem;
 }
 
 ::-webkit-file-upload-button {

@@ -206,12 +206,12 @@ export default function Gallery() {
     return (
         <>
         <SignedIn>
-            <div className={`flex ${searchParams.get("id") ? "fixed" : ""} flex-col w-full h-full px-16`}>
+            <div className={`flex flex-col w-full h-full lg:px-16 xxs:px-4 ${searchParams.get("id") ? "fixed" : ""}`}>
                  <GalleryHeader type={type} addQueryString={addQueryString} handleImageClick={handleImageClick} handleGalleryType={handleGalleryType} />
                  <div className="flex flex-col w-full">
-                    <div className="flex w-full justify-between py-10 items-center">
+                    <div className="flex grow w-full justify-between xs:py-10 xxs:py-4 items-center">
                         <div className="flex items-center gap-8">
-                            <div className="text-[32px] font-bold">{!query ? type === "image" ? "Your images" : "Your tags" : "Search results"}</div>
+                            <div className="text-[32px] xxs:text-[24px] font-bold">{!query ? type === "image" ? "Your images" : "Your tags" : "Search results"}</div>
                             <div className={query ? "hidden" : "flex gap-8"}>
                                 <FaPlusCircle className={type !== "image" ? "hidden" : ""} onClick={() => navigate("/addimage")} id="add-button" scale={1} size={20}/>
                                 <div className="flex items-center gap-4">
@@ -228,7 +228,7 @@ export default function Gallery() {
                     </div>
                     {
                         type === "image" ?    
-                        <div id="images-previews" className={query ? "hidden" : "grid lg:grid-cols-5 md:grid-cols-4 sm:grid-cols-3 w-full"}>
+                        <div id="images-previews" className={query ? "hidden" : "flex flex-wrap w-full"}>
                             {
                                 !imageQuery.isPending ?
                                 (

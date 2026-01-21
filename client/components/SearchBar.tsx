@@ -7,7 +7,6 @@ import type { TagType } from "../types/TagType";
 import type { ImageType } from "../types/ImageType";
 import useImages from "../utils/useImages";
 import useTags from "../utils/useTags";
-import { FaSearch } from "react-icons/fa";
 
 interface SearchBarProp {
     handleImageClick: (id: string) => void
@@ -185,9 +184,8 @@ export default function SearchBar({handleImageClick, addQueryString} : SearchBar
     return ( 
         <div className="flex shrink flex-col">
             <div className="flex items-center relative">
-                <input value={input} onFocus={() => setResultsView(true)} onChange={(e) => handleInput(e.target.value)} className="flex outline outline-black rounded-full xl:w-[600px] lg:w-[400px] md:w-[300px] pl-20 pr-25 h-[39px]" />        
-                <FaCircleXmark onClick={() => setInput("")} size={20} className="absolute right-15"/>
-                <FaSearch onClick={() => handleSearch()} size={20} className="absolute right-5" />
+                <input value={input} onFocus={() => setResultsView(true)} onChange={(e) => handleInput(e.target.value)} className="flex outline outline-black rounded-full xl:w-[600px] lg:w-[400px] md:w-[300px] xxs:w-[200px] pl-20 pr-10 h-[39px]" />        
+                <FaCircleXmark onClick={() => setInput("")} size={20} className="absolute right-5"/>
                 <div id="selected-option" className="absolute left-5 flex items-center gap-2">
                     <RxTriangleDown id="open-search-type-list" onClick={() => setShowList(!showList)} size={18} scale={1} />
                     <div ref={listRef} id="search-type-list" className={`flex ${searchType === "tag" ? "flex-col bg-green-300" : "flex-col-reverse bg-blue-300"} absolute left-5 -top-2 gap-5 p-2 rounded-full`}>
