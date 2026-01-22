@@ -170,25 +170,25 @@ export default function EditImage() {
     }
 
     return (
-        <form onSubmit={(e) => {e.preventDefault(); return false}} encType="multipart/form-data" method="post" className="flex flex-col p-4 gap-4 w-full h-full">
-            <div className="flex w-full justify-between">
+        <form onSubmit={(e) => {e.preventDefault(); return false}} encType="multipart/form-data" method="post" className="flex flex-col p-4 gap-4 sm:py-8 w-full h-full">
+            <div className="flex w-full justify-between items-center">
                 <FaArrowLeft onClick={() => navigate(-1)} data-testid="cancel-image" size={20} scale={1} />
                 <button className="rounded-full p-4" style={{backgroundColor:  submitable ? "cyan" : "gainsboro", 
                     color: submitable ? "black" : "white"}}>
                     Save Changes
                 </button>
             </div>
-            <div className="flex justify-around w-full">
+            <div className="flex lg:flex-row xxs:flex-col justify-around w-full">
                 <DragAndDrop fileRef={fileRef} imageRef={imageRef} setTitle={setTitle} setSubmitable={setSubmitable} editImageURL={editImage ? editImage.url : undefined}/>
                 <div className="flex flex-col gap-16">
                     <div style={{display: error ? "block" : "none"}}>{error}</div>
                     <div className="flex flex-col gap-4">
                         <label htmlFor="title">Title</label>
-                        <input value={title} onChange={(e) => setTitle(e.target.value)} id="title" name="title" className="p-4 w-[464px] h-[50px] rounded-full outline outline-black" />
+                        <input value={title} onChange={(e) => setTitle(e.target.value)} id="title" name="title" className="p-4 w-[464px] lg:w-[375px] h-[50px] rounded-full outline outline-black" />
                     </div>
                     <div className="flex flex-col gap-4">
                         <label htmlFor="source">Source</label>
-                        <input value={source} onChange={(e) => setSource(e.target.value)} id="source" name="source" className="p-4 w-[464px] h-[50px] rounded-full outline outline-black" />
+                        <input value={source} onChange={(e) => setSource(e.target.value)} id="source" name="source" className="p-4 w-[464px] lg:w-[375px] h-[50px] rounded-full outline outline-black" />
                     </div>
                     <div className="flex flex-col">
                         <div className="flex gap-3">

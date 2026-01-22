@@ -154,16 +154,18 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
                 <div id="arrow-left" className="fixed top-1/2 left-4" ref={leftRef} onClick={() => handleLeftArrowClick()}>
                     <FaArrowLeft color={isFirstImage(imageData?.image_id) ? "gainsboro" : "black"} size={20} scale={1} />
                 </div>
-                <div className={`flex justify-end items-center flex-col gap-6 w-full h-full mx-72 pb-12`}>
-                    <img id={imageData?.image_id} src={imageData?.url} alt={`${imageData?.title} ${tagsToString(imageData?.tagIDs ?? [])}`} className={`fixed top-1/8 left-1/5 w-[925px] h-[450px]`} />
-                    <div className={hideInfo ? "hidden" : "flex justify-between w-full"}>
+                <div className={`flex justify-center items-center flex-col gap-6 w-full h-full pb-12`}>
+                    <div id="image-container" className="flex justify-center items-center w-[925px] h-[450px] md:w-[600px] md:h-[350px] xs:w-[300px] xs:h-[275px] xxs:w-[185px] xxs:h-[125px]">
+                        <img id={imageData?.image_id} src={imageData?.url} alt={`${imageData?.title} ${tagsToString(imageData?.tagIDs ?? [])}`} className={`w-[925px] max-h-[450px] md:max-w-[600px] md:max-h-[350px] xs:max-w-[300px] xs:max-h-[275px] xxs:max-w-[185px] xxs:max-h-[125px] bg-amber-100`} />
+                    </div>
+                    <div className={hideInfo ? "hidden" : "flex justify-between"}>
                         <div className="flex flex-wrap py-4 w-[500px] gap-4">
                             {
                                 tags ? tags.map((tag) => <Tag key={tag.tag_id} id={tag.tag_id} title={tag.title} color={tag.color} addedTag={false} tagResult={false} />) 
                                 : ""
                             }
                         </div>
-                        <div className="flex text-gray-400 flex-col gap-4">
+                        <div className="flex text-gray-400 flex-col gap-4 md:text-lg xxs:text-xs">
                             <div className={imageData?.created_at ? "self-end" : "hidden"}>Date Uploaded: {formatDateTime(imageData?.created_at)}</div>
                             <div className={imageData?.source ? "" : "hidden"}>Source: {imageData?.source}</div>
                         </div>

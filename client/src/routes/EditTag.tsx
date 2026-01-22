@@ -1,5 +1,4 @@
 import { useContext, useEffect, useRef, useState } from "react";
-import { FaArrowLeft } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router";
 import axios from 'axios';
 import { useAuth } from "@clerk/clerk-react";
@@ -103,12 +102,9 @@ export default function EditTag() {
         <div className={`w-full h-full relative`}>
             <div className={`flex flex-col p-4 gap-4 w-full min-h-screen ${(editWarning && editWarning !== "set") || deleteWarning ? "backdrop-brightness-75 brightness-50 pointer-events-none" : ""}`}>
                 <div className="flex w-full justify-between">
-                    <FaArrowLeft onClick={() => navigate(-1)} data-testid="cancel-image" size={20} scale={1} />
-                    <div className="flex gap-4">
+                        <button className="rounded-full p-4" style={{backgroundColor: "red", color: "white"}} onClick={() => setDeleteWarning(true)}>Delete tag</button>
                         <button className="rounded-full p-4" style={{backgroundColor: title ? "cyan" : "gainsboro", 
                         color: title ? "black" : "white"}} onClick={() => handleSubmitClick()}>Save Changes</button>
-                        <button className="rounded-full p-4" style={{backgroundColor: "red", color: "white"}} onClick={() => setDeleteWarning(true)}>Delete tag</button>
-                    </div> 
                 </div>
                 <div className="text-[32px]">Edit Tag</div>
                 <div className="flex flex-col gap-10">
@@ -116,7 +112,7 @@ export default function EditTag() {
                         <div className="flex gap-3">
                             <label className="text-2xl" htmlFor="title">Title</label>
                         </div>
-                        <input required value={title} onChange={(e) => setTitle(e.target.value)} id="title" className="w-[464px] h-[45px] p-4 rounded-full outline outline-black" />
+                        <input required value={title} onChange={(e) => setTitle(e.target.value)} id="title" className="xs:w-[464px] xxs:w-[300px] h-[45px] p-4 rounded-full outline outline-black" />
                     </div>
                     <div className="flex flex-col gap-4">
                         <label className="text-2xl" htmlFor="color">Color</label>

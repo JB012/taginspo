@@ -211,12 +211,12 @@ export default function Gallery() {
                  <div className="flex flex-col w-full">
                     <div className="flex grow w-full justify-between xs:py-10 xxs:py-4 items-center">
                         <div className="flex items-center gap-8">
-                            <div className="text-[32px] xxs:text-[24px] font-bold">{!query ? type === "image" ? "Your images" : "Your tags" : "Search results"}</div>
+                            <div className="text-[32px] xxs:text-[22px] font-bold">{!query ? type === "image" ? "Your images" : "Your tags" : "Search results"}</div>
                             <div className={query ? "hidden" : "flex gap-8"}>
                                 <FaPlusCircle className={type !== "image" ? "hidden" : ""} onClick={() => navigate("/addimage")} id="add-button" scale={1} size={20}/>
-                                <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-1">
                                     <FaWrench className={type !== "tag" ? "hidden" : ""} color={editMode ? "#7FEF9A" : "black"} onClick={() => setEditMode(!editMode)} id="edit-button" scale={1} size={20} />
-                                    {editMode ? <div>Select a tag to edit</div> : <div></div>}
+                                    {editMode ? <div>Click a tag to edit</div> : <div></div>}
                                 </div>
                             </div>
                         </div>

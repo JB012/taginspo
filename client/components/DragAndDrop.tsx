@@ -143,7 +143,7 @@ export default function DragAndDrop({fileRef, imageRef, editImageURL, setTitle, 
     }, [imageRef, setSubmitable, setTitle]);
 
     return (
-    <div id="drop-zone-container" className="outline-dashed outline-black flex w-[800px] h-[567px]">
+    <div id="drop-zone-container" className="outline-dashed outline-black flex w-[800px] h-[567px] xl:w-[600px] lg:w-[400px] xxs:w-[400px] xxs:h-[400px] xxs:self-center">
         <div className="flex flex-col w-full items-center relative">
             <label id="drop-zone" htmlFor="add-image" className="w-full h-full flex items-center justify-center absolute cursor-pointer">
                 <div id="drop-zone-message">Drag-and-drop image or click to choose file</div>
