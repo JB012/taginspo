@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { TagType } from '../types/TagType';
 import { FaCheck, FaPlus } from "react-icons/fa";
 import { FaX } from "react-icons/fa6";
@@ -21,6 +21,44 @@ export default function TagSearch({allTags, duplicateTag, addTagToImage} : TagSe
     const [currentIndex, setCurrentIndex] = useState(0);
     const tagResultsRef = useRef<HTMLDivElement | null>(null);
 
+    const handleAddTag = useCallback((title: string, color: string, edit: boolean, id=v4()) => {
+        const hasDuplicate = edit ? !duplicateTag(title, id) : !duplicateTag(title);
+        if (hasDuplicate) {
+            if (title.trim() && allTags) {
+                const existingTagWithTitle = allTags.find((tag) => tag.title === title);
+                
+                addTagToImage(existingTagWithTitle ? existingTagWithTitle.tag_id : id, 
+                    title, existingTagWithTitle ? existingTagWithTitle.color : color);
+
+                setTagInput("");
+                setTagSearchResults([]);
+                setAddTag(false);
+            }
+        }
+        else {
+            setDuplicateTagError(true);
+
+            // Hiding display to view the error message
+            if (tagResultsRef) {
+                tagResultsRef.current!.style.display = "none";
+            }
+            
+        }
+    }, [addTagToImage, allTags, duplicateTag]);
+
+    const handleConfirm = useCallback(() => {
+        if (tagInput !== "" && !tagInput.includes('&')) {
+            setAddTag(false);
+            handleAddTag(tagInput, color, true);
+        }
+    }, [color, handleAddTag, tagInput]);
+
+    function handleCancel() {
+        setAddTag(false); 
+        setTagInput(""); 
+        setTagSearchResults([]);
+    }
+    
     useEffect(() => {
          function handleClickOutside(event: Event) {
             try {
@@ -44,9 +82,8 @@ export default function TagSearch({allTags, duplicateTag, addTagToImage} : TagSe
     }, []); 
 
     useEffect(() => {
-        function handleArrow(event : KeyboardEvent) {
+        function handleKeyDown(event : KeyboardEvent) {
             if (tagSearchResults.length > 0) {
-
                 if (event.key === "ArrowUp") {
                     if (currentIndex > 0) {
                         const prevTag = tagSearchResults[currentIndex - 1];                        
@@ -80,42 +117,18 @@ export default function TagSearch({allTags, duplicateTag, addTagToImage} : TagSe
                     if (divElem) {
                         divElem.click();
                     }
-                    
                 }   
             } 
+            else if (addTag && event.key === "Enter") {
+                handleConfirm();
+            }
         }
         
-        document.addEventListener('keydown', handleArrow);
+        document.addEventListener('keydown', handleKeyDown);
 
-        return () => document.removeEventListener('keydown', handleArrow);
+        return () => document.removeEventListener('keydown', handleKeyDown);
 
-    }, [currentIndex, tagSearchResults]);
-
-    function handleAddTag(title: string, color: string, edit: boolean, id=v4()) {
-        const hasDuplicate = edit ? !duplicateTag(title, id) : !duplicateTag(title);
-        if (hasDuplicate) {
-            if (title.trim() && allTags) {
-                const existingTagWithTitle = allTags.find((tag) => tag.title === title);
-                
-                addTagToImage(existingTagWithTitle ? existingTagWithTitle.tag_id : id, 
-                    title, existingTagWithTitle ? existingTagWithTitle.color : color);
-
-                setTagInput("");
-                setTagSearchResults([]);
-                setAddTag(false);
-            }
-        }
-        else {
-            setDuplicateTagError(true);
-
-            // Hiding display to view the error message
-            if (tagResultsRef) {
-                tagResultsRef.current!.style.display = "none";
-            }
-            
-        }
-    }
-
+    }, [addTag, currentIndex, handleConfirm, tagSearchResults]);
     
 
     function handleTagSearch(event : React.ChangeEvent<HTMLInputElement>) {
@@ -136,19 +149,6 @@ export default function TagSearch({allTags, duplicateTag, addTagToImage} : TagSe
             }
         }
 
-    }
-
-    function handleConfirm() {
-        if (tagInput !== "" && !tagInput.includes('&')) {
-            setAddTag(false);
-            handleAddTag(tagInput, color, true);
-        }
-    }
-
-    function handleCancel() {
-        setAddTag(false); 
-        setTagInput(""); 
-        setTagSearchResults([]);
     }
 
     return (

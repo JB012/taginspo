@@ -136,6 +136,10 @@ export default function EditImage() {
 
     }, [addedTags, navigate, submitable, title, getToken, id, queryClient, source]);
 
+    useEffect(() => {
+        document.title = "Edit Image - TagInspo";
+    }, []);
+
     function addTagToImage(id: string, title: string, color: string) {
         // created_at will be passed a date once user submits the form
         setAddedTags([...addedTags, {tag_id: id, title: title.trim().replace(' ', '_'), color: color, created_at: "", edited_at: null}]);

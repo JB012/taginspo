@@ -1,5 +1,5 @@
 import { SignedIn, SignedOut } from "@clerk/clerk-react";
-import { useCallback, useContext, useState, useMemo } from "react";
+import { useCallback, useContext, useState, useMemo, useEffect } from "react";
 import { FaList, FaPlusCircle, FaWrench } from "react-icons/fa";
 import { Navigate, useNavigate, useSearchParams } from "react-router";
 import type { TagType } from "../../types/TagType";
@@ -10,6 +10,7 @@ import Image from "../../components/Image";
 import SortOptions from "../../components/SortOptions";
 import GalleryHeader from "../../components/GalleryHeader";
 import Pagination from '../../components/Pagination';
+import LoadingSpin from "../../components/LoadingSpin";
 import ViewImage from "./ViewImage";
 import { QueryClientContext } from "@tanstack/react-query";
 import useImages from "../../utils/useImages";
@@ -19,6 +20,7 @@ export default function Gallery() {
     const [searchParams, setSearchParams] = useSearchParams();
     const type = searchParams.get("type");
     const query = searchParams.get("query");
+    const id = searchParams.get('id');
     const navigate = useNavigate();
     const [editMode, setEditMode] = useState(false);
     const [page, setPage] = useState(0);
@@ -29,6 +31,20 @@ export default function Gallery() {
     const [viewSortOptions, setViewSortOptions] = useState(false);
     const imageQuery = useImages();    
     const tagQuery = useTags();
+
+
+    useEffect(() => {
+        if (query) {
+            document.title = `${query ?? "Search Result"} - TagInspo`;
+        }
+        else if (id) {
+            document.title = `Image - TagInspo`;
+        }
+        else {
+            document.title = `Gallery - TagInspo`;
+        }
+    }, [id, query]);
+
     const images : ImageType[] = useMemo(() => {
         return imageQuery.data ?? [];
     }, [imageQuery.data]);
@@ -38,6 +54,10 @@ export default function Gallery() {
     }, [tagQuery.data]);
 
     function containsAllTags(imageTagIDs: string[], queryTagIDs: string[]) : boolean {
+        if (queryTagIDs.length === 0) {
+            return false;
+        }
+
         for (const id of queryTagIDs) {
             if (!imageTagIDs.includes(id)) {
                 return false;
@@ -67,6 +87,12 @@ export default function Gallery() {
         
         return queryResult;
     }, [images, query, tags]);
+
+    const fetchImageByID = useCallback((id: string | null) => {
+        if (id) {
+            return images.find((img) => img.image_id === id);
+        }
+    }, [images]);
 
     const queryImages = getMatchedImages();
 
@@ -122,8 +148,8 @@ export default function Gallery() {
             
         }
         else if (currentOption === "edited_at") {
-            const dA = new Date(a.created_at);
-            const dB = new Date(b.created_at);
+            const dA = new Date(a.edited_at!);
+            const dB = new Date(b.edited_at!);
             
             return dB.getTime() - dA.getTime();
         }
@@ -235,13 +261,8 @@ export default function Gallery() {
                                     images && images.length ? images.sort(sortList).slice(offset, offset + imageLimitPerPage).map((img) => <Image image_id={img.image_id} key={img.image_id} url={img.url} alt={`${img.title} ${tagsToString(img.tagIDs)}`} handleImageClick={handleImageClick} />) : 
                                     <div className="flex w-full justify-center">Click on the + button to add an image</div>
                                 )  
-                                :
-                                (
-                                    <svg className="absolute top-1/2 left-1/2 animate-spin -ml-1 mr-3 h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                )
+                                :  <LoadingSpin />
+                                
                             }
                         </div> :
                         <div id="tag-previews" style={{justifyContent: !tags ? "center" : "flex-start"}} className={query ? "hidden" : "flex w-full items-center flex-wrap gap-25"}>
@@ -258,7 +279,7 @@ export default function Gallery() {
                         }
                     </div>
                 </div> 
-                <ViewImage id={searchParams.get('id')} clearID={clearID} isFirstImage={isFirstImage} isLastImage={isLastImage} toPreviousImage={toPreviousImage} toNextImage={toNextImage} deleteImage={deleteImage} tagsToString={tagsToString} />
+                <ViewImage id={id} fetchImageByID={fetchImageByID} clearID={clearID} isFirstImage={isFirstImage} isLastImage={isLastImage} toPreviousImage={toPreviousImage} toNextImage={toNextImage} deleteImage={deleteImage} tagsToString={tagsToString} />
                 <Pagination page={page} toPreviousPage={toPreviousPage} toNextPage={toNextPage} totalPages={totalPages} />
             </div>
         </SignedIn>

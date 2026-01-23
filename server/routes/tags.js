@@ -86,11 +86,11 @@ router.post('/add', async (req, res) => {
                 const [rows, fields] = await pool.query(`SELECT * FROM tags WHERE tag_id=?`, [tagID]);
                 
                 if (rows.length === 0) {
-                    await pool.query(`INSERT INTO tags (user_id, created_at, tag_id, title, color) VALUES (?, ?, ?, ?, ?)`, [userId, createDateTime(), tagID, title, color]);
+                    await pool.query(`INSERT INTO tags (user_id, created_at, edited_at, tag_id, title, color) VALUES (?, ?, ?, ?, ?, ?)`, [userId, createDateTime(), createDateTime(), tagID, title, color]);
                 }
 
                 if (imageID) {
-                        await pool.query(`INSERT INTO users_images_tags (user_id, image_id, tag_id) VALUES (?, ?, ?)`, [userId, imageID, tagID]);
+                    await pool.query(`INSERT INTO users_images_tags (user_id, image_id, tag_id) VALUES (?, ?, ?)`, [userId, imageID, tagID]);
                 }
             }
 
@@ -148,7 +148,7 @@ router.post('/edit', async (req, res) => {
         // Individually editing a tag
         else {
             const tagID = req.body.tagID;
-            await pool.query(`UPDATE tags SET title=?, color=? WHERE user_id=? AND tag_id=?`, [title, color, userId, tagID])
+            await pool.query(`UPDATE tags SET title=?, color=?, edited_at=? WHERE user_id=? AND tag_id=?`, [title, color, createDateTime(), userId, tagID])
             res.send(`Tag successfully updated`);
         }
     }

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router";
 import axios from 'axios';
 import { useAuth } from "@clerk/clerk-react";
 import { QueryClientContext } from "@tanstack/react-query";
+import LoadingSpin from "../../components/LoadingSpin";
 
 export default function EditTag() {
     const queryClient = useContext(QueryClientContext);
@@ -13,6 +14,7 @@ export default function EditTag() {
     const { getToken } = useAuth();
     const [editWarning, setEditWarning] = useState(localStorage.getItem('editWarning'));
     const [deleteWarning, setDeleteWarning] = useState(false);
+    const [clickedDelete, setClickedDelete] = useState(false);
     const editCheckRef = useRef<HTMLInputElement | null>(null);
 
     useEffect(() => {
@@ -43,6 +45,10 @@ export default function EditTag() {
         }
 
     }, [getToken, id, title]);
+
+    useEffect(() => {
+        document.title = "Edit Tag - TagInspo";
+    }, []);
 
     async function handleSubmit() {
         if (title) {
@@ -130,15 +136,22 @@ export default function EditTag() {
                     <div>Do not show again</div>
                 </div>
                 <div className="flex justify-between">
-                    <button onClick={() => handleSubmit()} className="rounded-full px-2 outline outline-black">Yes</button>
+                    <button onClick={() => {setClickedDelete(true); handleSubmit()}} className="rounded-full px-2 outline outline-black">Yes</button>
                     <button onClick={() => setEditWarning('')} className={"rounded-full px-2 outline outline-black"}>No</button>
                 </div>
             </div>
             <div className={deleteWarning ? "absolute z-10 bg-white flex flex-col gap-8 w-[300px] p-4 rounded-3xl top-1/4 left-150" : "hidden"}>
-                <div>
-                    This tag will be removed from every image that it's attached to.<br />
-                    Are you sure you want to make this change?
-                </div>
+                {
+                    !clickedDelete ?     
+                    <div>
+                        This tag will be removed from every image that it's attached to.<br />
+                        Are you sure you want to make this change?
+                    </div> :
+                    <div className="flex items-center gap-8">
+                        <LoadingSpin />
+                        <div>Deleting...</div>
+                    </div>
+                }
                 <div className="flex justify-between">
                     <button onClick={() => handleDelete()} className="rounded-full px-2 outline outline-black">Yes</button>
                     <button onClick={() => setDeleteWarning(false)} className={"rounded-full px-2 outline outline-black"}>No</button>

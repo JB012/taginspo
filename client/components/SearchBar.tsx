@@ -194,7 +194,7 @@ export default function SearchBar({handleImageClick, addQueryString} : SearchBar
                     </div>
                 </div>
             </div>
-            <div ref={resultsRef} className={!resultsView ? "hidden" : "absolute w-[600px] max-h-[200px] top-12 left-145 text-ellipsis overflow-x-hidden overflow-y-auto whitespace-nowrap bg-white shadow rounded-3xl flex flex-col"}>
+            <div ref={resultsRef} className={!resultsView ? "hidden" : "absolute w-[600px] max-h-[200px] top-13 left-143 text-ellipsis overflow-x-hidden overflow-y-auto whitespace-nowrap bg-white shadow rounded-3xl flex flex-col"}>
                 {
                     searchBarResults.length ? searchBarResults.map((elem, index) => handleSearchView(elem, index)) : ''
                 }

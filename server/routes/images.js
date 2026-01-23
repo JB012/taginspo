@@ -115,7 +115,7 @@ router.post("/add", upload.single('file'), async (req, res) => {
  */
                 //const url = URL.createObjectURL(new Blob(req.file.buffer))
 
-                await pool.query('INSERT INTO images (user_id, image_id, created_at, title, source) VALUES (?, ?, ?, ?, ?)', [userId, imageID, createDateTime(), title, source]);
+                await pool.query('INSERT INTO images (user_id, image_id, created_at, edited_at, title, source) VALUES (?, ?, ?, ?, ?, ?)', [userId, imageID, createDateTime(), createDateTime(), title, source]);
                 
                 const token = await getToken();
 
@@ -159,19 +159,25 @@ router.post("/edit/:id", async (req, res) => {
 
     if (isAuthenticated) {
         try {
-            // check if any tags are changed or deleted
-            await pool.query(`UPDATE images SET title=?, source=?, edited_at=? WHERE user_id=? AND image_id=?`
+            const [rows] = await pool.query(`SELECT * FROM images WHERE NOT image_id=? AND user_id=? AND title=?`, [imageID, userId, title]);
+
+            if (rows.length === 0) {
+                await pool.query(`UPDATE images SET title=?, source=?, edited_at=? WHERE user_id=? AND image_id=?`
                 , [title, source, createDateTime(), userId, imageID]);
 
-            const token = await getToken();
+                const token = await getToken();
 
-            await axios.post("http://localhost:3000/tags/edit",{imageID: imageID, addedTags: addedTags}, 
-                {headers: {Authorization: `Bearer ${token}`}});
-            
-            return res.send('Image successfully edited');
+                await axios.post("http://localhost:3000/tags/edit",{imageID: imageID, addedTags: addedTags}, 
+                    {headers: {Authorization: `Bearer ${token}`}});
+                
+                return res.send('Image successfully edited');
+            }
+            else {
+                return res.send("Title already exists, please try again.");
+            }
         }
         catch (err) {
-            //console.log(err);
+            console.log(err);
         }
     }
     else {

@@ -19,20 +19,16 @@ interface ViewImageProp {
     toPreviousImage: (currentID : string | undefined) => void
     toNextImage: (currentID : string | undefined) => void
     tagsToString: (tagIDs : string[]) => string
+    fetchImageByID: (id: string | null) => ImageType | undefined
 }
 
-export default function ViewImage({id, clearID, isFirstImage, isLastImage, deleteImage, toPreviousImage, toNextImage, tagsToString} : ViewImageProp) {
-    const imageQuery = useQuery({
-        queryKey: ["image", id],
-        queryFn: () => (id ? fetchImageByID(id) : null)
-    });
-
+export default function ViewImage({id, clearID, isFirstImage, isLastImage, deleteImage, toPreviousImage, toNextImage, tagsToString, fetchImageByID} : ViewImageProp) {
     const tagQuery = useQuery({
         queryKey: ["tag", id],
         queryFn: () => (id ? fetchTagByID(id) : null)
     });
 
-    const imageData : ImageType | null = imageQuery.data;
+    const imageData : ImageType | undefined = fetchImageByID(id);
     const tags : TagType[] | null = tagQuery.data;
     const { getToken } = useAuth();
     const [imageOptions, setImageOptions] = useState(false);
@@ -41,14 +37,6 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
     const optionsRef = useRef<HTMLDivElement|null>(null);
     const leftRef = useRef<HTMLDivElement | null>(null);
     const rightRef = useRef<HTMLDivElement | null>(null);
-
-    async function fetchImageByID(id: string) {
-        const token = await getToken();
-        const response = await axios.get(`http://localhost:3000/images/${id}`, 
-        {headers: {Authorization: `Bearer ${token}`}});
-
-        return response.data;
-    }
 
     async function fetchTagByID(id: string) {
         const token = await getToken();
