@@ -94,16 +94,15 @@ export default function Tag({id, title, color, addedTag, tagResult, editMode,
     }
 
     return (
-        <div tabIndex={0} id={id} onClick={() => handleClick()} ref={addedTag && edit ? tagRef : undefined} className="flex gap-1 focus:outline-0">
-            <div className="text-center cursor-pointer rounded-full h-6 px-3" style={{backgroundColor: editColor, 
-            outline: color === "#ffffff" ? "1px solid black" : "", color: "black"}}>
+        <div data-testid={`tag-${title}`} tabIndex={0} id={id} onClick={() => handleClick()} ref={addedTag && edit ? tagRef : undefined} className="flex gap-1 focus:outline-0">
+            <div className="text-center cursor-pointer rounded-full h-6 px-3" style={{backgroundColor: editColor, outline: color === "#ffffff" ? "1px solid black" : "", color: "black"}}>
                 {
                     edit ? 
                     <div className="flex gap-4">
-                        <input id="title-input" style={{color: duplicateTag?.(id, editTitle) && editTitle !== title ? "red" : 
+                        <input data-testid="edit-tag" id="title-input" style={{color: duplicateTag?.(id, editTitle) && editTitle !== title ? "red" : 
                             colorLightness < 60 ? "white" : "black"}} className="max-w-[100px]" placeholder="Edit tag title" 
                             value={editTitle} onChange={(e) => setEditTitle(e.target.value)} /> 
-                        <input id="color-input" type="color" value={editColor} onChange={handleColorChange} />
+                        <input data-testid="edit-color" id="color-input" type="color" value={editColor} onChange={handleColorChange} />
                         <FaCheck fill={colorLightness < 60 ? "white" : "black"} data-testid="confirm-addtag" onClick={() => handleConfirm()} size={20} scale={1} />
                         <FaX fill={colorLightness < 60 ? "white" : "black"} data-testid="cancel-addtag" onClick={() => handleCancel()} size={20} scale={1} />
                     </div>
@@ -112,7 +111,7 @@ export default function Tag({id, title, color, addedTag, tagResult, editMode,
                 }
                 
             </div>
-            <FaEllipsis onClick={() => setOptions(!options)} style={{display: addedTag && !options ? 'block' : 'none'}} />
+            <FaEllipsis data-testid={`tag-cat-options`} onClick={() => setOptions(!options)} style={{display: addedTag && !options ? 'block' : 'none'}} />
             <div ref={optionsRef} style={{display: options ? 'flex' : 'none'}} className="flex-col outline outline-black">
                 <div id="edit-button" className="p-2 cursor-pointer" onClick={() => {setEdit(true); setOptions(false)}}>Edit</div>
                 <hr />

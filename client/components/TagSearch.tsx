@@ -153,12 +153,12 @@ export default function TagSearch({allTags, duplicateTag, addTagToImage} : TagSe
 
     return (
         <div className="flex flex-col relative">
-            <FaPlus onClick={() => setAddTag(true)} className={!addTag ? "" : "hidden"} size={20} scale={1}/>
+            <FaPlus data-testid="add-tag" onClick={() => {setTagInput(""); setAddTag(true)}} className={!addTag ? "" : "hidden"} size={20} scale={1}/>
             <div id="tag-input-container" className={addTag ? "flex flex-col" : "hidden"}>
                 <div className="flex gap-6">
                     <div className="flex gap-4">
                         <input tabIndex={-1} value={tagInput} onChange={handleTagSearch} style={{color: tagInput.includes('&') ? "red" : "black"}} placeholder="Enter tag here" multiple={false} className="w-[243px] h-[30px] rounded-full px-3 outline outline-black" />
-                        <input tabIndex={-1} type="color" value={color} onChange={(e) => setColor(e.target.value)} />
+                        <input tabIndex={-1} type="color" data-testid="color-input" value={color} onChange={(e) => setColor(e.target.value)} />
                     </div>
                     <div className="flex justify-between w-[60px]">
                         <FaCheck data-testid="submit-tag" onClick={() => handleConfirm()} size={20} scale={1} />

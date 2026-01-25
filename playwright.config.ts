@@ -23,7 +23,7 @@ export default defineConfig({
   reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: 'http://localhost:5173/',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     video: 'retain-on-failure',
@@ -33,7 +33,7 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
-      name: 'setup', 
+      name: 'setup',
       testMatch: /.*\.setup\.ts/ 
     },
     {

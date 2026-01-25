@@ -25,7 +25,7 @@ setup('authenticate and save state to storage', async ({ page }) => {
     emailAddress: process.env.TEST_USER_EMAIL
   });
 
-  await page.goto("/gallery", {waitUntil: "load"});
+  await page.goto("/gallery?type=image", {waitUntil: "load"});
   
   await expect(page.getByLabel('Open user menu')).toBeVisible();
 
