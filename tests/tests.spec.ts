@@ -37,10 +37,10 @@ test.describe('signed in tests', () => {
     
     await page.getByTestId('drop-zone').click();
     
-    await page.getByRole('button', { name: 'Drag-and-drop image or click' }).setInputFiles(path.join(__dirname, '..', 'test-images', 'cat.jpg'));
+    await page.getByRole('button', { name: 'Drag-and-drop image or click' }).setInputFiles(path.join(__dirname, 'test-images', 'cat.jpg'));
 
     await expect(page.getByRole('img', {'name': 'cat.jpg'})).toBeVisible();
-    await expect(page.getByRole('textbox', {name: 'Title'})).toHaveText('cat');
+    await expect(page.getByRole('textbox', {name: 'Title'})).toHaveValue('cat');
 
     await page.getByTestId('add-tag').click();
 
@@ -65,12 +65,25 @@ test.describe('signed in tests', () => {
 
     await page.getByRole('button', {name: 'Save changes'}).click();
 
+    await page.waitForURL('/gallery?type=image');
+
     await expect(page).toHaveURL('/gallery?type=image');
-    await expect(page.getByTestId('image-cat')).toBeVisible();    
+    await expect(page.getByTestId('image-cat')).toBeVisible();  
   });
 
-/* 
   test('view image', async ({ page }) => {
+    await page.getByTestId('image-cat').click();
 
-  }); */
+    await expect(page).toHaveURL(url => {
+      const params = url.searchParams;
+      return params.has('type') && params.has('id');
+    });
+
+    // img alt is a combination of the image title and tag title(s)
+    await expect(page.getByRole('img', {name: 'cat cat'})).toBeVisible();
+    await expect(page.getByTestId('tag-cat')).toBeVisible();
+    await expect(page.getByText(/Date Available/)).toBeVisible();
+  });
+    
+  // clean up
 });

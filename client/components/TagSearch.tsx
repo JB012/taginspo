@@ -161,7 +161,7 @@ export default function TagSearch({allTags, duplicateTag, addTagToImage} : TagSe
                         <input tabIndex={-1} type="color" data-testid="color-input" value={color} onChange={(e) => setColor(e.target.value)} />
                     </div>
                     <div className="flex justify-between w-[60px]">
-                        <FaCheck data-testid="submit-tag" onClick={() => handleConfirm()} size={20} scale={1} />
+                        <div data-testid="submit-tag" onClick={() => handleConfirm()}><FaCheck size={20} scale={1} /></div>
                         <FaX data-testid="cancel-tag" onClick={() => handleCancel()} size={20} scale={1} />
                     </div>
                 </div>
