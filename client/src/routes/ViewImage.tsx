@@ -128,14 +128,14 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
                         {
                             !hideInfo ? 
                             <FaEyeSlash onClick={() => setHideInfo(!hideInfo)} size={20} scale={1} /> :
-                            <FaEye onClick={() => setHideInfo(!hideInfo)} size={20} scale={1} />
+                            <FaEye data-testid="hide-info" onClick={() => setHideInfo(!hideInfo)} size={20} scale={1} />
                         }
                         <ImageOptions optionsRef={optionsRef} imageOptions={imageOptions} 
                         deletePopup={deletePopup} imageID={imageData?.image_id} setImageOptions={setImageOptions} 
                         setDeletePopup={setDeletePopup} handleDelete={handleDelete}/>
                     </div>    
                 </div>  
-                <div className={hideInfo ? "hidden" : "pb-4"}>{imageData?.title}</div>
+                <div data-testid="title" className={hideInfo ? "hidden" : "pb-4"}>{imageData?.title}</div>
                 <div id="close-view" onClick={() => closeView()}><FaX size={20} scale={1}/></div>
             </div> 
             <div className={`flex w-full h-full items-center justify-between`}>

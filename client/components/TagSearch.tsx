@@ -168,7 +168,7 @@ export default function TagSearch({allTags, duplicateTag, addTagToImage} : TagSe
                 <div className={duplicateTagError ? "text-red-500" : "hidden"}> 
                     A tag with the same title has already been added.
                 </div>
-                <div id="tag-results" ref={tagResultsRef} style={{display: tagSearchResults.length ? 'flex' : 'none'}} className="flex flex-col fixed max-h-[185px] mt-8.5 z-10 bg-white outline outline-black w-[239px] p-4 gap-4 overflow-y-auto">
+                <div id="tag-results" data-testid="tag-results" ref={tagResultsRef} style={{display: tagSearchResults.length ? 'flex' : 'none'}} className="flex flex-col fixed max-h-[185px] mt-8.5 z-10 bg-white outline outline-black w-[239px] p-4 gap-4 overflow-y-auto">
                     {
                         tagSearchResults.map((tag, index) => <div id={`div-${tag.tag_id}`} key={tag.tag_id} className={index == currentIndex ? "backdrop-brightness-95" : ""}><Tag key={tag.tag_id} title={tag.title} id={tag.tag_id} color={tag.color} addedTag={false} tagResult={true} duplicateTag={duplicateTag} handleAddTag={handleAddTag}/></div>)
                     }

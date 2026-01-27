@@ -24,66 +24,118 @@ test.describe('not signed in tests', () => {
 test.describe('signed in tests', () => {
   test.use({ storageState: 'playwright/.clerk/user.json' });
 
-  test.beforeEach(async ({ page }) => {
-    await page.goto("/gallery?type=image");
-  });
 
-  test('add an image with a tag', async ({ page }) => {
-    await page.getByTestId('add-image').click();
+  [ 
+    {fileName: 'cat.jpg', input: 'cat in nature', tags: [{name: 'cat', color: '#eba8ff'}, {name: 'nature', color: '#19ff79'}], editedInput: "cat outside"},
+    {fileName: 'birds.jpg', input: 'birds on a branch', tags: [{name: 'bird', color: '#2e3fff'}, {name: 'nature', color: '#ffffff'}], editedInput: null},
+    {fileName: 'sunset.jpg', input: 'sunset', tags: [{name: 'sunset', color: '#ff9f19'}, {name: 'sky', color: '#2ec0ff'}], editedInput: null}
+  ].forEach(({fileName, input, tags, editedInput}) => {
+      test(`add ${fileName} with tags`, async ({ page }) => {
+        await page.goto("/gallery?type=image");
 
-    await expect(page).toHaveURL("/addimage");
+        await page.getByTestId('add-image').click();
 
-    await expect(page.getByTestId('drop-zone')).toBeVisible();
-    
-    await page.getByTestId('drop-zone').click();
-    
-    await page.getByRole('button', { name: 'Drag-and-drop image or click' }).setInputFiles(path.join(__dirname, 'test-images', 'cat.jpg'));
+        await expect(page).toHaveURL("/addimage");
 
-    await expect(page.getByRole('img', {'name': 'cat.jpg'})).toBeVisible();
-    await expect(page.getByRole('textbox', {name: 'Title'})).toHaveValue('cat');
+        await expect(page.getByTestId('drop-zone')).toBeVisible();
+        
+        await page.getByTestId('drop-zone').click();
+        
+        await page.getByRole('button', { name: 'Drag-and-drop image or click' }).setInputFiles(path.join(__dirname, 'test-images', fileName));
 
-    await page.getByTestId('add-tag').click();
+        await expect(page.getByRole('img', {name: fileName})).toBeVisible();
 
-    await page.getByRole('textbox', { name: 'Enter tag here' }).click();
-    await page.getByRole('textbox', { name: 'Enter tag here' }).fill('cat');
-    await page.getByTestId('color-input').click();
-    await page.getByTestId('color-input').fill('#ffa3c8');
+        await page.getByRole('textbox', {name: 'Title'}).clear();
+        await page.getByRole('textbox', {name: 'Title'}).fill(input);
+        await expect(page.getByRole('textbox', {name: 'Title'})).toHaveValue(input);
 
-    await page.getByTestId('submit-tag').click();
+        for (const {name, color} of tags) {
+          await page.getByTestId('add-tag').click();
+          await expect(page.getByTestId('add-tag')).not.toBeVisible();
 
-    await expect(page.getByTestId('tag-cat')).toBeVisible();
+          await page.getByRole('textbox', { name: 'Enter tag here' }).click();
+          await page.getByRole('textbox', { name: 'Enter tag here' }).fill(name);
 
-    await page.getByTestId('tag-cat-options').click();
-    
-    await expect(page.getByText("Edit")).toBeVisible();
-    await expect(page.getByText("Delete")).toBeVisible();
+          await page.getByTestId('color-input').click();
+          await page.getByTestId('color-input').fill(color);
 
-    await page.getByText("Edit").click();
-    await page.getByTestId('edit-color').click();
-    await page.getByTestId('edit-color').fill('#ffa3f3');
-    await page.getByTestId('confirm-addtag').click();
+          await page.getByTestId('submit-tag').click();
+          await expect(page.getByTestId('submit-tag')).not.toBeVisible();
+          
+          await expect(page.getByTestId(`tag-${name}`)).toBeVisible(); 
+          await expect(page.getByTestId(`tag-${name}`)).toHaveCSS('backgroundColor', color);             
+            
+          await page.getByTestId(`tag-${name}-options`).click();
+          await expect(page.getByText("Edit")).toBeVisible();
+          await expect(page.getByText("Delete")).toBeVisible();
+        
+          await page.getByRole('button', {name: 'Save changes'}).click();
 
-    await page.getByRole('button', {name: 'Save changes'}).click();
+          await page.waitForURL('/gallery?type=image');
 
-    await page.waitForURL('/gallery?type=image');
+          await expect(page).toHaveURL('/gallery?type=image');
+          await expect(page.getByTestId(`image-${input}`)).toBeVisible();
+        }
+      });
 
-    await expect(page).toHaveURL('/gallery?type=image');
-    await expect(page.getByTestId('image-cat')).toBeVisible();  
-  });
+      test(`view ${fileName}`, async ({ page }) => {
+        await page.getByTestId(`image-${input}`).click();
 
-  test('view image', async ({ page }) => {
-    await page.getByTestId('image-cat').click();
+        await expect(page).toHaveURL(url => {
+          const params = url.searchParams;
+          return params.has('type') && params.has('id');
+        });
 
-    await expect(page).toHaveURL(url => {
-      const params = url.searchParams;
-      return params.has('type') && params.has('id');
+        await expect(page.getByTestId("title")).toBeVisible();
+
+        // img alt is a combination of the image title and tag title(s)
+        const alt = input + ' ' + tags.reduce((acc, tag) => acc + tag.name + " ", "").trim();
+        await expect(page.getByRole('img', {name: alt})).toBeVisible();
+        await expect(page.getByTestId(`tag-${input}`)).toBeVisible();
+
+        const currentDate = new Date(Date.now()).toLocaleDateString();
+        await expect(page.getByText(`Date Available: ${currentDate}`)).toBeVisible();
+      
+        await page.getByTestId('hide-info').click();
+        
+        await expect(page.getByTestId("title")).not.toBeVisible();
+        await expect(page.getByRole('img', {name: alt})).toBeVisible();
+        await expect(page.getByTestId(`tag-${input}`)).not.toBeVisible();
+        await expect(page.getByText(/Date Available/)).not.toBeVisible();
+
+        await page.getByTestId('hide-info').click();
+      });
+
+      test(`edit ${fileName}`, async ({ page }) => {
+        await page.getByTestId('image-options').click();
+
+        await expect(page.getByText('Edit Image')).toBeVisible();
+        await expect(page.getByTestId('delete-image')).toBeVisible();
+
+        await expect(page).toHaveURL(/\/editimage/);
+
+        
+        //await expect(page.getByRole('img', {name: fileName})).toBeVisible();
+
+        await expect(page.getByRole('textbox', {name: 'Title'})).toHaveValue(input);
+        
+        if (editedInput) {
+          await page.getByRole('textbox', {name: 'Title'}).clear();
+          await page.getByRole('textbox', {name: 'Title'}).fill(editedInput);
+        }
+
+        for (const {name, color} of tags) {
+          await expect(page.getByTestId(`tag-${name}`)).toBeVisible();
+          await expect(page.getByTestId(`tag-${name}`)).toHaveCSS('color', color);
+        }
+
+        await page.getByRole('button', {name: 'Save Changes'}).click();
+
+        await expect(page).toHaveURL('/gallery?type=image');
+      });
+
+
     });
 
-    // img alt is a combination of the image title and tag title(s)
-    await expect(page.getByRole('img', {name: 'cat cat'})).toBeVisible();
-    await expect(page.getByTestId('tag-cat')).toBeVisible();
-    await expect(page.getByText(/Date Available/)).toBeVisible();
   });
     
-  // clean up
-});
