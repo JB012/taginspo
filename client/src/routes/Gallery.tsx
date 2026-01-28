@@ -247,7 +247,7 @@ export default function Gallery() {
                             </div>
                         </div>
                         <div className="flex gap-4">
-                            <FaList onClick={() => setViewSortOptions(!viewSortOptions)} id="sort-button" size={20} scale={1} />
+                            <FaList data-testid="sort-options" onClick={() => setViewSortOptions(!viewSortOptions)} id="sort-button" size={20} scale={1} />
                             <SortOptions viewSortOptions={viewSortOptions} currentOption={currentOption} closeView={() => setViewSortOptions(false)} handleChangeOption={(option : string) => {setCurrentOption(option)}} />
                         
                         </div> 

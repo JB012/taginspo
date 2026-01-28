@@ -18,8 +18,8 @@ export default function GalleryHeader({type, handleImageClick, addQueryString, h
             <div className="flex gap-5 items-center">
                 <div onClick={() => navigate("http://localhost:5173")} className="text-[36px] cursor-pointer font-bold lg:block xxs:max-sm:hidden">TagInspo</div>
                 <div className="flex gap-8 xxs:gap-4">
-                    <FaImage onClick={() => handleGalleryType()} className={type === "image" ? "border-b-4 border-b-blue-300" : ""} size={20} scale={1} />
-                    <FaTag onClick={() => handleGalleryType()} className={type === "tag" ? "border-b-4 border-b-green-300" : ""} size={20} scale={1} />
+                    <FaImage data-testid="image-view" onClick={() => handleGalleryType()} className={type === "image" ? "border-b-4 border-b-blue-300" : ""} size={20} scale={1} />
+                    <FaTag data-testid="tag-view" onClick={() => handleGalleryType()} className={type === "tag" ? "border-b-4 border-b-green-300" : ""} size={20} scale={1} />
                 </div>
             </div>
             <SearchBar handleImageClick={handleImageClick} addQueryString={addQueryString} />

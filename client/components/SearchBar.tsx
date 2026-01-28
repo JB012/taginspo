@@ -162,7 +162,7 @@ export default function SearchBar({handleImageClick, addQueryString} : SearchBar
 
     function handleSearchView(elem : ImageType | TagType, index : number) {
         if (isImage(elem)) {
-            return (<div tabIndex={0} onClick={() => handleImageClick(elem.image_id)} id={`div-${elem.image_id}`} key={elem.image_id} className={`flex focus:outline-0 justify-between cursor-pointer p-1.5 ${currentIndex === index ? 'backdrop-brightness-95' : ''} hover:backdrop-brightness-95`}>
+            return (<div data-testid={`search-${elem.title}`} tabIndex={0} onClick={() => handleImageClick(elem.image_id)} id={`div-${elem.image_id}`} key={elem.image_id} className={`flex focus:outline-0 justify-between cursor-pointer p-1.5 ${currentIndex === index ? 'backdrop-brightness-95' : ''} hover:backdrop-brightness-95`}>
                         <div className="flex items-center gap-4">
                             <FaImage color="blue" size={20} scale={1} />
                             <div>{elem.title}</div>
@@ -171,7 +171,7 @@ export default function SearchBar({handleImageClick, addQueryString} : SearchBar
                     </div>)
         }
         else if (isTag(elem)) {
-            return (<div tabIndex={0} onClick={() => handleTagClick(elem.title)} id={`div-${elem.tag_id}`} key={elem.tag_id} className={`flex justify-between focus:outline-0 cursor-pointer p-1.5 ${currentIndex === index ? 'backdrop-brightness-95' : ''}  hover:backdrop-brightness-95`}>
+            return (<div data-testid={`search-${elem.title}`} tabIndex={0} onClick={() => handleTagClick(elem.title)} id={`div-${elem.tag_id}`} key={elem.tag_id} className={`flex justify-between focus:outline-0 cursor-pointer p-1.5 ${currentIndex === index ? 'backdrop-brightness-95' : ''}  hover:backdrop-brightness-95`}>
                         <div className="flex items-center gap-4">
                             <FaTag color={elem.color} strokeWidth={10} stroke={elem.color === "#ffffff" ? 'black' : undefined} size={20} scale={1} />
                             <div>{elem.title}</div>
@@ -187,14 +187,14 @@ export default function SearchBar({handleImageClick, addQueryString} : SearchBar
                 <input value={input} onFocus={() => setResultsView(true)} onChange={(e) => handleInput(e.target.value)} className="flex outline outline-black rounded-full xl:w-[600px] lg:w-[400px] md:w-[300px] xxs:w-[200px] pl-20 pr-10 h-[39px]" />        
                 <FaCircleXmark onClick={() => setInput("")} size={20} className="absolute right-5"/>
                 <div id="selected-option" className="absolute left-5 flex items-center gap-2">
-                    <RxTriangleDown id="open-search-type-list" onClick={() => setShowList(!showList)} size={18} scale={1} />
+                    <RxTriangleDown data-testid='select-search-options' id="open-search-type-list" onClick={() => setShowList(!showList)} size={18} scale={1} />
                     <div ref={listRef} id="search-type-list" className={`flex ${searchType === "tag" ? "flex-col bg-green-300" : "flex-col-reverse bg-blue-300"} absolute left-5 -top-2 gap-5 p-2 rounded-full`}>
-                        <FaTag onClick={() => handleSearchType()} color="green" className={searchType !== "tag" && !showList ? "hidden" : ""} size={18} scale={1}/>
-                        <FaImage onClick={() => handleSearchType()} color="blue" className={searchType !== "image" && !showList ? "hidden" : ""} size={18} scale={1} />
+                        <FaTag data-testid='search-tag' onClick={() => handleSearchType()} color="green" className={searchType !== "tag" && !showList ? "hidden" : ""} size={18} scale={1}/>
+                        <FaImage data-testid='search-image' onClick={() => handleSearchType()} color="blue" className={searchType !== "image" && !showList ? "hidden" : ""} size={18} scale={1} />
                     </div>
                 </div>
             </div>
-            <div ref={resultsRef} className={!resultsView ? "hidden" : "absolute w-[600px] max-h-[200px] top-13 left-143 text-ellipsis overflow-x-hidden overflow-y-auto whitespace-nowrap bg-white shadow rounded-3xl flex flex-col"}>
+            <div data-testid="search-results" ref={resultsRef} className={!resultsView ? "hidden" : "absolute w-[600px] max-h-[200px] top-13 left-143 text-ellipsis overflow-x-hidden overflow-y-auto whitespace-nowrap bg-white shadow rounded-3xl flex flex-col"}>
                 {
                     searchBarResults.length ? searchBarResults.map((elem, index) => handleSearchView(elem, index)) : ''
                 }
