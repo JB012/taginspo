@@ -35,8 +35,6 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
     const [deletePopup, setDeletePopup] = useState(false);
     const [hideInfo, setHideInfo] = useState(false);
     const optionsRef = useRef<HTMLDivElement|null>(null);
-    const leftRef = useRef<HTMLDivElement | null>(null);
-    const rightRef = useRef<HTMLDivElement | null>(null);
 
     async function fetchTagByID(id: string) {
         const token = await getToken();
@@ -127,7 +125,7 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
                     <div className="flex gap-4">
                         {
                             !hideInfo ? 
-                            <FaEyeSlash onClick={() => setHideInfo(!hideInfo)} size={20} scale={1} /> :
+                            <FaEyeSlash data-testid="show-info" onClick={() => setHideInfo(!hideInfo)} size={20} scale={1} /> :
                             <FaEye data-testid="hide-info" onClick={() => setHideInfo(!hideInfo)} size={20} scale={1} />
                         }
                         <ImageOptions optionsRef={optionsRef} imageOptions={imageOptions} 
@@ -139,15 +137,15 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
                 <div id="close-view" onClick={() => closeView()}><FaX size={20} scale={1}/></div>
             </div> 
             <div className={`flex w-full h-full items-center justify-between`}>
-                <div id="arrow-left" className="fixed top-1/2 left-4" ref={leftRef} onClick={() => handleLeftArrowClick()}>
+                <div id="arrow-left" data-testid="arrow-left" className="fixed top-1/2 left-4" aria-disabled={isFirstImage(imageData?.image_id)} onClick={() => handleLeftArrowClick()}>
                     <FaArrowLeft color={isFirstImage(imageData?.image_id) ? "gainsboro" : "black"} size={20} scale={1} />
                 </div>
                 <div className={`flex justify-center items-center flex-col gap-6 w-full h-full pb-12`}>
                     <div id="image-container" className="flex justify-center items-center w-[925px] h-[450px] md:w-[600px] md:h-[350px] xs:w-[300px] xs:h-[275px] xxs:w-[185px] xxs:h-[125px]">
-                        <img id={imageData?.image_id} src={imageData?.url} alt={`${imageData?.title} ${tagsToString(imageData?.tagIDs ?? [])}`} className={`w-[925px] max-h-[450px] md:max-w-[600px] md:max-h-[350px] xs:max-w-[300px] xs:max-h-[275px] xxs:max-w-[185px] xxs:max-h-[125px] bg-amber-100`} />
+                        <img data-testid="view-image" id={imageData?.image_id} src={imageData?.url} alt={`${imageData?.title} ${tagsToString(imageData?.tagIDs ?? [])}`} className={`w-[925px] max-h-[450px] md:max-w-[600px] md:max-h-[350px] xs:max-w-[300px] xs:max-h-[275px] xxs:max-w-[185px] xxs:max-h-[125px] bg-amber-100`} />
                     </div>
                     <div className={hideInfo ? "hidden" : "flex justify-between"}>
-                        <div className="flex flex-wrap py-4 w-[500px] gap-4">
+                        <div data-testid="tags-view" className="flex flex-wrap py-4 w-[500px] gap-4">
                             {
                                 tags ? tags.map((tag) => <Tag key={tag.tag_id} id={tag.tag_id} title={tag.title} color={tag.color} addedTag={false} tagResult={false} />) 
                                 : ""
@@ -159,7 +157,7 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
                         </div>
                     </div> 
                 </div>
-                <div id="arrow-right" className="fixed top-1/2 right-3" ref={rightRef} onClick={() => handleRightArrowClick()}>
+                <div id="arrow-right" data-testid="arrow-right" className="fixed top-1/2 right-3" aria-disabled={isLastImage(imageData?.image_id)} onClick={() => handleRightArrowClick()}>
                     <FaArrowRight color={isLastImage(imageData?.image_id) ? "gainsboro" : "black"} onClick={() => handleRightArrowClick()} size={20} scale={1}/>
                 </div>
             </div>  

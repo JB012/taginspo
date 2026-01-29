@@ -94,8 +94,8 @@ export default function Tag({id, title, color, addedTag, tagResult, editMode,
     }
 
     return (
-        <div data-testid={`tag-${title}`} tabIndex={0} id={id} onClick={() => handleClick()} ref={addedTag && edit ? tagRef : undefined} className="flex gap-1 focus:outline-0">
-            <div className="text-center cursor-pointer rounded-full h-6 px-3" style={{backgroundColor: editColor, outline: color === "#ffffff" ? "1px solid black" : "", color: "black"}}>
+        <div tabIndex={0} id={id} ref={addedTag && edit ? tagRef : undefined} className="flex gap-1 focus:outline-0">
+            <div data-testid={`tag-${title}`} className="text-center cursor-pointer rounded-full h-6 px-3" onClick={() => handleClick()} style={{backgroundColor: editColor, outline: color === "#ffffff" ? "1px solid black" : "", color: "black"}}>
                 {
                     edit ? 
                     <div className="flex gap-4">
@@ -111,7 +111,7 @@ export default function Tag({id, title, color, addedTag, tagResult, editMode,
                 }
                 
             </div>
-            <FaEllipsis data-testid={`tag-cat-options`} onClick={() => setOptions(!options)} style={{display: addedTag && !options ? 'block' : 'none'}} />
+            <FaEllipsis data-testid={`tag-${title}-options`} onClick={() => setOptions(!options)} style={{display: addedTag && !options ? 'block' : 'none'}} />
             <div ref={optionsRef} style={{display: options ? 'flex' : 'none'}} className="flex-col outline outline-black">
                 <div id="edit-button" className="p-2 cursor-pointer" onClick={() => {setEdit(true); setOptions(false)}}>Edit</div>
                 <hr />

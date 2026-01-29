@@ -241,7 +241,7 @@ export default function Gallery() {
                             <div className={query ? "hidden" : "flex gap-8"}>
                                 <FaPlusCircle data-testid="add-image" className={type !== "image" ? "hidden" : ""} onClick={() => navigate("/addimage")} id="add-button" scale={1} size={20}/>
                                 <div className="flex items-center gap-1">
-                                    <FaWrench className={type !== "tag" ? "hidden" : ""} color={editMode ? "#7FEF9A" : "black"} onClick={() => setEditMode(!editMode)} id="edit-button" scale={1} size={20} />
+                                    <FaWrench data-testid={"edit-tag"} className={type !== "tag" ? "hidden" : ""} color={editMode ? "#7FEF9A" : "black"} onClick={() => setEditMode(!editMode)} id="edit-button" scale={1} size={20} />
                                     {editMode ? <div>Click a tag to edit</div> : <div></div>}
                                 </div>
                             </div>
