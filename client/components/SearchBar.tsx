@@ -18,7 +18,7 @@ export default function SearchBar({handleImageClick, addQueryString} : SearchBar
     const [showList, setShowList] = useState(false);
     const [searchBarResults, setSearchBarResults] = useState<Array<ImageType | TagType>>([]);
     const [resultsView, setResultsView] = useState(false);
-    const [currentIndex, setCurrentIndex] = useState(0);
+    const [currentIndex, setCurrentIndex] = useState(-1);
     const listRef = useRef<HTMLDivElement|null>(null);
     const resultsRef = useRef<HTMLDivElement|null>(null);
 
@@ -102,7 +102,7 @@ export default function SearchBar({handleImageClick, addQueryString} : SearchBar
                 }
             }
             else if (event.key === "Enter") {
-                if (searchBarResults.length > 0) {    
+                if (searchBarResults.length > 0 && currentIndex >= 0) {    
                     // Clicking tag
                     const elem = searchBarResults[currentIndex];
                     const divElem : HTMLElement | null = document.getElementById(`div-${isImage(elem) ? elem.image_id : elem.tag_id}`);

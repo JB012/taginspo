@@ -16,8 +16,8 @@ export default function ImageOptions({optionsRef, imageOptions, deletePopup, ima
     const navigate = useNavigate();
 
     return (
-        <div data-testid="image-options" className="relative" ref={optionsRef}>
-            <FaEllipsisH onClick={() => setImageOptions(!imageOptions)} size={20} scale={20}/>
+        <div className="relative" ref={optionsRef}>
+            <FaEllipsisH data-testid="image-options" onClick={() => setImageOptions(!imageOptions)} size={20} scale={20}/>
             <div className={imageOptions ? "flex flex-col absolute top-1 left-6 w-[110px] bg-white outline" : "hidden"}>
                 <div onClick={() => {if (imageID) navigate(`http://localhost:5173/editimage/${imageID}`)}} className="cursor-pointer p-2">Edit Image</div>
                 <hr />

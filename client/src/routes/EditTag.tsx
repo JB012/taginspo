@@ -140,7 +140,7 @@ export default function EditTag() {
                     <button onClick={() => setEditWarning('')} className={"rounded-full px-2 outline outline-black"}>No</button>
                 </div>
             </div>
-            <div className={deleteWarning ? "absolute z-10 bg-white flex flex-col gap-8 w-[300px] p-4 rounded-3xl top-1/4 left-150" : "hidden"}>
+            <div data-testid="delete-warning" className={deleteWarning ? "absolute z-10 bg-white flex flex-col gap-8 w-[300px] p-4 rounded-3xl top-1/4 left-150" : "hidden"}>
                 {
                     !clickedDelete ?     
                     <div>

@@ -6,12 +6,19 @@ interface DragAndDropProp {
     fileRef: {current: HTMLInputElement | null},
     imageRef: {current: HTMLImageElement | null},
     editImageURL?: string,
-    setTitle: (value: React.SetStateAction<string>) => void,
-    setSubmitable: (value: React.SetStateAction<boolean>) => void,
+    changeTitle: (title : string) => void,
+    disableSubmit: () => void,
+    enableSubmit: () => void
 }
 
 
-export default function DragAndDrop({fileRef, imageRef, editImageURL, setTitle, setSubmitable} : DragAndDropProp) {
+export default function DragAndDrop({fileRef, imageRef, editImageURL, changeTitle, disableSubmit, enableSubmit} : DragAndDropProp) {
+    useEffect(() => {
+        if (editImageURL) {
+            enableSubmit();
+        }
+    }, [editImageURL, enableSubmit]);
+
     useEffect(() => {
         const dropZone = document.querySelector('#drop-zone') as HTMLElement;
         const dropZoneContainer = document.querySelector('#drop-zone-container') as HTMLElement;
@@ -91,7 +98,7 @@ export default function DragAndDrop({fileRef, imageRef, editImageURL, setTitle, 
                     fileInput.disabled = false;
                 }
 
-                setSubmitable(false);
+                disableSubmit();
             }
         }
 
@@ -109,8 +116,8 @@ export default function DragAndDrop({fileRef, imageRef, editImageURL, setTitle, 
                     dropZone.style.cursor = "default";
                     fileInput.disabled = true;
 
-                    setTitle(file.name.split(".")[0]);
-                    setSubmitable(true);
+                    changeTitle(file.name.split(".")[0]);
+                    enableSubmit();
                 }
                 
             }
@@ -140,14 +147,14 @@ export default function DragAndDrop({fileRef, imageRef, editImageURL, setTitle, 
             fileInput?.removeEventListener('input', handleFileInput);
             dropZone?.removeEventListener("drop", handleDrop);
         }
-    }, [imageRef, setSubmitable, setTitle]);
+    }, [imageRef, enableSubmit, disableSubmit, changeTitle]);
 
     return (
     <div id="drop-zone-container" className="outline-dashed outline-black flex w-[800px] h-[567px] xl:w-[600px] lg:w-[400px] xxs:w-[400px] xxs:h-[400px] xxs:self-center">
         <div className="flex flex-col w-full items-center relative">
             <label id="drop-zone" data-testid="drop-zone" htmlFor="add-image" className="w-full h-full flex items-center justify-center absolute cursor-pointer">
                 <div id="drop-zone-message">Drag-and-drop image or click to choose file</div>
-                <input className={editImageURL ? "hidden" : ""} ref={fileRef} id="add-image" type="file" name="file" accept="image/*" />
+                <input disabled={editImageURL ? true : false} ref={fileRef} id="add-image" type="file" name="file" accept="image/*" />
             </label>
             <div id="preview-image" className="relative">  
                 <FaCircleXmark color="white" id="clear-image" data-testid="clear-image" className={"hidden z-20 absolute top-3 right-3"} size={20} scale={1}/>

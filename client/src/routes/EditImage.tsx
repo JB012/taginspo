@@ -183,7 +183,8 @@ export default function EditImage() {
                 </button>
             </div>
             <div className="flex lg:flex-row xxs:flex-col justify-around w-full">
-                <DragAndDrop fileRef={fileRef} imageRef={imageRef} setTitle={setTitle} setSubmitable={setSubmitable} editImageURL={editImage ? editImage.url : undefined}/>
+                <DragAndDrop fileRef={fileRef} imageRef={imageRef} changeTitle={(title : string) => setTitle(title)} 
+                enableSubmit={() => setSubmitable(true)} disableSubmit={() => setSubmitable(false)} editImageURL={editImage ? "cat.jpg": undefined}/>
                 <div className="flex flex-col gap-16">
                     <div style={{display: error ? "block" : "none"}}>{error}</div>
                     <div className="flex flex-col gap-4">

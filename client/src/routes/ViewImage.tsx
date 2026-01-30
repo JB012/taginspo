@@ -125,8 +125,8 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
                     <div className="flex gap-4">
                         {
                             !hideInfo ? 
-                            <FaEyeSlash data-testid="show-info" onClick={() => setHideInfo(!hideInfo)} size={20} scale={1} /> :
-                            <FaEye data-testid="hide-info" onClick={() => setHideInfo(!hideInfo)} size={20} scale={1} />
+                            <FaEyeSlash data-testid="hide-info" onClick={() => setHideInfo(!hideInfo)} size={20} scale={1} /> :
+                            <FaEye data-testid="show-info" onClick={() => setHideInfo(!hideInfo)} size={20} scale={1} />
                         }
                         <ImageOptions optionsRef={optionsRef} imageOptions={imageOptions} 
                         deletePopup={deletePopup} imageID={imageData?.image_id} setImageOptions={setImageOptions} 
