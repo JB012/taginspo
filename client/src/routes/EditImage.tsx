@@ -74,7 +74,7 @@ export default function EditImage() {
                 fileRef.current.disabled = false;
                 const formData = new FormData(form);
 
-                formData.set("title", title ? title : new Date().toString());
+                formData.set("title", title ? title.trim().replace(" ", "_") : new Date().toString());
                 formData.append("addedTags", JSON.stringify(addedTags));
 
                 try {
@@ -184,7 +184,7 @@ export default function EditImage() {
             </div>
             <div className="flex lg:flex-row xxs:flex-col justify-around w-full">
                 <DragAndDrop fileRef={fileRef} imageRef={imageRef} changeTitle={(title : string) => setTitle(title)} 
-                enableSubmit={() => setSubmitable(true)} disableSubmit={() => setSubmitable(false)} editImageURL={editImage ? "cat.jpg": undefined}/>
+                enableSubmit={() => setSubmitable(true)} disableSubmit={() => setSubmitable(false)} editImageURL={editImage ? editImage.url : undefined}/>
                 <div className="flex flex-col gap-16">
                     <div style={{display: error ? "block" : "none"}}>{error}</div>
                     <div className="flex flex-col gap-4">

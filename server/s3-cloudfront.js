@@ -16,7 +16,7 @@ const s3Client = new S3Client({
 });
 
 const cloudFront = new CloudFrontClient({
-    credentials: process.env.AWS_USER_ACCESS_KEY_ID,
+    accessKeyId: process.env.AWS_USER_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_USER_SECRET_ACCESS_KEY
 })
 

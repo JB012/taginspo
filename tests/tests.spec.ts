@@ -271,7 +271,7 @@ test.describe('signed in tests', () => {
       await expect(page.getByText(/No results/)).toBeVisible();
     });
 
-    /* test('sorting images in gallery page', async ({ page }) => {
+    test('sorting images in gallery page', async ({ page }) => {
       await page.goto('/gallery?type=image');
 
       await page.getByTestId('sort-options').click();
@@ -315,7 +315,7 @@ test.describe('signed in tests', () => {
       for (let i = 0; i < lastEditedImgs.length; i++) {
         await expect(AscTitleImgs[i]).toHaveAttribute('src', AscTitleSrcs[i]);
       }
-    }); */
+    });
 
     test('navigating through images in view mode', async ({ page }) => {
       await page.goto("/gallery?type=image");
