@@ -221,7 +221,7 @@ export default function Gallery() {
             }
         }
 
-        return res.trimEnd();
+        return res.trim();
     }
 
     function clearID() {
@@ -254,11 +254,11 @@ export default function Gallery() {
                     </div>
                     {
                         type === "image" ?    
-                        <div id="images-previews" className={query ? "hidden" : "flex flex-wrap w-full"}>
+                        <div id="images-previews" data-testid="image-view" className={query ? "hidden" : "flex flex-wrap w-full"}>
                             {
                                 !imageQuery.isPending ?
                                 (
-                                    images && images.length ? images.sort(sortList).slice(offset, offset + imageLimitPerPage).map((img) => <Image image_id={img.image_id} key={img.image_id} title={img.title} url={img.url} alt={`${img.title} ${tagsToString(img.tagIDs)}`} handleImageClick={handleImageClick} />) : 
+                                    images && images.length ? images.sort(sortList).slice(offset, offset + imageLimitPerPage).map((img) => <Image image_id={img.image_id} key={img.image_id} title={img.title} url={img.url} alt={`${img.title} ${tagsToString(img.tagIDs)}`.trim()} handleImageClick={handleImageClick} />) : 
                                     <div className="flex w-full justify-center">Click on the + button to add an image</div>
                                 )  
                                 :  <LoadingSpin />

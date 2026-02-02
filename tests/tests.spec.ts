@@ -24,10 +24,24 @@ test.describe('signed in tests', () => {
   test.use({ storageState: 'playwright/.clerk/user.json' });
 
   const testData = [ 
-    {fileName: 'cat.jpg', input: 'cat in nature', tags: ['cat', 'nature'], editedInput: "cat outside"},
-    {fileName: 'birds.jpeg', input: 'birds on a branch', tags: ['bird','nature']},
+    {fileName: 'cat.jpg', input: 'cat_in_nature', tags: ['cat', 'nature'], editedInput: "cat_outside"},
+    {fileName: 'birds.jpeg', input: 'birds_on_a_branch', tags: ['bird','nature']},
     {fileName: 'sunset.jpg', input: 'sunset', tags: ['sunset', 'sky']}
   ];
+
+  function computeImageAlt(index : number) : string {
+    if (index < testData.length) {        
+      let alt = testData[index].input + " ";
+
+      for (const tagName of testData[index].tags) {
+        alt += tagName + " ";
+      }
+
+      return alt.trim();
+    }
+
+    return "";
+  }
 
   testData.forEach(({fileName, input, tags, editedInput}) => {
       test(`add ${fileName} with tags`, async ({ page }) => {
@@ -282,38 +296,37 @@ test.describe('signed in tests', () => {
 
       await page.getByText('Last created').click();
 
-      const lastCreatedImgSrcs = testData.map((data) => data.fileName);
-
-      const lastCreatedImgs = await page.getByTestId(/image/).all();
+      const lastCreatedAlts = testData.reverse().map((elem) => elem.input);
+      const lastCreatedImgs = await page.getByTestId('image-view').getByRole('img').all();
 
       for (let i = 0; i < lastCreatedImgs.length; i++) {
-        await expect(lastCreatedImgs[i]).toHaveAttribute('src', lastCreatedImgSrcs[i]);
+        await expect(lastCreatedImgs[i]).toHaveAttribute('alt', lastCreatedAlts[i]);
       }
       
       await page.getByTestId('sort-options').click();
       await page.getByText('Last edited').click();
 
-      const lastEditedImgSrcs = testData.slice().sort((a, b) =>  b.editedInput ? 1 : -1).map((data) => data.fileName);
-      const lastEditedImgs = await page.getByTestId(/image/).all();
+      const lastEditedAlts = testData.slice().sort((a, b) =>  b.editedInput ? 1 : -1).map((elem) => elem.input);
+      const lastEditedImgs = await page.getByTestId('image-view').getByRole('img').all();
   
       for (let i = 0; i < lastEditedImgs.length; i++) {
-        await expect(lastEditedImgs[i]).toHaveAttribute('src', lastEditedImgSrcs[i]);
+        await expect(lastEditedImgs[i]).toHaveAttribute('alt', lastEditedAlts[i]);
       }
 
       await page.getByTestId('sort-options').click();
       await page.getByText('Title').click();
 
-      const AscTitleSrcs = testData.slice().sort((a, b) => {
+      const ascTitleAlts = testData.slice().sort((a, b) => {
         const titleA = a.editedInput ? a.editedInput.toLowerCase() : a.input.toLowerCase();
         const titleB = b.editedInput ? b.editedInput.toLowerCase() : b.input.toLowerCase();
 
         return titleA.localeCompare(titleB);
-      }).map((data) => data.fileName);
+      }).map((elem) => elem.input);
 
-      const AscTitleImgs = await page.getByTestId(/image/).all();
+      const AscTitleImgs = await page.getByTestId('image-view').getByRole('img').all();
   
       for (let i = 0; i < lastEditedImgs.length; i++) {
-        await expect(AscTitleImgs[i]).toHaveAttribute('src', AscTitleSrcs[i]);
+        await expect(AscTitleImgs[i]).toHaveAttribute('alt', ascTitleAlts[i]);
       }
     });
 
@@ -324,10 +337,10 @@ test.describe('signed in tests', () => {
 
       const fileNames = testData.map((data) => data.fileName);
 
-      await page.getByRole('img').first().click();
+      await page.getByTestId('image-view').getByRole('img').first().click();
 
       for (let i = 0; i < fileNames.length; i++) {
-        await expect(page.getByRole('img')).toHaveAttribute('src', fileNames[i]);
+        await expect(page.getByTestId('view-image')).toHaveAttribute('alt', computeImageAlt(i));
         
         if (i === 0) {
           await expect(page.getByTestId('arrow-left')).toBeDisabled();
@@ -340,7 +353,7 @@ test.describe('signed in tests', () => {
       }
 
       for (let i = fileNames.length - 1; i > -1; i--) {
-        await expect(page.getByRole('img')).toHaveAttribute('src', fileNames[i]);
+        await expect(page.getByTestId('view-image')).toHaveAttribute('alt', computeImageAlt(i));
         
         if (i === 0) {
           await expect(page.getByTestId('arrow-left')).toBeDisabled();
@@ -356,7 +369,7 @@ test.describe('signed in tests', () => {
     test(`deleting all images`, async ({ page }) => {
       await page.goto(`/gallery?type=image`);
 
-      for (const img of await page.getByRole('img').all()) {
+      for (const img of await page.getByTestId(/image/).all()) {
         await img.click();
         
         await expect(page).toHaveURL(url => {
@@ -376,7 +389,7 @@ test.describe('signed in tests', () => {
         await page.waitForURL(`/gallery?type=image`);
       }
 
-      await expect(page.getByRole('img')).not.toBeVisible();
+      await expect(page.getByTestId(/image/)).not.toBeVisible();
     });
   });
     

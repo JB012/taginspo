@@ -74,7 +74,7 @@ export default function EditImage() {
                 fileRef.current.disabled = false;
                 const formData = new FormData(form);
 
-                formData.set("title", title ? title.trim().replace(" ", "_") : new Date().toString());
+                formData.set("title", title ? title.trim().replaceAll(" ", "_") : new Date().toString());
                 formData.append("addedTags", JSON.stringify(addedTags));
 
                 try {
