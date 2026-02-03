@@ -254,7 +254,7 @@ export default function Gallery() {
                     </div>
                     {
                         type === "image" ?    
-                        <div id="images-previews" data-testid="image-view" className={query ? "hidden" : "flex flex-wrap w-full"}>
+                        <div id="images-previews" data-testid="images-previews" className={query ? "hidden" : "flex flex-wrap w-full"}>
                             {
                                 !imageQuery.isPending ?
                                 (
@@ -274,7 +274,7 @@ export default function Gallery() {
                     }
                     <div id="query-images" className={query ? "grid grid-cols-5 lg:grid-cols-4 w-full" : "hidden"}>
                         {
-                            queryImages && queryImages.length ? queryImages.sort(sortList).slice(offset, offset + imageLimitPerPage).map((img) => <Image image_id={img.image_id} key={img.image_id} title={img.title} url={img.url} alt={`${img.title} ${tagsToString(img.tagIDs)}`} handleImageClick={handleImageClick} />)
+                            queryImages && queryImages.length ? queryImages.sort(sortList).slice(offset, offset + imageLimitPerPage).map((img) => <Image image_id={img.image_id} key={img.image_id} title={img.title} url={img.url} alt={`${img.title} ${tagsToString(img.tagIDs)}`.trim()} handleImageClick={handleImageClick} />)
                             : `No results for ${query?.replace('&', ' ')}`
                         }
                     </div>

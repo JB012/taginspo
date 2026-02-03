@@ -137,12 +137,12 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
                 <div id="close-view" onClick={() => closeView()}><FaX size={20} scale={1}/></div>
             </div> 
             <div className={`flex w-full h-full items-center justify-between`}>
-                <div id="arrow-left" data-testid="arrow-left" className="fixed top-1/2 left-4" aria-disabled={isFirstImage(imageData?.image_id)} onClick={() => handleLeftArrowClick()}>
+                <button id="arrow-left" data-testid="arrow-left" className="fixed top-1/2 left-4" disabled={isFirstImage(imageData?.image_id)} onClick={() => handleLeftArrowClick()}>
                     <FaArrowLeft color={isFirstImage(imageData?.image_id) ? "gainsboro" : "black"} size={20} scale={1} />
-                </div>
+                </button>
                 <div className={`flex justify-center items-center flex-col gap-6 w-full h-full pb-12`}>
                     <div id="image-container" className="flex justify-center items-center w-[925px] h-[450px] md:w-[600px] md:h-[350px] xs:w-[300px] xs:h-[275px] xxs:w-[185px] xxs:h-[125px]">
-                        <img data-testid="view-image" id={imageData?.image_id} src={imageData?.url} alt={`${imageData?.title} ${tagsToString(imageData?.tagIDs ?? [])}`} className={`w-[925px] max-h-[450px] md:max-w-[600px] md:max-h-[350px] xs:max-w-[300px] xs:max-h-[275px] xxs:max-w-[185px] xxs:max-h-[125px] bg-amber-100`} />
+                        <img data-testid="view-image" id={imageData?.image_id} src={imageData?.url} alt={`${imageData?.title} ${tagsToString(imageData?.tagIDs ?? [])}`.trim()} className={`w-[925px] max-h-[450px] md:max-w-[600px] md:max-h-[350px] xs:max-w-[300px] xs:max-h-[275px] xxs:max-w-[185px] xxs:max-h-[125px] bg-amber-100`} />
                     </div>
                     <div className={hideInfo ? "hidden" : "flex justify-between"}>
                         <div data-testid="tags-view" className="flex flex-wrap py-4 w-[500px] gap-4">
@@ -157,9 +157,9 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
                         </div>
                     </div> 
                 </div>
-                <div id="arrow-right" data-testid="arrow-right" className="fixed top-1/2 right-3" aria-disabled={isLastImage(imageData?.image_id)} onClick={() => handleRightArrowClick()}>
-                    <FaArrowRight color={isLastImage(imageData?.image_id) ? "gainsboro" : "black"} onClick={() => handleRightArrowClick()} size={20} scale={1}/>
-                </div>
+                <button id="arrow-right" data-testid="arrow-right" className="fixed top-1/2 right-3" disabled={isLastImage(imageData?.image_id)} onClick={() => handleRightArrowClick()}>
+                    <FaArrowRight color={isLastImage(imageData?.image_id) ? "gainsboro" : "black"} size={20} scale={1}/>
+                </button>
             </div>  
         </div>
     )

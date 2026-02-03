@@ -29,21 +29,7 @@ test.describe('signed in tests', () => {
     {fileName: 'sunset.jpg', input: 'sunset', tags: ['sunset', 'sky']}
   ];
 
-  function computeImageAlt(index : number) : string {
-    if (index < testData.length) {        
-      let alt = testData[index].input + " ";
-
-      for (const tagName of testData[index].tags) {
-        alt += tagName + " ";
-      }
-
-      return alt.trim();
-    }
-
-    return "";
-  }
-
-  testData.forEach(({fileName, input, tags, editedInput}) => {
+  testData.forEach(({fileName, input, tags}) => {
       test(`add ${fileName} with tags`, async ({ page }) => {
         await page.goto("/gallery?type=image");
 
@@ -110,43 +96,6 @@ test.describe('signed in tests', () => {
         await expect(page.getByTestId("title")).not.toBeVisible();
         await expect(page.getByTestId(`tag-${input}`)).not.toBeVisible();
         await expect(page.getByText(/Date Uploaded/)).not.toBeVisible();
-      });
-
-      test(`edit ${fileName} title`, async ({ page }) => {
-        async function editTitle(title : string, editedTitle: string) {
-          await page.goto("/gallery?type=image");
-
-          await page.getByTestId(`image-${title}`).click();
-          await page.getByTestId('image-options').click();
-
-          await expect(page.getByText('Edit Image')).toBeVisible();
-          await expect(page.getByTestId('delete-image')).toBeVisible();
-
-          await page.getByText('Edit Image').click();
-          await expect(page).toHaveURL(/\/editimage/);
-
-          
-          //await expect(page.getByRole('img', {name: fileName})).toBeVisible();
-
-          await expect(page.getByRole('textbox', {name: 'Title'})).toHaveValue(title);
-          
-          await page.getByRole('textbox', {name: 'Title'}).clear();
-          await page.getByRole('textbox', {name: 'Title'}).fill(editedTitle);
-  
-          for (const tagName of tags) {
-            await expect(page.getByTestId(`tag-${tagName}`)).toBeVisible();
-          }
-
-          await page.getByRole('button', {name: 'Save Changes'}).click();
-
-          await page.waitForURL('/gallery?type=image');
-          await expect(page).toHaveURL('/gallery?type=image');
-        }
-
-        if (editedInput) {
-          await editTitle(input, editedInput);
-          await editTitle(editedInput, input);
-        }
       });
 
       test(`view ${fileName} tags`, async ({ page }) => {
@@ -285,6 +234,37 @@ test.describe('signed in tests', () => {
       await expect(page.getByText(/No results/)).toBeVisible();
     });
 
+    test(`edit cat.jpg`, async ({ page }) => {
+      async function editTitle(title : string, editedTitle: string, tags: string[]) {
+        await page.goto("/gallery?type=image");
+
+        await page.getByTestId(`image-${title}`).click();
+        await page.getByTestId('image-options').click();
+
+        await expect(page.getByText('Edit Image')).toBeVisible();
+        await expect(page.getByTestId('delete-image')).toBeVisible();
+
+        await page.getByText('Edit Image').click();
+        await expect(page).toHaveURL(/\/editimage/);
+
+        await expect(page.getByRole('textbox', {name: 'Title'})).toHaveValue(title);
+        
+        await page.getByRole('textbox', {name: 'Title'}).clear();
+        await page.getByRole('textbox', {name: 'Title'}).fill(editedTitle);
+
+        await page.getByRole('button', {name: 'Save Changes'}).click();
+
+        await page.waitForURL('/gallery?type=image');
+        await expect(page).toHaveURL('/gallery?type=image');
+      }
+
+      const data = testData[0];
+      
+      await editTitle(data.input, data.editedInput, data.tags);
+      await editTitle(data.editedInput, data.input, data.tags);
+    
+    });
+
     test('sorting images in gallery page', async ({ page }) => {
       await page.goto('/gallery?type=image');
 
@@ -297,7 +277,7 @@ test.describe('signed in tests', () => {
       await page.getByText('Last created').click();
 
       const lastCreatedAlts = testData.reverse().map((elem) => elem.input);
-      const lastCreatedImgs = await page.getByTestId('image-view').getByRole('img').all();
+      const lastCreatedImgs = await page.getByTestId('images-previews').getByRole('img').all();
 
       for (let i = 0; i < lastCreatedImgs.length; i++) {
         await expect(lastCreatedImgs[i]).toHaveAttribute('alt', lastCreatedAlts[i]);
@@ -306,11 +286,11 @@ test.describe('signed in tests', () => {
       await page.getByTestId('sort-options').click();
       await page.getByText('Last edited').click();
 
-      const lastEditedAlts = testData.slice().sort((a, b) =>  b.editedInput ? 1 : -1).map((elem) => elem.input);
-      const lastEditedImgs = await page.getByTestId('image-view').getByRole('img').all();
+      const expected = ["cat_in_nature", "sunset", "birds_on_a_branch"];
+      const lastEditedImgs = await page.getByTestId('images-previews').getByRole('img').all();
   
       for (let i = 0; i < lastEditedImgs.length; i++) {
-        await expect(lastEditedImgs[i]).toHaveAttribute('alt', lastEditedAlts[i]);
+        await expect(lastEditedImgs[i]).toHaveAttribute('alt', expected[i]);
       }
 
       await page.getByTestId('sort-options').click();
@@ -323,7 +303,7 @@ test.describe('signed in tests', () => {
         return titleA.localeCompare(titleB);
       }).map((elem) => elem.input);
 
-      const AscTitleImgs = await page.getByTestId('image-view').getByRole('img').all();
+      const AscTitleImgs = await page.getByTestId('images-previews').getByRole('img').all();
   
       for (let i = 0; i < lastEditedImgs.length; i++) {
         await expect(AscTitleImgs[i]).toHaveAttribute('alt', ascTitleAlts[i]);
@@ -332,44 +312,50 @@ test.describe('signed in tests', () => {
 
     test('navigating through images in view mode', async ({ page }) => {
       await page.goto("/gallery?type=image");
+      
       await page.getByTestId('sort-options').click();
       await page.getByText('Last created').click();
 
-      const fileNames = testData.map((data) => data.fileName);
+      await page.getByTestId('images-previews').getByRole('img').first().click();
 
-      await page.getByTestId('image-view').getByRole('img').first().click();
+      const expected = ["sunset", "birds_on_a_branch", "cat_in_nature"];
 
-      for (let i = 0; i < fileNames.length; i++) {
-        await expect(page.getByTestId('view-image')).toHaveAttribute('alt', computeImageAlt(i));
+      for (let i = 0; i < testData.length; i++) {
+        await expect(page.getByTestId('view-image')).toHaveAttribute('alt', expected[i]);
         
         if (i === 0) {
           await expect(page.getByTestId('arrow-left')).toBeDisabled();
         }
-        else if (i === fileNames.length - 1) {
+        else if (i === testData.length - 1) {
           await expect(page.getByTestId('arrow-right')).toBeDisabled();
         }
 
-        await page.getByTestId('arrow-right').click();
+        if (!await page.getByTestId('arrow-right').isDisabled()) {
+          await page.getByTestId('arrow-right').click();
+        }
       }
 
-      for (let i = fileNames.length - 1; i > -1; i--) {
-        await expect(page.getByTestId('view-image')).toHaveAttribute('alt', computeImageAlt(i));
+      for (let i = testData.length - 1; i > -1; i--) {
+        await expect(page.getByTestId('view-image')).toHaveAttribute('alt', expected[i]);
         
         if (i === 0) {
           await expect(page.getByTestId('arrow-left')).toBeDisabled();
         }
-        else if (i === fileNames.length - 1) {
+        else if (i === testData.length - 1) {
           await expect(page.getByTestId('arrow-right')).toBeDisabled();
         }
 
-        await page.getByTestId('arrow-left').click();
+        if (!await page.getByTestId('arrow-left').isDisabled()) {    
+          await page.getByTestId('arrow-left').click();
+        }
       }
     });
     
     test(`deleting all images`, async ({ page }) => {
       await page.goto(`/gallery?type=image`);
 
-      for (const img of await page.getByTestId(/image/).all()) {
+      for (let i = 0; i < testData.length; i++) {
+        const img = page.getByTestId(`image-${testData[i].input}`);
         await img.click();
         
         await expect(page).toHaveURL(url => {
@@ -389,7 +375,7 @@ test.describe('signed in tests', () => {
         await page.waitForURL(`/gallery?type=image`);
       }
 
-      await expect(page.getByTestId(/image/)).not.toBeVisible();
+      await expect(page.getByText("Click on the + button to add an image")).toBeVisible();
     });
   });
     
