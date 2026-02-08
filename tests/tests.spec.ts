@@ -1,8 +1,10 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../playwright/fixtures';
 import path = require('path');
 
+//test.describe.configure({ mode: 'parallel' });
+
 test.describe('not signed in tests', () => {  
-  test.use({ storageState: { cookies: [], origins: [] } });
+  //test.use({ storageState: { cookies: [], origins: [] } });
    
   test('has title', async ({ page }) => {
     await page.goto('/');
@@ -14,14 +16,14 @@ test.describe('not signed in tests', () => {
     await page.goto("/");
 
     await expect(page.getByRole('button', {name: 'Sign Up'})).toBeVisible();
-    await expect(page.getByRole('button', {name: 'Sign In'})).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Log In'})).toBeVisible();
     await expect(page.getByRole('button', {name: 'Get Started'})).toBeVisible();
   });
 
 });
 
 test.describe('signed in tests', () => {
-  test.use({ storageState: 'playwright/.clerk/user.json' });
+  //test.use({ storageState: 'playwright/.clerk/user.json' });
 
   const testData = [ 
     {fileName: 'cat.jpg', input: 'cat_in_nature', tags: ['cat', 'nature'], editedInput: "cat_outside"},

@@ -20,3 +20,7 @@
 svg, button {
     cursor: pointer;
 }
+
+html {
+    background-color: #f4f4f4;
+}

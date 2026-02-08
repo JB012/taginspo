@@ -1,12 +1,9 @@
 export default function HomeFooter() {
     return (
-        <footer className="flex w-full justify-between items-center py-16">
-            <div className="font-bold text-2xl">
-                TagInspo
-            </div>
+        <footer className="flex w-full justify-end items-center xs:py-12 xxs:py-6">
             <div className="flex gap-4 text-gray-400">
-                <div>Terms of Service</div>
-                <div>Privacy Policy</div>
+                <div className="xs:text-[16px] xxs:text-xs">Terms of Service</div>
+                <div className="xs:text-[16px] xxs:text-xs">Privacy Policy</div>
             </div>
         </footer>
     )
