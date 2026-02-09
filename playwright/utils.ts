@@ -6,7 +6,7 @@ export async function acquireAccount(id: number) {
     });
 
     const username = `user-${id}`;
-    const password = `pass-${id}`;
+    const password = `${process.env.CLERK_SECRET_KEY}-${id}`;
     try {        
         await clerkClient.users.createUser({
             username: username,

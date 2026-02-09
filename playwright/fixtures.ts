@@ -13,7 +13,7 @@ export const test = baseTest.extend<{}, { workerStorageState: string }>({
   workerStorageState: [async ({ browser }, use) => {
     // Use parallelIndex as a unique identifier for each worker.
     const id = test.info().parallelIndex;
-    const fileName = path.resolve(test.info().project.outputDir, `.auth/${id}.json`);
+    const fileName = `./playwright/.auth/${id}.json`;
 
     if (fs.existsSync(fileName)) {
       // Reuse existing authentication state if any.
@@ -28,11 +28,12 @@ export const test = baseTest.extend<{}, { workerStorageState: string }>({
     // Make sure that accounts are unique, so that multiple team members
     // can run tests at the same time without interference.
 
+    await clerkSetup();
+
     const account = await acquireAccount(id);
 
-    //TODO: turn on nginx while testing
-
     // Perform authentication steps. Replace these actions with your own.
+    
     await page.goto('http://localhost:5173/', {waitUntil: 'load'});
 
     await clerk.loaded({page});
