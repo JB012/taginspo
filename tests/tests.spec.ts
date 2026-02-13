@@ -31,6 +31,7 @@ test.describe('signed in tests', () => {
 
   function getImageAlt(fileName : string) {
     const findImage = testData.find(data => data.fileName === fileName);
+    const input = findImage.editedInput ? findImage.editedInput : findImage.input;
 
     let alt = "";
 
@@ -38,10 +39,10 @@ test.describe('signed in tests', () => {
       alt += `${tags} `;
     }
 
-    return `${findImage.input} ${alt.trim()}`;
+    return `${input} ${alt.trim()}`;
   }
 
-  test.beforeAll(async ({browser}) => {
+ test.beforeAll(async ({browser}) => {
     test.setTimeout(60000);
 
     const page = await browser.newPage();
@@ -95,10 +96,10 @@ test.describe('signed in tests', () => {
     }
     
     await page.close();
-  }); 
+  });
 
   testData.forEach(({fileName, input, tags}) => {
-   /*  test(`add ${fileName} with tags`, async ({ page }) => {
+   test(`add ${fileName} with tags`, async ({ page }) => {
       await page.goto('/gallery?type=image');
       await page.getByTestId('add-image').click();
 
@@ -141,7 +142,7 @@ test.describe('signed in tests', () => {
       await expect(page).toHaveURL('/gallery?type=image');
 
       await expect(page.getByTestId(`image-${input}`)).toBeVisible();
-    }); */
+    });
 
     test(`view ${fileName}`, async ({ page }) => {
       await page.goto("/gallery?type=image");
@@ -269,7 +270,7 @@ test.describe('signed in tests', () => {
       });
     });
 
-    /* test(`deleting ${fileName} tags`, async ({ page }) => {        
+    test(`deleting ${fileName} tags`, async ({ page }) => {        
       for (const tagName of tags) {
         await page.goto('/gallery?type=tag');
 
@@ -299,7 +300,7 @@ test.describe('signed in tests', () => {
       await page.goto('/gallery?type=image');
       await page.getByTestId(`image-${input}`).click();
       await expect(page.getByTestId('tags-view')).toBeEmpty();
-    }); */
+    });
   });
   
   test(`unmatched search shows no results`, async ({ page }) => {
@@ -310,8 +311,8 @@ test.describe('signed in tests', () => {
     await expect(page.getByText(/No results/)).toBeVisible();
   });
 
-  test.describe("sorting options", () => {
-    test.beforeAll('edit cat.jpg to new title', async ({browser}) => {
+  test.describe("sorting/navigating tests", () => {
+   test.beforeAll('edit cat.jpg to new title', async ({browser}) => {
       const page = await browser.newPage();
 
       //TODO: Make a fixture
@@ -344,51 +345,90 @@ test.describe('signed in tests', () => {
       await page.close();
     });
 
-     test('sorting images in gallery page', async ({ page }) => {
-        await page.goto('/gallery?type=image');
+    test('sorting images in gallery page', async ({ page }) => {
+      await page.goto('/gallery?type=image');
 
-        await page.getByTestId('sort-options').click();
+      await page.getByTestId('sort-options').click();
 
-        await expect(page.getByText('Last created')).toBeVisible();
-        await expect(page.getByText('Last edited')).toBeVisible();
-        await expect(page.getByText('Title')).toBeVisible();
+      await expect(page.getByText('Last created')).toBeVisible();
+      await expect(page.getByText('Last edited')).toBeVisible();
+      await expect(page.getByText('Title')).toBeVisible();
 
-        await page.getByText('Last created').click();
+      await page.getByText('Last created').click();
 
-        const lastCreatedImgs = await page.getByTestId('images-previews').getByRole('img').all();
+      const lastCreatedImgs = await page.getByTestId('images-previews').getByRole('img').all();
 
-        for (let i = 0; i < lastCreatedImgs.length; i++) {
-          await expect(lastCreatedImgs[i]).toHaveAttribute('alt', getImageAlt(testData[testData.length - i].fileName));
-        }
-        
-        await page.getByTestId('sort-options').click();
-        await page.getByText('Last edited').click();
+      for (let i = 0; i < lastCreatedImgs.length; i++) {
+        await expect(lastCreatedImgs[i]).toHaveAttribute('alt', getImageAlt(testData[testData.length - i - 1].fileName));
+      }
+      
+      await page.getByTestId('sort-options').click();
+      await page.getByText('Last edited').click();
 
-        const lastCreated = ["cat.jpg", "sunset.jpg", "birds.jpeg"];
-        const lastEditedImgs = await page.getByTestId('images-previews').getByRole('img').all();
+      const lastCreated = ["cat.jpg", "sunset.jpg", "birds.jpeg"];
+      const lastEditedImgs = await page.getByTestId('images-previews').getByRole('img').all();
 
-        for (let i = 0; i < lastEditedImgs.length; i++) {
-          await expect(lastEditedImgs[i]).toHaveAttribute('alt', getImageAlt(lastCreated[i]));
-        }
+      for (let i = 0; i < lastEditedImgs.length; i++) {
+        await expect(lastEditedImgs[i]).toHaveAttribute('alt', getImageAlt(lastCreated[i]));
+      }
 
-        await page.getByTestId('sort-options').click();
-        await page.getByText('Title').click();
+      await page.getByTestId('sort-options').click();
+      await page.getByText('Title').click();
 
-        const ascTitleSortedData = testData.slice().sort((a, b) => {
-          const titleA = a.editedInput ? a.editedInput.toLowerCase() : a.input.toLowerCase();
-          const titleB = b.editedInput ? b.editedInput.toLowerCase() : b.input.toLowerCase();
+      const ascTitleSortedData = testData.slice().sort((a, b) => {
+        const titleA = a.editedInput ? a.editedInput.toLowerCase() : a.input.toLowerCase();
+        const titleB = b.editedInput ? b.editedInput.toLowerCase() : b.input.toLowerCase();
 
-          return titleA.localeCompare(titleB);
-        });
-
-        const AscTitleImgs = await page.getByTestId('images-previews').getByRole('img').all();
-
-        for (let i = 0; i < lastEditedImgs.length; i++) {
-          await expect(AscTitleImgs[i]).toHaveAttribute('alt', getImageAlt(ascTitleSortedData[i].fileName));
-        }
+        return titleA.localeCompare(titleB);
       });
 
-    test.afterAll('edit cat.jpg to original title', async ({browser}) => {
+      const AscTitleImgs = await page.getByTestId('images-previews').getByRole('img').all();
+
+      for (let i = 0; i < lastEditedImgs.length; i++) {
+        await expect(AscTitleImgs[i]).toHaveAttribute('alt', getImageAlt(ascTitleSortedData[i].fileName));
+      }
+    });
+
+    test('navigating through images in view mode', async ({ page }) => {
+      await page.goto("/gallery?type=image");
+      
+      await page.getByTestId('sort-options').click();
+      await page.getByText('Last created').click();
+
+      await page.getByTestId('images-previews').getByRole('img').first().click();
+
+      //const expected = ["sunset", "birds_on_a_branch", "cat_in_nature"];
+
+      for (let i = testData.length - 1; i > -1; i--) {
+        await expect(page.getByTestId('view-image')).toHaveAttribute('alt', getImageAlt(testData[i].fileName));
+        
+        if (i === 0) {
+          await expect(page.getByTestId('arrow-right')).toBeDisabled();
+        }
+        else if (i === 0) {
+          await expect(page.getByTestId('arrow-left')).toBeDisabled();
+        }
+        if (!await page.getByTestId('arrow-right').isDisabled()) {
+          await page.getByTestId('arrow-right').click();
+        }
+      }
+
+      for (let i = 0; i < testData.length; i++) {
+        await expect(page.getByTestId('view-image')).toHaveAttribute('alt', getImageAlt(testData[i].fileName));
+        
+        if (i === testData.length - 1) {
+          await expect(page.getByTestId('arrow-left')).toBeDisabled();
+        }
+        else if (i === 0) {
+          await expect(page.getByTestId('arrow-right')).toBeDisabled();
+        }
+        if (!await page.getByTestId('arrow-left').isDisabled()) {    
+          await page.getByTestId('arrow-left').click();
+        }
+      }
+    });
+
+   test.afterAll('edit cat.jpg to original title', async ({browser}) => {
       const page = await browser.newPage();
 
       //TODO: Make a fixture
@@ -420,47 +460,6 @@ test.describe('signed in tests', () => {
       await editTitle(data.editedInput, data.input);
       await page.close();
     });
-  });
-
-  test('navigating through images in view mode', async ({ page }) => {
-    await page.goto("/gallery?type=image");
-    
-    await page.getByTestId('sort-options').click();
-    await page.getByText('Last created').click();
-
-    await page.getByTestId('images-previews').getByRole('img').first().click();
-
-    //const expected = ["sunset", "birds_on_a_branch", "cat_in_nature"];
-
-    for (let i = 0; i < testData.length; i++) {
-      await expect(page.getByTestId('view-image')).toHaveAttribute('alt', getImageAlt(testData[testData.length - i].fileName));
-      
-      if (i === 0) {
-        await expect(page.getByTestId('arrow-left')).toBeDisabled();
-      }
-      else if (i === testData.length - 1) {
-        await expect(page.getByTestId('arrow-right')).toBeDisabled();
-      }
-
-      if (!await page.getByTestId('arrow-right').isDisabled()) {
-        await page.getByTestId('arrow-right').click();
-      }
-    }
-
-    for (let i = testData.length - 1; i > -1; i--) {
-      await expect(page.getByTestId('view-image')).toHaveAttribute('alt', getImageAlt(testData[i].fileName));
-      
-      if (i === 0) {
-        await expect(page.getByTestId('arrow-left')).toBeDisabled();
-      }
-      else if (i === testData.length - 1) {
-        await expect(page.getByTestId('arrow-right')).toBeDisabled();
-      }
-
-      if (!await page.getByTestId('arrow-left').isDisabled()) {    
-        await page.getByTestId('arrow-left').click();
-      }
-    }
   });
 
   
