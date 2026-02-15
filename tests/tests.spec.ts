@@ -21,7 +21,7 @@ test.describe('not signed in tests', () => {
 });
 
 test.describe('signed in tests', () => {
-  test.describe.configure({mode: 'serial'});
+  //test.describe.configure({mode: 'serial'});
 
   const testData = [ 
     {fileName: 'cat.jpg', input: 'cat_in_nature', tags: ['cat', 'nature'], editedInput: "cat_outside"},

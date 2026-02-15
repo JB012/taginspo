@@ -30,5 +30,8 @@
 **/values.dev.yaml
 **/build
 **/dist
+**/playwright/.cache/
+**/playwright/.auth/
+**/playwright/.clerk/
 LICENSE
 README.md
