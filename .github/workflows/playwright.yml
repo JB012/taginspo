@@ -27,6 +27,7 @@ jobs:
     - name: Download blob reports from GitHub Actions Artifacts
       uses: actions/download-artifact@v5
       with:
+        name: my-artifact-${{ matrix.os }}
         path: all-blob-reports
         pattern: blob-report-*
         merge-multiple: true
