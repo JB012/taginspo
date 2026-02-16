@@ -17,7 +17,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: process.env.CI ? 1 : 3,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -42,15 +42,14 @@ export default defineConfig({
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
-        storageState: './playwright/.auth/0.json',
        },
+      
     },
 
     {
       name: 'firefox',
       use: { 
         ...devices['Desktop Firefox'],
-        storageState: './playwright/.auth/1.json',
       },
     },
 
@@ -58,7 +57,6 @@ export default defineConfig({
       name: 'webkit',
       use: { 
         ...devices['Desktop Safari'],
-        storageState: './playwright/.auth/2.json', 
       },
     },
 
