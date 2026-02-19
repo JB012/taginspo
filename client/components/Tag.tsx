@@ -112,10 +112,12 @@ export default function Tag({id, title, color, addedTag, tagResult, editMode,
                 
             </div>
             <FaEllipsis data-testid={`tag-${title}-options`} onClick={() => setOptions(!options)} style={{display: addedTag && !options ? 'block' : 'none'}} />
-            <div ref={optionsRef} style={{display: options ? 'flex' : 'none'}} className="flex-col outline outline-black">
-                <div id="edit-button" className="p-2 cursor-pointer" onClick={() => {setEdit(true); setOptions(false)}}>Edit</div>
-                <hr />
-                <div className="p-2 cursor-pointer" onClick={() => removeTag!(id)}>Delete</div>
+            <div style={{display: options ? 'flex' : 'none'}} className="relative">
+                <div ref={optionsRef} style={{display: options ? 'flex' : 'none'}} className="flex-col absolute left-1 outline outline-black">
+                    <div id="edit-button" className="p-2 cursor-pointer" onClick={() => {setEdit(true); setOptions(false)}}>Edit</div>
+                    <hr />
+                    <div className="p-2 cursor-pointer" onClick={() => removeTag!(id)}>Delete</div>
+                </div>
             </div>
         </div>
     )

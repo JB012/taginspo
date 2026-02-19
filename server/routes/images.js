@@ -1,5 +1,5 @@
 const express = require('express');
-const { pool } = require("../db");
+const { supabase } = require("../sb");
 const { createDateTime } = require("../utils");
 const { s3Client, cloudFront, createSignedURL } = require("../s3-cloudfront");
 const router = express.Router();
@@ -29,9 +29,11 @@ async function formatImageJSON(imageJSON, userId) {
 
     for (const json of imageJSON) {
         const signedURL = createSignedURL(json.title);
-        const [rows] = await pool.query(`SELECT tag_id FROM users_images_tags WHERE user_id=? AND image_id=?`, [userId, json.image_id]);
 
-        const tagIDs = Object.values(JSON.parse(JSON.stringify(rows))).map((json) => json.tag_id);
+        const { data } = await supabase.from('users_images_tags').select('tag_id').eq('user_id', userId).eq('image_id', json.image_id);
+        //const [rows] = await pool.query(`SELECT tag_id FROM users_images_tags WHERE user_id=? AND image_id=?`, [userId, json.image_id]);
+
+        const tagIDs = Object.values(JSON.parse(JSON.stringify(data))).map((json) => json.tag_id);
             
         images.push({...json, url: signedURL, tagIDs: tagIDs});
     }
@@ -44,9 +46,10 @@ router.get("/", async (req, res) => {
     
     if (isAuthenticated) {
         try {
-            const [rows] = await pool.query(`SELECT * FROM images WHERE user_id=? ORDER BY created_at DESC`, [userId]);
+            const { data } = await supabase.from('images').select().eq('user_id', userId).order('created_at', {ascending: false});
+            //const [rows] = await pool.query(`SELECT * FROM images WHERE user_id=? ORDER BY created_at DESC`, [userId]);
 
-            const imagesJSON = Object.values(JSON.parse(JSON.stringify(rows)));
+            const imagesJSON = Object.values(JSON.parse(JSON.stringify(data)));
             const images = await formatImageJSON(imagesJSON, userId);
         
             return res.send(images);  
@@ -75,15 +78,17 @@ router.get("/:id", async (req, res) => {
     if (isAuthenticated) {
         const imageID = req.params.id;
 
-        const [[image]] = await pool.query(`SELECT * FROM images WHERE user_id=? AND image_id=?`, [userId, imageID]);
+        const imageData = await supabase.from('images').select().eq('user_id', userId).eq('image_id', imageID);
+        //const [[image]] = await pool.query(`SELECT * FROM images WHERE user_id=? AND image_id=?`, [userId, imageID]);
 
-        const [rows] = await pool.query(`SELECT tag_id FROM users_images_tags WHERE user_id=? AND image_id=?`, [userId, imageID]);
+        const { data } = await supabase.from('users_images_tags').select('tag_id').eq('user_id', userId).eq('image_id', imageID);
+        //const [rows] = await pool.query(`SELECT tag_id FROM users_images_tags WHERE user_id=? AND image_id=?`, [userId, imageID]);
 
-        const tagIDs = Object.values(JSON.parse(JSON.stringify(rows))).map((json) => json.tag_id);
+        const tagIDs = Object.values(JSON.parse(JSON.stringify(data))).map((json) => json.tag_id);
                         
-        const signedURL = createSignedURL(image.title);
+        const signedURL = createSignedURL(imageData.data.image.title);
 
-        return res.send({url: signedURL, tagIDs: tagIDs, ...image});
+        return res.send({url: signedURL, tagIDs: tagIDs, ...imageData.data.image});
     }
     else {
         return res.status(401).send('User not authenticated');
@@ -100,10 +105,10 @@ router.post("/add", upload.single('file'), async (req, res) => {
 
     if (isAuthenticated) {
         try {
-
-            const [rows] = await pool.query(`SELECT * FROM images WHERE user_id=? AND title=?`, [userId, title]);
+            const { data } = await supabase.from('images').select().eq('user_id', userId).eq('title', title);
+            //const [rows] = await pool.query(`SELECT * FROM images WHERE user_id=? AND title=?`, [userId, title]);
             
-            if (rows.length === 0) {
+            if (data.length === 0) {
                 const command = new PutObjectCommand({
                     Bucket: 'www.taginspo.com',
                     Key: title,
@@ -113,7 +118,9 @@ router.post("/add", upload.single('file'), async (req, res) => {
                         
                 await s3Client.send(command);
 
-                await pool.query('INSERT INTO images (user_id, image_id, created_at, edited_at, title, source) VALUES (?, ?, ?, ?, ?, ?)', [userId, imageID, createDateTime(), createDateTime(), title, source]);
+                await supabase.from('images').insert({user_id: userId, image_id: imageID, created_at: createDateTime(), edited_at: createDateTime(), title: title, source: source});
+                
+                //await pool.query('INSERT INTO images (user_id, image_id, created_at, edited_at, title, source) VALUES (?, ?, ?, ?, ?, ?)', [userId, imageID, createDateTime(), createDateTime(), title, source]);
                 
                 const token = await getToken();
 
@@ -157,11 +164,13 @@ router.post("/edit/:id", async (req, res) => {
 
     if (isAuthenticated) {
         try {
-            const [rows] = await pool.query(`SELECT * FROM images WHERE NOT image_id=? AND user_id=? AND title=?`, [imageID, userId, title]);
+            const { data } = await supabase.from('images').neq('image_id', imageID).eq('user_id', userId).eq('title', title);
+            //const [rows] = await pool.query(`SELECT * FROM images WHERE NOT image_id=? AND user_id=? AND title=?`, [imageID, userId, title]);
 
-            if (rows.length === 0) {
-                await pool.query(`UPDATE images SET title=?, source=?, edited_at=? WHERE user_id=? AND image_id=?`
-                , [title, source, createDateTime(), userId, imageID]);
+            if (data.length === 0) {
+                await supabase.from('images').update({title: title, edited_at: createDateTime()}).eq('user_id', userId).eq('image_id', imageID);
+                //await pool.query(`UPDATE images SET title=?, source=?, edited_at=? WHERE user_id=? AND image_id=?`
+                //, [title, source, createDateTime(), userId, imageID]);
 
                 const token = await getToken();
 
@@ -189,10 +198,11 @@ router.delete("/delete/:id", async (req, res) => {
     
     if (isAuthenticated) {
         try {
-            const [rows] = await pool.query(`SELECT * FROM images WHERE user_id=? AND image_id=?`, [userId, imageID]);
+            const {data} = await supabase.from('images').select().eq('user_id', userId).eq('image_id', imageID);
+            //const [rows] = await pool.query(`SELECT * FROM images WHERE user_id=? AND image_id=?`, [userId, imageID]);
             
-            if (rows.length) {
-                const imageInfo = rows[0];
+            if (data.length) {
+                const imageInfo = data[0];
 
                 const s3Command = new DeleteObjectCommand({Bucket: bucketName, Key: imageInfo.title});
                 await s3Client.send(s3Command);
@@ -214,7 +224,8 @@ router.delete("/delete/:id", async (req, res) => {
                 const invalidationCommand = new CreateInvalidationCommand(invalidateParams);
                 await cloudFront.send(invalidationCommand);
 
-                await pool.query(`DELETE FROM images WHERE user_id=? AND image_id=?`, [userId, imageID]);
+                await supabase.from('images').delete().eq('user_id', userId).eq('image_id', imageID);
+                //await pool.query(`DELETE FROM images WHERE user_id=? AND image_id=?`, [userId, imageID]);
             
                 return res.send('Image successfully deleted');
             }
