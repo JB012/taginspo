@@ -183,7 +183,7 @@ test.describe('signed in tests', () => {
       for (const tagName of tags) {
         await page.getByRole('textbox').fill(tagName);
 
-        await expect(page.getByTestId('search-results')).toBeVisible();
+        await expect(page.getByTestId('search-results')).toBeVisible({timeout: 3000});
         await expect(page.getByTestId(`search-${tagName}`)).toBeVisible();
 
         await page.keyboard.press("Enter");
@@ -269,7 +269,6 @@ test.describe('signed in tests', () => {
    test.beforeAll('edit cat.jpg to new title', async ({browser}) => {
       const page = await browser.newPage();
 
-      //TODO: Make a fixture
       async function editTitle(title : string, editedTitle: string) {
         await page.goto("/gallery?type=image");
 

@@ -20,10 +20,6 @@ dotenv.config();
 router.use(cors());
 router.use(clerkMiddleware());
 
-router.use(bodyParser.json());
-router.use(bodyParser.urlencoded());
-router.use(bodyParser.urlencoded({extended:true}));
-
 async function formatImageJSON(imageJSON, userId) {
     const images = [];
 
@@ -33,7 +29,7 @@ async function formatImageJSON(imageJSON, userId) {
         const { data } = await supabase.from('users_images_tags').select('tag_id').eq('user_id', userId).eq('image_id', json.image_id);
         //const [rows] = await pool.query(`SELECT tag_id FROM users_images_tags WHERE user_id=? AND image_id=?`, [userId, json.image_id]);
 
-        const tagIDs = Object.values(JSON.parse(JSON.stringify(data))).map((json) => json.tag_id);
+        const tagIDs = data.map((json) => json.tag_id);
             
         images.push({...json, url: signedURL, tagIDs: tagIDs});
     }
@@ -48,9 +44,8 @@ router.get("/", async (req, res) => {
         try {
             const { data } = await supabase.from('images').select().eq('user_id', userId).order('created_at', {ascending: false});
             //const [rows] = await pool.query(`SELECT * FROM images WHERE user_id=? ORDER BY created_at DESC`, [userId]);
-
-            const imagesJSON = Object.values(JSON.parse(JSON.stringify(data)));
-            const images = await formatImageJSON(imagesJSON, userId);
+    
+            const images = await formatImageJSON(data, userId);
         
             return res.send(images);  
         }
@@ -84,7 +79,7 @@ router.get("/:id", async (req, res) => {
         const { data } = await supabase.from('users_images_tags').select('tag_id').eq('user_id', userId).eq('image_id', imageID);
         //const [rows] = await pool.query(`SELECT tag_id FROM users_images_tags WHERE user_id=? AND image_id=?`, [userId, imageID]);
 
-        const tagIDs = Object.values(JSON.parse(JSON.stringify(data))).map((json) => json.tag_id);
+        const tagIDs = data.map((json) => json.tag_id);
                         
         const signedURL = createSignedURL(imageData.data.image.title);
 

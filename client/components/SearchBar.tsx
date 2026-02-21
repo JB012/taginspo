@@ -7,6 +7,7 @@ import type { TagType } from "../types/TagType";
 import type { ImageType } from "../types/ImageType";
 import useImages from "../utils/useImages";
 import useTags from "../utils/useTags";
+import LoadingSpin from "../components/LoadingSpin";
 
 interface SearchBarProp {
     handleImageClick: (id: string) => void
@@ -26,7 +27,6 @@ export default function SearchBar({handleImageClick, addQueryString} : SearchBar
     const tagQuery = useTags();
     const images : ImageType[] = imageQuery.data;
     const tags : TagType[] = tagQuery.data;
-
 
      useEffect(() => {
         function handleClickOutside(event: Event) {
@@ -196,6 +196,7 @@ export default function SearchBar({handleImageClick, addQueryString} : SearchBar
             </div>
             <div data-testid="search-results" ref={resultsRef} className={!resultsView ? "hidden" : "absolute w-[600px] max-h-[200px] top-13 left-143 text-ellipsis overflow-x-hidden overflow-y-auto whitespace-nowrap bg-white shadow rounded-3xl flex flex-col"}>
                 {
+                    imageQuery.isLoading ? <LoadingSpin /> :
                     searchBarResults.length ? searchBarResults.map((elem, index) => handleSearchView(elem, index)) : ''
                 }
             </div>
