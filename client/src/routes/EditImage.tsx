@@ -98,10 +98,10 @@ export default function EditImage() {
 
                     async function editImageBackEnd() {
                         const token = await getToken();
-                        //TODO: Tag duplicates occurring while editing image.
+                        
                         if (token) {
                             const res = await axios.post(`http://localhost:3000/images/edit/${id}`, 
-                                {title: title ? title : new Date().toString(), source: source, addedTags: JSON.stringify(addedTags)}, 
+                                {title: title ? title.trim().replaceAll(" ", "_") : new Date().toString(), source: source, addedTags: JSON.stringify(addedTags)}, 
                                 {headers:  { Authorization: `Bearer ${token}`}});
                             
                             if (res.status === 200 && !res.data.includes("Title already exists")) {

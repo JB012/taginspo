@@ -150,10 +150,10 @@ export default function DragAndDrop({fileRef, imageRef, editImageURL, changeTitl
     }, [imageRef, enableSubmit, disableSubmit, changeTitle]);
 
     return (
-    <div id="drop-zone-container" className="outline-dashed outline-black flex w-[800px] h-[567px] xl:w-[600px] lg:w-[400px] xxs:w-[400px] xxs:h-[400px] xxs:self-center">
+    <div id="drop-zone-container" className={`${editImageURL ? "outline-none" : "outline-dashed"} outline-black flex w-[800px] h-[567px] xl:w-[600px] lg:w-[400px] xxs:w-[400px] xxs:h-[400px] xxs:self-center`}>
         <div className="flex flex-col w-full items-center relative">
             <label id="drop-zone" data-testid="drop-zone" htmlFor="add-image" className="w-full h-full flex items-center justify-center absolute cursor-pointer">
-                <div id="drop-zone-message">Drag-and-drop image or click to choose file</div>
+                <div id="drop-zone-message" className={editImageURL ? "hidden" : ""}>Drag-and-drop image or click to choose file</div>
                 <input disabled={editImageURL ? true : false} ref={fileRef} id="add-image" type="file" name="file" accept="image/*" />
             </label>
             <div id="preview-image" className="relative">  

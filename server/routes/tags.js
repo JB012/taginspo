@@ -11,8 +11,8 @@ require('dotenv').config();
 
 router.use(cors());
 router.use(clerkMiddleware());
-router.use(bodyParser.urlencoded({extended:false}));
-router.use(bodyParser.json());
+router.use(express.json());
+router.use(express.urlencoded({ extended: true }));
 
 router.get('/', async (req, res) => {
     const { isAuthenticated, userId } = getAuth(req);

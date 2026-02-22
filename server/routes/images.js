@@ -5,7 +5,7 @@ const { s3Client, cloudFront, createSignedURL } = require("../s3-cloudfront");
 const router = express.Router();
 const { clerkMiddleware, getAuth, clerkClient } =  require('@clerk/express')
 const bodyParser = require("body-parser");
-const { DeleteObjectCommand, PutObjectCommand, S3ServiceException, NoSuchKey } = require('@aws-sdk/client-s3');
+const { DeleteObjectCommand, PutObjectCommand, S3ServiceException, NoSuchKey, CopyObjectCommand } = require('@aws-sdk/client-s3');
 const { CreateInvalidationCommand } = require('@aws-sdk/client-cloudfront');
 const dotenv = require('dotenv');
 const multer = require('multer');
@@ -19,6 +19,8 @@ dotenv.config();
 
 router.use(cors());
 router.use(clerkMiddleware());
+router.use(express.json());
+router.use(express.urlencoded({ extended: true }));
 
 async function formatImageJSON(imageJSON, userId) {
     const images = [];
@@ -35,6 +37,28 @@ async function formatImageJSON(imageJSON, userId) {
     }
     
     return images;
+}
+
+async function deleteImageInS3(title) {
+    const s3Command = new DeleteObjectCommand({Bucket: bucketName, Key: title});
+    await s3Client.send(s3Command);
+
+    //Invalidating cloudfront cache for the image
+    const invalidateParams = { 
+        DistributionId: process.env.DISTRIBUTION_ID,
+        InvalidationBatch: {
+            CallerReference: title,
+            Paths: {
+                Quantity: 1,
+                Items: [
+                    "/" + title
+                ]
+            }
+        }
+    }
+
+    const invalidationCommand = new CreateInvalidationCommand(invalidateParams);
+    await cloudFront.send(invalidationCommand);
 }
 
 router.get("/", async (req, res) => {
@@ -80,10 +104,10 @@ router.get("/:id", async (req, res) => {
         //const [rows] = await pool.query(`SELECT tag_id FROM users_images_tags WHERE user_id=? AND image_id=?`, [userId, imageID]);
 
         const tagIDs = data.map((json) => json.tag_id);
-                        
-        const signedURL = createSignedURL(imageData.data.image.title);
 
-        return res.send({url: signedURL, tagIDs: tagIDs, ...imageData.data.image});
+        const signedURL = createSignedURL(imageData.data[0].title);
+
+        return res.send({url: signedURL, tagIDs: tagIDs, ...imageData.data[0]});
     }
     else {
         return res.status(401).send('User not authenticated');
@@ -159,10 +183,23 @@ router.post("/edit/:id", async (req, res) => {
 
     if (isAuthenticated) {
         try {
-            const { data } = await supabase.from('images').neq('image_id', imageID).eq('user_id', userId).eq('title', title);
+            const { data } = await supabase.from('images').select().neq('image_id', imageID).eq('user_id', userId).eq('title', title);
             //const [rows] = await pool.query(`SELECT * FROM images WHERE NOT image_id=? AND user_id=? AND title=?`, [imageID, userId, title]);
 
             if (data.length === 0) {
+                const { data } = await supabase.from('images').select('title').eq('image_id', imageID).eq('user_id', userId);
+                
+                const copyOriginalParams = {
+                    Bucket: bucketName,
+                    CopySource: `${bucketName}/${data[0].title}`,
+                    Key: title
+                };
+
+                const command = new CopyObjectCommand(copyOriginalParams);
+                await s3Client.send(command);
+                
+                await deleteImageInS3(data[0].title);
+
                 await supabase.from('images').update({title: title, edited_at: createDateTime()}).eq('user_id', userId).eq('image_id', imageID);
                 //await pool.query(`UPDATE images SET title=?, source=?, edited_at=? WHERE user_id=? AND image_id=?`
                 //, [title, source, createDateTime(), userId, imageID]);
@@ -199,25 +236,7 @@ router.delete("/delete/:id", async (req, res) => {
             if (data.length) {
                 const imageInfo = data[0];
 
-                const s3Command = new DeleteObjectCommand({Bucket: bucketName, Key: imageInfo.title});
-                await s3Client.send(s3Command);
-
-                //Invalidating cloudfront cache for the image
-                const invalidateParams = { 
-                    DistributionId: process.env.DISTRIBUTION_ID,
-                    InvalidationBatch: {
-                        CallerReference: imageInfo.title,
-                        Paths: {
-                            Quantity: 1,
-                            Items: [
-                                "/" + imageInfo.title
-                            ]
-                        }
-                    }
-                }
-
-                const invalidationCommand = new CreateInvalidationCommand(invalidateParams);
-                await cloudFront.send(invalidationCommand);
+                await deleteImageInS3(imageInfo.title);
 
                 await supabase.from('images').delete().eq('user_id', userId).eq('image_id', imageID);
                 //await pool.query(`DELETE FROM images WHERE user_id=? AND image_id=?`, [userId, imageID]);

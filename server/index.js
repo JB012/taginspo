@@ -14,6 +14,8 @@ app.use(cors());
 app.use(clerkMiddleware());
 app.use("/images", images);
 app.use("/tags", tags);
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.post('/api/webhooks', express.raw({ type: 'application/json' }), async (req, res) => {
   try {
