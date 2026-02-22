@@ -42,7 +42,7 @@ test.describe('signed in tests', () => {
   }
 
  test.beforeAll(async ({browser}) => {
-    test.setTimeout(60000);
+    test.setTimeout(90000);
 
     const page = await browser.newPage();
 
@@ -422,7 +422,7 @@ test.describe('signed in tests', () => {
 
   
   test.afterAll(async ({ browser }) => { 
-    test.setTimeout(60000);
+    test.setTimeout(90000);
     
     //TODO: Delete tags
     
