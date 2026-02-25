@@ -82,13 +82,13 @@ export default defineConfig({
   webServer: [
     {
       command: 'npm run client',
-      url: 'http://localhost:5173',
+      port: 5173,
       timeout: 120 * 1000,
       reuseExistingServer: !process.env.CI,
     },
     {
       command: 'npm run server',
-      url: 'http://localhost:3000',
+      port: 3000,
       timeout: 120 * 1000,
       reuseExistingServer: !process.env.CI,
     }
