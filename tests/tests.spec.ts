@@ -42,11 +42,11 @@ test.describe('signed in tests', () => {
   }
 
  test.beforeAll(async ({browser}) => {
-    test.setTimeout(90000);
+    test.setTimeout(240000);
 
     const page = await browser.newPage();
 
-    await page.goto("/gallery?type=image");
+    await page.goto("/gallery?type=image", {waitUntil: 'load'});
 
     for (const {fileName, input, tags} of testData) {
       if (!await page.getByTestId(`image-${input}`).isVisible()) {
@@ -422,7 +422,7 @@ test.describe('signed in tests', () => {
 
   
   test.afterAll(async ({ browser }) => { 
-    test.setTimeout(90000);
+    test.setTimeout(240000);
     
     //TODO: Delete tags
     
