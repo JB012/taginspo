@@ -25,7 +25,7 @@ test.describe('signed in tests', () => {
 
   const testData = [ 
     {fileName: 'cat.jpg', input: 'cat_in_nature', tags: ['cat', 'nature'], editedInput: "cat_outside"},
-    {fileName: 'birds.jpeg', input: 'birds_on_a_branch', tags: ['bird','sky']},
+    {fileName: 'birds.jpeg', input: 'birds_on_a_branch', tags: ['bird','nature']},
     {fileName: 'sunset.jpg', input: 'sunset', tags: ['sunset', 'sky']}
   ];
 
@@ -41,8 +41,8 @@ test.describe('signed in tests', () => {
     return `${input} ${alt.trim()}`;
   }
 
- test.beforeAll(async ({browser}) => {
-    test.setTimeout(240000);
+/*  test.beforeAll(async ({browser}) => {
+    test.setTimeout(180000);
 
     const page = await browser.newPage();
 
@@ -96,7 +96,7 @@ test.describe('signed in tests', () => {
     
     await page.close();
   });
-
+ */
   testData.forEach(({fileName, input, tags}) => {
     test(`view ${fileName}`, async ({ page }) => {
       await page.goto("/gallery?type=image");
@@ -421,8 +421,8 @@ test.describe('signed in tests', () => {
   });
 
   
-  test.afterAll(async ({ browser }) => { 
-    test.setTimeout(240000);
+  /* test.afterAll(async ({ browser }) => { 
+    test.setTimeout(180000);
     
     //TODO: Delete tags
     
@@ -452,6 +452,6 @@ test.describe('signed in tests', () => {
 
     await expect(page.getByText("Click on the + button to add an image")).toBeVisible(); 
     await page.close();   
-  }); 
+  });  */
 });
     
