@@ -10,6 +10,8 @@ export const test = baseTest.extend<{}, { workerStorageState: string }>({
   workerStorageState: [async ({ browser }, use) => {
     // Use parallelIndex as a unique identifier for each worker.
     const id = test.info().parallelIndex;
+    
+    fs.mkdirSync('./playwright/.auth', {recursive: true});
     const fileName = `./playwright/.auth/${id}.json`;
 
     if (fs.existsSync(fileName)) {
