@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FaTag, FaImage, FaCircleXmark } from "react-icons/fa6"
 import { RxTriangleDown } from "react-icons/rx";
 import { assertIsNode, formatDateTime } from "../utils/utils";
@@ -7,13 +7,12 @@ import type { TagType } from "../types/TagType";
 import type { ImageType } from "../types/ImageType";
 import useImages from "../utils/useImages";
 import useTags from "../utils/useTags";
-import LoadingSpin from "../components/LoadingSpin";
 
 interface SearchBarProp {
     handleImageClick: (id: string) => void
     addQueryString: (query: string) => void
 }
-export default function SearchBar({handleImageClick, addQueryString} : SearchBarProp) { 
+export default function SearchBar({ handleImageClick, addQueryString} : SearchBarProp) { 
     const [input, setInput] = useState(""); 
     const [searchType, setSearchType] = useState("tag");
     const [showList, setShowList] = useState(false);
@@ -25,9 +24,15 @@ export default function SearchBar({handleImageClick, addQueryString} : SearchBar
 
     const imageQuery = useImages();
     const tagQuery = useTags();
-    const images : ImageType[] = imageQuery.data;
-    const tags : TagType[] = tagQuery.data;
 
+    const images : ImageType[] = useMemo(() => {
+            return imageQuery.data ?? [];
+        }, [imageQuery.data]);
+        
+    const tags : TagType[] = useMemo(() => {
+        return tagQuery.data ?? [];
+    }, [tagQuery.data]);
+    
      useEffect(() => {
         function handleClickOutside(event: Event) {
             try {
@@ -72,6 +77,7 @@ export default function SearchBar({handleImageClick, addQueryString} : SearchBar
             addQueryString(input.trim().replace(' ', '&'));
             setInput('');
             setSearchBarResults([]);
+            setResultsView(false);
         }
     }, [addQueryString, input]);
 
@@ -142,6 +148,7 @@ export default function SearchBar({handleImageClick, addQueryString} : SearchBar
         if (searchType === "tag") {
             const words = input.split(' ');
             const recentWordinInput = words[words.length - 1];
+
             const filteredTags = tags.filter((tag) => tag.title.toLowerCase().startsWith(recentWordinInput.toLowerCase()));
             setSearchBarResults(filteredTags);
         }
@@ -184,7 +191,7 @@ export default function SearchBar({handleImageClick, addQueryString} : SearchBar
     return ( 
         <div className="flex shrink flex-col">
             <div className="flex items-center relative">
-                <input value={input} onFocus={() => setResultsView(true)} onChange={(e) => handleInput(e.target.value)} className="flex outline outline-black rounded-full xl:w-[600px] lg:w-[400px] md:w-[300px] xxs:w-[200px] pl-20 pr-10 h-[39px]" />        
+                <input disabled={images.length === 0 && tags.length === 0} value={input} onFocus={() => setResultsView(true)} onChange={(e) => handleInput(e.target.value)} className="flex outline outline-black rounded-full xl:w-[600px] lg:w-[400px] md:w-[300px] xxs:w-[200px] pl-20 pr-10 h-[39px]" />        
                 <FaCircleXmark onClick={() => setInput("")} size={20} className="absolute right-5"/>
                 <div id="selected-option" className="absolute left-5 flex items-center gap-2">
                     <RxTriangleDown data-testid='select-search-options' id="open-search-type-list" onClick={() => setShowList(!showList)} size={18} scale={1} />
@@ -194,10 +201,9 @@ export default function SearchBar({handleImageClick, addQueryString} : SearchBar
                     </div>
                 </div>
             </div>
-            <div data-testid="search-results" ref={resultsRef} className={!resultsView ? "hidden" : "absolute w-[600px] max-h-[200px] top-13 left-143 text-ellipsis overflow-x-hidden overflow-y-auto whitespace-nowrap bg-white shadow rounded-3xl flex flex-col"}>
+            <div data-testid="search-results" ref={resultsRef} className={!resultsView && searchBarResults.length === 0 ? "hidden" : "absolute w-[600px] max-h-[200px] top-13 left-110 text-ellipsis overflow-x-hidden overflow-y-auto whitespace-nowrap bg-white shadow rounded-3xl flex flex-col"}>
                 {
-                    imageQuery.isLoading ? <LoadingSpin /> :
-                    searchBarResults.length ? searchBarResults.map((elem, index) => handleSearchView(elem, index)) : ''
+                    searchBarResults.map((elem, index) => handleSearchView(elem, index)) 
                 }
             </div>
         </div>

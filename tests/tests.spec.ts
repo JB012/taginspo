@@ -99,7 +99,7 @@ test.describe('signed in tests', () => {
  */
   testData.forEach(({fileName, input, tags}) => {
     test(`view ${fileName}`, async ({ page }) => {
-      await page.goto("/gallery?type=image");
+      await page.goto("/gallery?type=image", {waitUntil: 'load'});
       await page.getByTestId(`image-${input}`).click();
 
       await page.waitForURL(url => {
@@ -130,7 +130,7 @@ test.describe('signed in tests', () => {
     });
 
     test(`view ${fileName} tags`, async ({ page }) => {
-      await page.goto("/gallery?type=image");
+      await page.goto("/gallery?type=image", {waitUntil: 'load'});
       await page.getByTestId('tag-view').click();
 
       await expect(page).toHaveURL('/gallery?type=tag');
@@ -142,7 +142,7 @@ test.describe('signed in tests', () => {
 
     test(`clicking on tag shows ${fileName}`, async ({ page }) => {
       for (const tagName of tags) {
-        await page.goto('/gallery?type=tag');
+        await page.goto('/gallery?type=tag', {waitUntil: 'load'});
         await page.getByTestId(`tag-${tagName}`).click();
         
         await expect(page).toHaveURL(url => {
@@ -157,7 +157,7 @@ test.describe('signed in tests', () => {
     });
 
     test(`attempting to add image with title ${input}`, async ({ page }) => {
-      await page.goto('/gallery?type=image');
+      await page.goto('/gallery?type=image', {waitUntil: 'load'});
 
       await page.getByTestId('add-image').click();
 
@@ -176,14 +176,17 @@ test.describe('signed in tests', () => {
     });
 
     test(`searching tag will show ${fileName}`, async ({ page }) => {
-      await page.goto(`/gallery?type=image`);
+      await page.goto(`/gallery?type=image`, {waitUntil: 'load'});
 
+      await expect(page.getByTestId(`image-${input}`)).toBeVisible({timeout: 10000});
       await expect(page.getByTestId('search-tag')).toBeVisible();
 
       for (const tagName of tags) {
-        await page.getByRole('textbox').fill(tagName);
-
-        await expect(page.getByTestId('search-results')).toBeVisible({timeout: 3000});
+        await page.getByRole('textbox').pressSequentially(tagName);
+        await page.getByRole('textbox').click();
+        await expect(page.getByRole('textbox')).toBeFocused();
+        
+        await expect(page.getByTestId('search-results')).toBeVisible();
         await expect(page.getByTestId(`search-${tagName}`)).toBeVisible();
 
         await page.keyboard.press("Enter");
@@ -200,7 +203,9 @@ test.describe('signed in tests', () => {
     });
 
     test(`searching ${input} shows view of image`, async ({ page }) => {
-      await page.goto("/gallery?type=image");
+      await page.goto("/gallery?type=image", {waitUntil: 'load'});
+
+      await expect(page.getByTestId(`image-${input}`)).toBeVisible({timeout: 10000});
 
       await page.getByTestId('select-search-options').click();
 
@@ -210,8 +215,10 @@ test.describe('signed in tests', () => {
 
       await expect(page.getByTestId('search-tag')).not.toBeVisible();
 
-      await page.getByRole('textbox').fill(input);
-      
+      await page.getByRole('textbox').pressSequentially(input);
+      await page.getByRole('textbox').click();
+      await expect(page.getByRole('textbox')).toBeFocused();
+
       await expect(page.getByTestId('search-results')).toBeVisible();
 
       await expect(page.getByTestId(`search-${input}`)).toBeVisible();
@@ -258,7 +265,7 @@ test.describe('signed in tests', () => {
   });
   
   test(`unmatched search shows no results`, async ({ page }) => {
-    await page.goto("/gallery?type=image");
+    await page.goto("/gallery?type=image", {waitUntil: 'load'});
     await page.getByRole('textbox').fill('qjfwoqpwfwqf');
     await page.keyboard.press('Enter');
 
@@ -269,37 +276,46 @@ test.describe('signed in tests', () => {
    test.beforeAll('edit cat.jpg to new title', async ({browser}) => {
       const page = await browser.newPage();
 
-      async function editTitle(title : string, editedTitle: string) {
-        await page.goto("/gallery?type=image");
-
-        await page.getByTestId(`image-${title}`).click();
-        await page.getByTestId('image-options').click();
-
-        await expect(page.getByText('Edit Image')).toBeVisible();
-        await expect(page.getByTestId('delete-image')).toBeVisible();
-
-        await page.getByText('Edit Image').click();
-        await expect(page).toHaveURL(/\/editimage/);
-
-        await expect(page.getByRole('textbox', {name: 'Title'})).toHaveValue(title);
-        
-        await page.getByRole('textbox', {name: 'Title'}).clear();
-        await page.getByRole('textbox', {name: 'Title'}).fill(editedTitle);
-
-        await page.getByRole('button', {name: 'Save Changes'}).click();
-
-        await page.waitForURL('/gallery?type=image');
-        await expect(page).toHaveURL('/gallery?type=image');
-      }
+      await page.goto("/gallery?type=image", {waitUntil: 'load'});
 
       const data = testData[0];
+
+      const title = data.input;
+      const editedTitle = data.editedInput;
+      
+      await page.getByTestId(`image-${title}`).click();
+      await page.getByTestId('image-options').click();
+
+      await expect(page.getByText('Edit Image')).toBeVisible();
+      await expect(page.getByTestId('delete-image')).toBeVisible();
+
+      await page.getByText('Edit Image').click();
+      await expect(page).toHaveURL(/\/editimage/);
+
+      await expect(page.getByTestId('edit-img')).toBeVisible({timeout: 10000});
+
+      await expect(page.getByRole('textbox', {name: 'Title'})).toHaveValue(title);
+      
+      await page.getByRole('textbox', {name: 'Title'}).clear();
     
-      await editTitle(data.input, data.editedInput);
+      await expect(page.getByRole('textbox', {name: 'Title'})).toHaveValue('', {timeout: 5000});
+      await page.getByRole('textbox', {name: 'Title'}).fill(editedTitle);
+      await expect(page.getByRole('textbox', {name: 'Title'})).toHaveValue(editedTitle, {timeout: 5000});
+
+      await expect(page.getByRole('textbox', {name: 'Title'})).toHaveValue(editedTitle);
+
+      await page.getByRole('button', {name: 'Save Changes'}).click();
+
+      await page.waitForURL('/gallery?type=image');
+      await expect(page).toHaveURL('/gallery?type=image');
+
+      await expect(page.getByTestId(`image-${editedTitle}`)).toBeVisible();
+  
       await page.close();
     });
 
     test('sorting images in gallery page', async ({ page }) => {
-      await page.goto('/gallery?type=image');
+      await page.goto('/gallery?type=image', {waitUntil: 'load'});
 
       await page.getByTestId('sort-options').click();
 
@@ -348,7 +364,7 @@ test.describe('signed in tests', () => {
     });
 
     test('navigating through images in view mode', async ({ page }) => {
-      await page.goto("/gallery?type=image");
+      await page.goto("/gallery?type=image", {waitUntil: 'load'});
       
       await page.getByTestId('sort-options').click();
       await page.getByText('Last created').click();
@@ -389,33 +405,38 @@ test.describe('signed in tests', () => {
    test.afterAll('edit cat.jpg to original title', async ({browser}) => {
       const page = await browser.newPage();
 
-      //TODO: Make a fixture
-      async function editTitle(title : string, editedTitle: string) {
-        await page.goto("/gallery?type=image");
-
-        await page.getByTestId(`image-${title}`).click();
-        await page.getByTestId('image-options').click();
-
-        await expect(page.getByText('Edit Image')).toBeVisible();
-        await expect(page.getByTestId('delete-image')).toBeVisible();
-
-        await page.getByText('Edit Image').click();
-        await expect(page).toHaveURL(/\/editimage/);
-
-        await expect(page.getByRole('textbox', {name: 'Title'})).toHaveValue(title);
-        
-        await page.getByRole('textbox', {name: 'Title'}).clear();
-        await page.getByRole('textbox', {name: 'Title'}).fill(editedTitle);
-
-        await page.getByRole('button', {name: 'Save Changes'}).click();
-
-        await page.waitForURL('/gallery?type=image');
-        await expect(page).toHaveURL('/gallery?type=image');
-      }
-
+      await page.goto("/gallery?type=image", {waitUntil: 'load'});
+      
       const data = testData[0];
-    
-      await editTitle(data.editedInput, data.input);
+
+      const title = data.input;
+      const editedTitle = data.editedInput;
+      await page.getByTestId(`image-${editedTitle}`).click();
+      await page.getByTestId('image-options').click();
+
+      await expect(page.getByText('Edit Image')).toBeVisible();
+      await expect(page.getByTestId('delete-image')).toBeVisible();
+
+      await page.getByText('Edit Image').click();
+      await expect(page).toHaveURL(/\/editimage/);
+
+      await expect(page.getByTestId('edit-img')).toBeVisible({timeout: 10000});
+
+      await expect(page.getByRole('textbox', {name: 'Title'})).toHaveValue(editedTitle);
+      
+      await page.getByRole('textbox', {name: 'Title'}).clear();
+
+      await expect(page.getByRole('textbox', {name: 'Title'})).toHaveValue('', {timeout: 5000});
+      await page.getByRole('textbox', {name: 'Title'}).fill(title);
+      await expect(page.getByRole('textbox', {name: 'Title'})).toHaveValue(title, {timeout: 5000});
+
+      await page.getByRole('button', {name: 'Save Changes'}).click();
+
+      await page.waitForURL('/gallery?type=image');
+      await expect(page).toHaveURL('/gallery?type=image');
+
+      await expect(page.getByTestId(`image-${title}`)).toBeVisible();
+  
       await page.close();
     });
   });

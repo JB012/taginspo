@@ -154,11 +154,11 @@ export default function DragAndDrop({fileRef, imageRef, editImageURL, changeTitl
         <div className="flex flex-col w-full items-center relative">
             <label id="drop-zone" data-testid="drop-zone" htmlFor="add-image" className="w-full h-full flex items-center justify-center absolute cursor-pointer">
                 <div id="drop-zone-message" className={editImageURL ? "hidden" : ""}>Drag-and-drop image or click to choose file</div>
-                <input disabled={editImageURL ? true : false} ref={fileRef} id="add-image" type="file" name="file" accept="image/*" />
+                <input ref={fileRef} id="add-image" type="file" name="file" accept="image/*" />
             </label>
             <div id="preview-image" className="relative">  
                 <FaCircleXmark color="white" id="clear-image" data-testid="clear-image" className={"hidden z-20 absolute top-3 right-3"} size={20} scale={1}/>
-                <img ref={imageRef} src={editImageURL ? editImageURL : undefined} className="w-full h-full object-fill" />
+                <img data-testid="edit-img" ref={imageRef} src={editImageURL ? editImageURL : undefined} className="w-full h-full object-fill" />
             </div>
         </div>
     </div>

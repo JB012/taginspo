@@ -1,5 +1,5 @@
 import { FaArrowLeft } from "react-icons/fa";
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import type { TagType } from '../../types/TagType';
 import type { ImageType } from "../../types/ImageType";
@@ -9,18 +9,17 @@ import TagSearch from '../../components/TagSearch';
 import axios from "axios";
 import { useAuth } from "@clerk/clerk-react";
 import useTags from "../../utils/useTags";
-import { QueryClientContext } from "@tanstack/react-query";
+import { QueryClientContext, skipToken, useQuery } from "@tanstack/react-query";
+import LoadingSpin from "../../components/LoadingSpin";
 
 const url = import.meta.env.VITE_DEFAULT_URL;
 
 export default function EditImage() {
     const queryClient = useContext(QueryClientContext);
     const { id } = useParams();
-    const [editImage, setEditImage] = useState<ImageType | null>(null);
+    const [addedImageInfo, setAddedImageInfo] = useState(false);
     const [title, setTitle] = useState('');
     const [source, setSource] = useState('');
-    const tagQuery = useTags();
-    const allTags : TagType[] = tagQuery.data;
     const [addedTags, setAddedTags] = useState<Array<TagType>>([]);
     const imageRef = useRef<HTMLImageElement | null>(null);
     const [submitable, setSubmitable] = useState(false);
@@ -29,26 +28,39 @@ export default function EditImage() {
     const fileRef = useRef<HTMLInputElement | null>(null);
     const {getToken} = useAuth();
 
+    const imageQuery = useQuery({
+        queryKey: ['images', id],
+        queryFn: id ? () => retrieveImageData(id) : skipToken
+    });
+
+    const image : ImageType | undefined = useMemo(() => {
+            return imageQuery.data ?? undefined;
+    }, [imageQuery.data]);
+       
+    
+    const tagQuery = useTags();
+    const allTags : TagType[] = tagQuery.data;
+
+    async function retrieveImageData(id : string) {
+        const token = await getToken();
+        const res = await axios.get(`http://localhost:3000/images/${id}`, 
+            {headers:  { Authorization: `Bearer ${token}` }});
+        
+        return res.data; 
+    }
+
     useEffect(() => {
-        async function retrieveImageData() {
-            if (id && !editImage) {
-                const token = await getToken();
-                if (token) {
-                    const res = await axios.get(`http://localhost:3000/images/${id}`, 
-                        {headers:  { Authorization: `Bearer ${token}` }});
-                    const imageData : ImageType = res.data;
-                    
-                    setEditImage(imageData);
-                    setTitle(imageData.title);
-                    setSource(imageData.source);
-                    setAddedTags(allTags.filter((tag) => imageData.tagIDs.includes(tag.tag_id)));  
-                }
+        function addImageInfo() {
+            if (image && !addedImageInfo) {
+                setTitle(image.title);
+                setSource(image.source);
+                setAddedTags(allTags.filter((tag) => image.tagIDs.includes(tag.tag_id))); 
+                setAddedImageInfo(true);
             }
         }
 
-        retrieveImageData();
-
-    }, [id, editImage, getToken, allTags]);
+        addImageInfo();
+    }, [addedImageInfo, allTags, image]);
 
     useEffect(() => {
         function handleEnter(event : KeyboardEvent) {
@@ -173,6 +185,14 @@ export default function EditImage() {
 
     }
 
+    if (imageQuery.isLoading) {
+        return (
+            <div className="flex w-full h-full justify-center items-center">
+                <LoadingSpin />
+            </div>
+        )
+    }
+
     return (
         <form onSubmit={(e) => {e.preventDefault(); return false}} encType="multipart/form-data" method="post" className="flex flex-col p-4 gap-4 sm:py-8 w-full h-full">
             <div className="flex w-full justify-between items-center">
@@ -184,7 +204,7 @@ export default function EditImage() {
             </div>
             <div className="flex lg:flex-row xxs:flex-col justify-around w-full">
                 <DragAndDrop fileRef={fileRef} imageRef={imageRef} changeTitle={(title : string) => setTitle(title)} 
-                enableSubmit={() => setSubmitable(true)} disableSubmit={() => setSubmitable(false)} editImageURL={editImage ? editImage.url : undefined}/>
+                enableSubmit={() => setSubmitable(true)} disableSubmit={() => setSubmitable(false)} editImageURL={image ? image.url : undefined}/>
                 <div className="flex flex-col gap-16">
                     <div style={{display: error ? "block" : "none"}}>{error}</div>
                     <div className="flex flex-col gap-4">
@@ -205,7 +225,6 @@ export default function EditImage() {
                                 addedTags.map(tag => <Tag key={tag.tag_id} id={tag.tag_id} title={tag.title} color={tag.color} addedTag={true} tagResult={false} removeTag={removeTag} editTag={editTag} duplicateTag={duplicateTag}/>)
                             }
                         </div>
-                        
                     </div>
                 </div>
             </div>

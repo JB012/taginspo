@@ -1,10 +1,10 @@
 const express = require('express');
+const crypto = require('crypto');
 const { supabase } = require("../sb");
 const { createDateTime } = require("../utils");
 const { s3Client, cloudFront, createSignedURL } = require("../s3-cloudfront");
 const router = express.Router();
 const { clerkMiddleware, getAuth, clerkClient } =  require('@clerk/express')
-const bodyParser = require("body-parser");
 const { DeleteObjectCommand, PutObjectCommand, S3ServiceException, NoSuchKey, CopyObjectCommand } = require('@aws-sdk/client-s3');
 const { CreateInvalidationCommand } = require('@aws-sdk/client-cloudfront');
 const dotenv = require('dotenv');
@@ -12,6 +12,7 @@ const multer = require('multer');
 const { v4 } = require('uuid');
 const cors = require('cors');
 const axios = require('axios');
+const { encrypt } = require('../symm_enc');
 const upload = multer({storage: multer.memoryStorage()});
 const bucketName = "www.taginspo.com";
 
@@ -26,11 +27,10 @@ async function formatImageJSON(imageJSON, userId) {
     const images = [];
 
     for (const json of imageJSON) {
-        const signedURL = createSignedURL(json.title);
+        const signedURL = createSignedURL(encrypt(`${userId}/${json.title}`));
 
         const { data } = await supabase.from('users_images_tags').select('tag_id').eq('user_id', userId).eq('image_id', json.image_id);
-        //const [rows] = await pool.query(`SELECT tag_id FROM users_images_tags WHERE user_id=? AND image_id=?`, [userId, json.image_id]);
-
+       
         const tagIDs = data.map((json) => json.tag_id);
             
         images.push({...json, url: signedURL, tagIDs: tagIDs});
@@ -67,8 +67,7 @@ router.get("/", async (req, res) => {
     if (isAuthenticated) {
         try {
             const { data } = await supabase.from('images').select().eq('user_id', userId).order('created_at', {ascending: false});
-            //const [rows] = await pool.query(`SELECT * FROM images WHERE user_id=? ORDER BY created_at DESC`, [userId]);
-    
+           
             const images = await formatImageJSON(data, userId);
         
             return res.send(images);  
@@ -98,14 +97,12 @@ router.get("/:id", async (req, res) => {
         const imageID = req.params.id;
 
         const imageData = await supabase.from('images').select().eq('user_id', userId).eq('image_id', imageID);
-        //const [[image]] = await pool.query(`SELECT * FROM images WHERE user_id=? AND image_id=?`, [userId, imageID]);
-
+       
         const { data } = await supabase.from('users_images_tags').select('tag_id').eq('user_id', userId).eq('image_id', imageID);
-        //const [rows] = await pool.query(`SELECT tag_id FROM users_images_tags WHERE user_id=? AND image_id=?`, [userId, imageID]);
-
+       
         const tagIDs = data.map((json) => json.tag_id);
 
-        const signedURL = createSignedURL(imageData.data[0].title);
+        const signedURL = createSignedURL(encrypt(`${userId}/${imageData.data[0].title}`));
 
         return res.send({url: signedURL, tagIDs: tagIDs, ...imageData.data[0]});
     }
@@ -125,12 +122,16 @@ router.post("/add", upload.single('file'), async (req, res) => {
     if (isAuthenticated) {
         try {
             const { data } = await supabase.from('images').select().eq('user_id', userId).eq('title', title);
-            //const [rows] = await pool.query(`SELECT * FROM images WHERE user_id=? AND title=?`, [userId, title]);
-            
-            if (data.length === 0) {
+          
+            if (data.length === 0) {   
+                const encryptedTitle = encrypt(`${userId}/${title}`);
+             
+                const hash = crypto.createHash('sha256');
+                const hashTitle = hash.update(`${userId}/${title}`).digest('hex');
+
                 const command = new PutObjectCommand({
                     Bucket: 'www.taginspo.com',
-                    Key: title,
+                    Key: encryptedTitle,
                     Body: req.file.buffer,
                     ContentType: req.file.mimetype
                 });
@@ -138,8 +139,6 @@ router.post("/add", upload.single('file'), async (req, res) => {
                 await s3Client.send(command);
 
                 await supabase.from('images').insert({user_id: userId, image_id: imageID, created_at: createDateTime(), edited_at: createDateTime(), title: title, source: source});
-                
-                //await pool.query('INSERT INTO images (user_id, image_id, created_at, edited_at, title, source) VALUES (?, ?, ?, ?, ?, ?)', [userId, imageID, createDateTime(), createDateTime(), title, source]);
                 
                 const token = await getToken();
 
@@ -180,30 +179,34 @@ router.post("/edit/:id", async (req, res) => {
     const source = req.body.source;
     const addedTags = req.body.addedTags;
     const title = req.body.title;
-
+    
     if (isAuthenticated) {
         try {
             const { data } = await supabase.from('images').select().neq('image_id', imageID).eq('user_id', userId).eq('title', title);
-            //const [rows] = await pool.query(`SELECT * FROM images WHERE NOT image_id=? AND user_id=? AND title=?`, [imageID, userId, title]);
-
+           
             if (data.length === 0) {
-                const { data } = await supabase.from('images').select('title').eq('image_id', imageID).eq('user_id', userId);
+                const { data } = await supabase.from('images').select('title').eq('image_id', imageID).eq('user_id', userId);      
+                
+                const originalTitle = encrypt(`${userId}/${data[0].title}`);
+                const newTitle = encrypt(`${userId}/${title}`);
+
+                const hash = crypto.createHash('sha256');
+                const originalHashTitle = hash.update(`${userId}/${data[0].title}`).digest('hex');
+                const newHashTitle = crypto.createHash('sha256').update(`${userId}/${title}`).digest('hex');
                 
                 const copyOriginalParams = {
                     Bucket: bucketName,
-                    CopySource: `${bucketName}/${data[0].title}`,
-                    Key: title
+                    CopySource: `${bucketName}/${originalTitle}`,
+                    Key: newTitle
                 };
 
                 const command = new CopyObjectCommand(copyOriginalParams);
                 await s3Client.send(command);
                 
-                await deleteImageInS3(data[0].title);
+                await deleteImageInS3(originalTitle);
 
-                await supabase.from('images').update({title: title, edited_at: createDateTime()}).eq('user_id', userId).eq('image_id', imageID);
-                //await pool.query(`UPDATE images SET title=?, source=?, edited_at=? WHERE user_id=? AND image_id=?`
-                //, [title, source, createDateTime(), userId, imageID]);
-
+                await supabase.from('images').update({title: title, source: source, edited_at: createDateTime()}).eq('user_id', userId).eq('image_id', imageID);
+            
                 const token = await getToken();
 
                 await axios.post("http://localhost:3000/tags/edit",{imageID: imageID, addedTags: addedTags}, 
@@ -231,16 +234,15 @@ router.delete("/delete/:id", async (req, res) => {
     if (isAuthenticated) {
         try {
             const {data} = await supabase.from('images').select().eq('user_id', userId).eq('image_id', imageID);
-            //const [rows] = await pool.query(`SELECT * FROM images WHERE user_id=? AND image_id=?`, [userId, imageID]);
-            
-            if (data.length) {
-                const imageInfo = data[0];
-
-                await deleteImageInS3(imageInfo.title);
+          
+            if (data.length) {    
+                const encryptedTitle = encrypt(`${userId}/${data[0].title}`);
+                const hash = crypto.createHash('sha256');
+                const hashTitle = hash.update(`${userId/data[0].title}`).digest('hex');
+                await deleteImageInS3(encryptedTitle);
 
                 await supabase.from('images').delete().eq('user_id', userId).eq('image_id', imageID);
-                //await pool.query(`DELETE FROM images WHERE user_id=? AND image_id=?`, [userId, imageID]);
-            
+              
                 return res.send('Image successfully deleted');
             }
             else {

@@ -5,7 +5,6 @@ import path from 'path';
 
 export * from '@playwright/test';
 export const test = baseTest.extend<{}, { workerStorageState: string }>({
-  storageState: ({ workerStorageState }, use) => use(workerStorageState),
 
   workerStorageState: [async ({ browser }, use) => {
     // Use parallelIndex as a unique identifier for each worker.
