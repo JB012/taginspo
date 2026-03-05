@@ -68,9 +68,9 @@ router.get("/", async (req, res) => {
         try {
             const { data } = await supabase.from('images').select().eq('user_id', userId).order('created_at', {ascending: false});
            
-            //const images = await formatImageJSON(data, userId);
+            const images = await formatImageJSON(data, userId);
         
-            return res.send(data);  
+            return res.send(images);  
         }
         catch(err) {
             if (err instanceof NoSuchKey) {
