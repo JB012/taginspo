@@ -161,6 +161,8 @@ test.describe('signed in tests', () => {
 
       await page.getByTestId('add-image').click();
 
+      await expect(page).toHaveURL("/addimage");
+
       await page.getByTestId('drop-zone').click();
       
       await page.getByRole('button', { name: 'Drag-and-drop image or click' }).setInputFiles(path.join(__dirname, 'test-images', fileName));
