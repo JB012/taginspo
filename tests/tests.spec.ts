@@ -100,14 +100,11 @@ test.describe('signed in tests', () => {
   testData.forEach(({fileName, input, tags}) => {
     test(`view ${fileName}`, async ({ page }) => {
       await page.goto("/gallery?type=image", {waitUntil: 'load'});
+
+      await expect(page.getByTestId(`image-${input}`)).toBeVisible({timeout: 5000});
       await page.getByTestId(`image-${input}`).click();
 
       await page.waitForURL(url => {
-        const params = url.searchParams;
-        return params.has('type') && params.has('id');
-      });
-
-      await expect(page).toHaveURL(url => {
         const params = url.searchParams;
         return params.has('type') && params.has('id');
       });
