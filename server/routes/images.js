@@ -184,7 +184,7 @@ router.post("/edit/:id", async (req, res) => {
         try {
             const { data } = await supabase.from('images').select().neq('image_id', imageID).eq('user_id', userId).eq('title', title);
            
-            if (data.length === 0) {
+            /* if (data.length === 0) {
                 const { data } = await supabase.from('images').select('title').eq('image_id', imageID).eq('user_id', userId);      
                 
                 const originalTitle = encrypt(`${userId}/${data[0].title}`);
@@ -216,7 +216,9 @@ router.post("/edit/:id", async (req, res) => {
             }
             else {
                 return res.send("Title already exists, please try again.");
-            }
+            } */
+        
+            return res.send("Testing")    
         }
         catch (err) {
             console.log(err);
