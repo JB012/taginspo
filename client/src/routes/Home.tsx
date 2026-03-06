@@ -1,4 +1,4 @@
-import { SignedOut, SignedIn, SignUpButton } from '@clerk/clerk-react'
+import { SignedOut, SignUp, SignedIn, SignUpButton } from '@clerk/clerk-react'
 import HomeHeader from '../../components/HomeHeader'
 import { Navigate } from 'react-router'
 
@@ -24,14 +24,14 @@ export default function Home() {
                 </button>
               </SignUpButton>
             </div>
-            {/* <div id='features-display' className='flex flex-col gap-10'>
+            <div id='features-display' className='flex flex-col gap-10'>
               <div id='feature-1' className='feature flex justify-between items-center'>
                 <div className='flex flex-col gap-2'>  
                   <div className='text-[36px]'>
                     Upload images 
                   </div>
                   <div className='text-[24px]'>
-                    Drag-and-drop editor to suit your vision
+                    Drag-and-drop editor to suit your vision.
                   </div>
                 </div>
                 <div className='flex shrink w-[502px] h-[330px] bg-gray-400'>
@@ -44,7 +44,7 @@ export default function Home() {
                 </div>
                 <div className='flex flex-col gap-2'>  
                   <div className='text-[36px]'>
-                    Tag Images
+                    Tag images
                   </div>
                   <div className='text-[24px] w-[350px] h-[104px]'>
                     Customize tags to
@@ -56,10 +56,10 @@ export default function Home() {
               <div id='feature-3' className='feature flex justify-between items-center'>
                 <div className='flex flex-col gap-2'>  
                   <div className='text-[36px] w-[431.9px] h-[54px]'>
-                    Collaborate with your team
+                    Custom search
                   </div>
                   <div className='text-[24px] w-[431.9px] h-[54px]'>
-                    Share your moodboard to design with your team in real time. 
+                    Find images based on searched tags. 
                   </div>
                 </div>
                 <div className='flex shrink w-[502px] h-[330px] bg-gray-400'>
@@ -68,9 +68,9 @@ export default function Home() {
               </div>
             </div>
             <div className='flex flex-col justify-center items-center py-16 gap-10'>
-              <div className='text-[32px]'>Explore your ideas today</div>
+              <div className='text-[32px]'>Explore your ideas today.</div>
               <SignUp />
-            </div> */}
+            </div>
           </div>
       </div>  
     </SignedOut>

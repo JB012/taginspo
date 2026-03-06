@@ -193,7 +193,7 @@ router.post("/edit/:id", async (req, res) => {
                 const hash = crypto.createHash('sha256');
                 const originalHashTitle = hash.update(`${userId}/${data[0].title}`).digest('hex');
                 const newHashTitle = crypto.createHash('sha256').update(`${userId}/${title}`).digest('hex');
-             /*    
+                
                 const copyOriginalParams = {
                     Bucket: bucketName,
                     CopySource: `${bucketName}/${originalTitle}`,
@@ -203,7 +203,7 @@ router.post("/edit/:id", async (req, res) => {
                 const command = new CopyObjectCommand(copyOriginalParams);
                 await s3Client.send(command);
                 
-                await deleteImageInS3(originalTitle); */
+                await deleteImageInS3(originalTitle);
 
                 await supabase.from('images').update({title: title, source: source, edited_at: createDateTime()}).eq('user_id', userId).eq('image_id', imageID);
             

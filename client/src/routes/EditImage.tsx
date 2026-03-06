@@ -117,8 +117,8 @@ export default function EditImage() {
                                 {headers:  { Authorization: `Bearer ${token}`}});
                             
                             if (res.status === 200 && !res.data.includes("Title already exists")) {
-                                await queryClient?.refetchQueries();    
                                 navigate(url);
+                                await queryClient?.refetchQueries();    
                             }
                             else {
                                 setError(res.data);
