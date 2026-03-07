@@ -174,7 +174,7 @@ router.post("/add", upload.single('file'), async (req, res) => {
 });
 
 router.post("/edit/:id", async (req, res) => {
-   /*  const { isAuthenticated, userId, getToken } = getAuth(req);
+    const { isAuthenticated, userId, getToken } = getAuth(req);
     const imageID = req.params.id;
     const source = req.body.source;
     const addedTags = req.body.addedTags;
@@ -190,11 +190,7 @@ router.post("/edit/:id", async (req, res) => {
                 const originalTitle = encrypt(`${userId}/${data[0].title}`);
                 const newTitle = encrypt(`${userId}/${title}`);
 
-                const hash = crypto.createHash('sha256');
-                const originalHashTitle = hash.update(`${userId}/${data[0].title}`).digest('hex');
-                const newHashTitle = crypto.createHash('sha256').update(`${userId}/${title}`).digest('hex');
-                
-                const copyOriginalParams = {
+                /* const copyOriginalParams = {
                     Bucket: bucketName,
                     CopySource: `${bucketName}/${originalTitle}`,
                     Key: newTitle
@@ -203,7 +199,7 @@ router.post("/edit/:id", async (req, res) => {
                 const command = new CopyObjectCommand(copyOriginalParams);
                 await s3Client.send(command);
                 
-                await deleteImageInS3(originalTitle);
+                await deleteImageInS3(originalTitle); */
 
                 await supabase.from('images').update({title: title, source: source, edited_at: createDateTime()}).eq('user_id', userId).eq('image_id', imageID);
             
@@ -224,8 +220,7 @@ router.post("/edit/:id", async (req, res) => {
     }
     else {
         return res.status(401).send('User not authenticated');
-    } */
-   return res.send('Test');
+    }
 })
 
 router.delete("/delete/:id", async (req, res) => {
