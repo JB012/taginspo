@@ -197,10 +197,10 @@ router.post("/edit/:id", async (req, res) => {
                 };
 
                 const command = new CopyObjectCommand(copyOriginalParams);
-                await s3Client.send(command); */
-
+                await s3Client.send(command);
+                
                 await deleteImageInS3(originalTitle);
-
+ */
                 await supabase.from('images').update({title: title, source: source, edited_at: createDateTime()}).eq('user_id', userId).eq('image_id', imageID);
             
                 const token = await getToken();
