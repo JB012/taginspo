@@ -187,7 +187,7 @@ router.post("/edit/:id", async (req, res) => {
             if (data.length === 0) {
                 const { data } = await supabase.from('images').select('title').eq('image_id', imageID).eq('user_id', userId);      
                 
-                /* const originalTitle = encrypt(`${userId}/${data[0].title}`);
+                const originalTitle = encrypt(`${userId}/${data[0].title}`);
                 const newTitle = encrypt(`${userId}/${title}`);
                 
                 const copyOriginalParams = {
@@ -200,7 +200,7 @@ router.post("/edit/:id", async (req, res) => {
                 await s3Client.send(command);
                 
                 await deleteImageInS3(originalTitle);
- */
+
                 await supabase.from('images').update({title: title, source: source, edited_at: createDateTime()}).eq('user_id', userId).eq('image_id', imageID);
             
                 const token = await getToken();
