@@ -174,7 +174,7 @@ router.post("/add", upload.single('file'), async (req, res) => {
 });
 
 router.post("/edit/:id", async (req, res) => {
-    const { isAuthenticated, userId, getToken } = getAuth(req);
+   /*  const { isAuthenticated, userId, getToken } = getAuth(req);
     const imageID = req.params.id;
     const source = req.body.source;
     const addedTags = req.body.addedTags;
@@ -224,7 +224,8 @@ router.post("/edit/:id", async (req, res) => {
     }
     else {
         return res.status(401).send('User not authenticated');
-    }
+    } */
+   return res.send('Test');
 })
 
 router.delete("/delete/:id", async (req, res) => {
