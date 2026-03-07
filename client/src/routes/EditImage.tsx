@@ -100,7 +100,7 @@ export default function EditImage() {
 
                             if (res.status === 200 && !res.data.includes("Title already exists")) {
                                 await queryClient?.refetchQueries();
-                                navigate(url);
+                                await navigate(url);
                             }
                             else {
                                 setError(res.data);
@@ -117,7 +117,7 @@ export default function EditImage() {
                                 {headers:  { Authorization: `Bearer ${token}`}});
                             
                             if (res.status === 200 && !res.data.includes("Title already exists")) {
-                                navigate(url);
+                                await navigate(url);
                                 await queryClient?.refetchQueries();    
                             }
                             else {
