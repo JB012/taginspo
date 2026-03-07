@@ -117,7 +117,7 @@ export default function EditImage() {
                                 {headers:  { Authorization: `Bearer ${token}`}});
                             
                             if (res.status === 200 && !res.data.includes("Title already exists")) {
-                                await navigate(url);
+                                await navigate('http://localhost:5173/gallery?type=image');
                                 await queryClient?.refetchQueries();    
                             }
                             else {
