@@ -23,6 +23,7 @@ export default function EditImage() {
     const [addedTags, setAddedTags] = useState<Array<TagType>>([]);
     const imageRef = useRef<HTMLImageElement | null>(null);
     const [submitable, setSubmitable] = useState(false);
+    const [editing, setEditing] = useState(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
     const fileRef = useRef<HTMLInputElement | null>(null);
@@ -117,7 +118,8 @@ export default function EditImage() {
                                 {headers:  { Authorization: `Bearer ${token}`}});
                             
                             if (res.status === 200 && !res.data.includes("Title already exists")) {
-                                await navigate('http://localhost:5173/gallery?type=image');
+                                await navigate(url);
+                                setEditing(true);
                                 await queryClient?.refetchQueries();    
                             }
                             else {
@@ -185,7 +187,7 @@ export default function EditImage() {
 
     }
 
-    if (imageQuery.isLoading) {
+    if (imageQuery.isLoading || editing) {
         return (
             <div className="flex w-full h-full justify-center items-center">
                 <LoadingSpin />
