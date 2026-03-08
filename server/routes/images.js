@@ -216,7 +216,10 @@ router.post("/edit/:id", async (req, res) => {
         }
         catch (err) {
             console.log(err);
-            res.send(err);
+
+            if (err instanceof S3ServiceException) {
+                res.status(403).send(err.message)
+            }
         }
     }
     else {
