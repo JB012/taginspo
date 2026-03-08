@@ -216,9 +216,7 @@ router.post("/edit/:id", async (req, res) => {
         }
         catch (err) {
             console.log(err);
-
-            res.status(403).send(err.message);
-        
+            res.send(err.message);
         }
     }
     else {
