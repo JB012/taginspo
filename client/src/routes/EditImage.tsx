@@ -98,8 +98,8 @@ export default function EditImage() {
                             const res = await axios.post('http://localhost:3000/images/add', formData, 
                             {headers:  { Authorization: `Bearer ${token}`, 
                             "Content-Type": "multipart/form-data"}});
-
-                            if (res.status === 200 && !res.data.includes("Title already exists")) {
+                            //&& !res.data.includes("Title already exists")
+                            if (res.status === 200) {
                                 await queryClient?.refetchQueries();
                                 await navigate(url);
                             }
