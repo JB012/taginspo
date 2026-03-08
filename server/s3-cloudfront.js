@@ -16,8 +16,11 @@ const s3Client = new S3Client({
 });
 
 const cloudFront = new CloudFrontClient({
-    accessKeyId: process.env.AWS_USER_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_USER_SECRET_ACCESS_KEY
+    region: 'us-east-1',
+    credentials: {
+        accessKeyId: process.env.AWS_USER_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_USER_SECRET_ACCESS_KEY
+    }
 })
 
 function createSignedURL(title) {
