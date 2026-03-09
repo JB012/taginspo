@@ -42,7 +42,7 @@ jobs:
       run: npm install
 
     - name: App Build
-      run: npm run client
+      run: npm run build
 
     - name: Deploy to AWS S3
       run: aws s3 sync client ${{ secrets.REACT_S3_BUCKET }} --delete
