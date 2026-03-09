@@ -38,8 +38,11 @@ jobs:
       with:
         node-version: ${{ secrets.NODE_VERSION}}
 
-    - name: Dependency Installation / App Build
-      uses: npm run client
+    - name: Dependency Installation
+      run: npm install
+
+    - name: App Build
+      run: npm run client
 
     - name: Deploy to AWS S3
-      run: aws s3 sync build ${{ secrets.REACT_S3_BUCKET }} --delete
+      run: aws s3 sync client ${{ secrets.REACT_S3_BUCKET }} --delete
