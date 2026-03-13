@@ -9,8 +9,9 @@ import EditImage from './routes/EditImage.tsx'
 import EditTag from './routes/EditTag.tsx'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
-const URL = import.meta.env.VITE_DEFAULT_URL
+const PUBLISHABLE_KEY = "pk_test_c2ltcGxlLXNlYWhvcnNlLTcyLmNsZXJrLmFjY291bnRzLmRldiQ"
+const URL = "/gallery?type=image"
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
