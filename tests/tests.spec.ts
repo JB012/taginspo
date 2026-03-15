@@ -21,8 +21,6 @@ test.describe('not signed in tests', () => {
 });
 
 test.describe('signed in tests', () => {
-  //test.describe.configure({mode: 'serial'});
-
   const testData = [ 
     {fileName: 'cat.jpg', input: 'cat_in_nature', tags: ['cat', 'nature'], editedInput: "cat_outside"},
     {fileName: 'birds.jpeg', input: 'birds_on_a_branch', tags: ['bird','nature']},
@@ -41,62 +39,60 @@ test.describe('signed in tests', () => {
     return `${input} ${alt.trim()}`;
   }
 
-/*  test.beforeAll(async ({browser}) => {
-    test.setTimeout(180000);
+ test.beforeAll(async ({browser}) => {
+    test.setTimeout(120000);
 
     const page = await browser.newPage();
 
     await page.goto("/gallery?type=image", {waitUntil: 'load'});
 
     for (const {fileName, input, tags} of testData) {
-      if (!await page.getByTestId(`image-${input}`).isVisible()) {
-        await page.getByTestId('add-image').click();
+      await page.getByTestId('add-image').click();
 
-        await page.waitForURL("/addimage");
-        await expect(page).toHaveURL("/addimage");
+      await page.waitForURL("/addimage");
 
-        await expect(page.getByTestId('drop-zone')).toBeVisible();
+      await expect(page.getByTestId('drop-zone')).toBeVisible();
+      
+      await page.getByTestId('drop-zone').click();
+      
+      await page.getByRole('button', { name: 'Drag-and-drop image or click' }).setInputFiles(path.join(__dirname, 'test-images', fileName));
+
+      await expect(page.getByRole('img', {name: fileName})).toBeVisible();
+
+      await page.getByRole('textbox', {name: 'Title'}).clear();
+      await page.getByRole('textbox', {name: 'Title'}).pressSequentially(input);
+      await expect(page.getByRole('textbox', {name: 'Title'})).toHaveValue(input);
+
+      for (const tagName of tags) {
+        await expect(page.getByTestId('add-tag')).toBeVisible();
+        await page.getByTestId('add-tag').click();
+        await expect(page.getByTestId('add-tag')).not.toBeVisible();
+
+        await expect(page.getByRole('textbox', {name: `Enter tag here`})).toBeVisible();
+        await page.getByRole('textbox', { name: 'Enter tag here' }).click();
+        await page.getByRole('textbox', { name: 'Enter tag here' }).pressSequentially(tagName);
+        await expect(page.getByRole('textbox', {name: 'Enter tag here'})).toHaveValue(tagName);
+
+        await page.getByTestId('submit-tag').click();
+
+        await expect(page.getByTestId('submit-tag')).not.toBeVisible();
         
-        await page.getByTestId('drop-zone').click();
-        
-        await page.getByRole('button', { name: 'Drag-and-drop image or click' }).setInputFiles(path.join(__dirname, 'test-images', fileName));
-
-        await expect(page.getByRole('img', {name: fileName})).toBeVisible();
-
-        await page.getByRole('textbox', {name: 'Title'}).clear();
-        await page.getByRole('textbox', {name: 'Title'}).fill(input);
-        await expect(page.getByRole('textbox', {name: 'Title'})).toHaveValue(input);
-
-        for (const tagName of tags) {
-          await expect(page.getByTestId('add-tag')).toBeVisible();
-          await page.getByTestId('add-tag').click();
-          await expect(page.getByTestId('add-tag')).not.toBeVisible();
-
-          await expect(page.getByRole('textbox', {name: `Enter tag here`})).toBeVisible();
-          await page.getByRole('textbox', { name: 'Enter tag here' }).click();
-          await page.getByRole('textbox', { name: 'Enter tag here' }).fill(tagName);
-          await expect(page.getByRole('textbox', {name: 'Enter tag here'})).toHaveValue(tagName);
-
-          await page.getByTestId('submit-tag').click();
-
-          await expect(page.getByTestId('submit-tag')).not.toBeVisible();
-          
-          await expect(page.getByTestId(`tag-${tagName}`)).toBeVisible(); 
-          await expect(page.getByTestId(`tag-${tagName}-options`)).toBeVisible();
-        }
-
-        await page.getByRole('button', {name: 'Save changes'}).click({delay: 1500});
-
-        await page.waitForURL('/gallery?type=image');
-        await expect(page).toHaveURL('/gallery?type=image');
-
-        await expect(page.getByTestId(`image-${input}`).getByRole('img')).toHaveAttribute("alt", getImageAlt(input, fileName));
+        await expect(page.getByTestId(`tag-${tagName}`)).toBeVisible(); 
+        await expect(page.getByTestId(`tag-${tagName}-options`)).toBeVisible();
       }
-    }
+
+      await page.getByRole('button', {name: 'Save changes'}).click({delay: 1500});
+
+      await page.waitForURL('/gallery?type=image');
+      await expect(page).toHaveURL('/gallery?type=image');
+
+      await expect(page.getByTestId(`image-${input}`).getByRole('img')).toHaveAttribute("alt", getImageAlt(input, fileName));
+      }
+    
     
     await page.close();
   });
- */
+
   testData.forEach(({fileName, input, tags}) => {
     test(`view ${fileName}`, async ({ page }) => {
       await page.goto("/gallery?type=image", {waitUntil: 'load'});
@@ -165,7 +161,7 @@ test.describe('signed in tests', () => {
       await page.getByRole('button', { name: 'Drag-and-drop image or click' }).setInputFiles(path.join(__dirname, 'test-images', fileName));
 
       await page.getByRole('textbox', {name: 'Title'}).clear();
-      await page.getByRole('textbox', {name: 'Title'}).fill(input);
+      await page.getByRole('textbox', {name: 'Title'}).pressSequentially(input);
 
       
       await page.getByRole('button', {name: 'Save changes'}).click();
@@ -230,43 +226,13 @@ test.describe('signed in tests', () => {
         return params.get('type') === 'image' && params.has('id');
       });
     });
-
-   /*  test(`deleting ${fileName} tags`, async ({ page }) => {        
-      for (const tagName of tags) {
-        await page.goto('/gallery?type=tag');
-
-        await page.getByTestId('edit-tag').click();
-
-        await expect(page.getByText("Click a tag to edit")).toBeVisible();
-
-        if (page.getByTestId(`tag-${tagName}`).isVisible()) {
-          await page.getByTestId(`tag-${tagName}`).click();
-
-          await expect(page).toHaveURL(/edittag/);
-          await expect(page.getByRole('button', {name: "Delete tag"})).toBeVisible();
-
-          await page.getByRole('button', {name: "Delete tag"}).click();
-
-          await expect(page.getByTestId('delete-warning')).toBeVisible();
-          await expect(page.getByRole("button", {name: "Yes"})).toBeVisible();
-          await expect(page.getByRole("button", {name: "No"})).toBeVisible();
-
-          await page.getByRole("button", {name: "Yes"}).click();
-          await page.waitForURL("/gallery?type=tag");
-
-          await expect(page.getByTestId(`tag=${tagName}`)).not.toBeVisible();
-        }
-      }
-
-      await page.goto('/gallery?type=image');
-      await page.getByTestId(`image-${input}`).click();
-      await expect(page.getByTestId('tags-view')).toBeEmpty();
-    }); */
   });
   
   test(`unmatched search shows no results`, async ({ page }) => {
     await page.goto("/gallery?type=image", {waitUntil: 'load'});
-    await page.getByRole('textbox').fill('qjfwoqpwfwqf');
+    await expect(page.getByTestId('images-previews')).toBeVisible();
+    
+    await page.getByRole('textbox').pressSequentially('qjfwoqpwfwqf');
     await page.keyboard.press('Enter');
 
     await expect(page.getByText(/No results/)).toBeVisible();
@@ -299,7 +265,7 @@ test.describe('signed in tests', () => {
       await page.getByRole('textbox', {name: 'Title'}).clear();
     
       await expect(page.getByRole('textbox', {name: 'Title'})).toHaveValue('', {timeout: 5000});
-      await page.getByRole('textbox', {name: 'Title'}).fill(editedTitle);
+      await page.getByRole('textbox', {name: 'Title'}).pressSequentially(editedTitle);
       await expect(page.getByRole('textbox', {name: 'Title'})).toHaveValue(editedTitle, {timeout: 5000});
 
       await expect(page.getByRole('textbox', {name: 'Title'})).toHaveValue(editedTitle);
@@ -427,7 +393,7 @@ test.describe('signed in tests', () => {
       await page.getByRole('textbox', {name: 'Title'}).clear();
 
       await expect(page.getByRole('textbox', {name: 'Title'})).toHaveValue('', {timeout: 5000});
-      await page.getByRole('textbox', {name: 'Title'}).fill(title);
+      await page.getByRole('textbox', {name: 'Title'}).pressSequentially(title);
       await expect(page.getByRole('textbox', {name: 'Title'})).toHaveValue(title, {timeout: 5000});
 
       await page.getByRole('button', {name: 'Save Changes'}).click();
@@ -442,16 +408,15 @@ test.describe('signed in tests', () => {
   });
 
   
-  /* test.afterAll(async ({ browser }) => { 
-    test.setTimeout(180000);
-    
-    //TODO: Delete tags
+  test.afterAll(async ({ browser }) => { 
+    test.setTimeout(120000);
     
     const page = await browser.newPage();
 
-    await page.goto(`/gallery?type=image`);
+    await page.goto(`/gallery?type=image`, {waitUntil: 'load'});
 
     for (const data of testData) {
+      await expect(page.getByTestId(`image-${data.input}`)).toBeVisible();
       await page.getByTestId(`image-${data.input}`).click();
       
       await expect(page).toHaveURL(url => {
@@ -473,6 +438,37 @@ test.describe('signed in tests', () => {
 
     await expect(page.getByText("Click on the + button to add an image")).toBeVisible(); 
     await page.close();   
-  });  */
+  });
+  
+  test.afterAll(async ({ browser }) => { 
+    test.setTimeout(120000);
+    
+    const page = await browser.newPage();
+
+    await page.goto(`/gallery?type=tag`, {waitUntil: 'load'});
+
+    let allTags = [];
+
+    testData.forEach((data) => allTags = allTags.concat(data.tags));
+
+    allTags = allTags.filter((value, index, array) => array.indexOf(value) === index);
+
+    for (const tagName of allTags) {
+      await page.getByTestId('edit-tag').click();
+      await expect(page.getByTestId(`tag-${tagName}`)).toBeVisible();
+      await page.getByTestId(`tag-${tagName}`).click();
+      
+      await expect(page.getByRole('button', {name: 'Delete tag'})).toBeVisible();
+      await page.getByRole('button', { name: 'Delete tag' }).click();
+      
+      await expect(page.getByText(/This tag will be removed/)).toBeVisible();
+      await page.getByRole('button', { name: 'Yes' }).click();
+
+      await page.waitForURL(`/gallery?type=tag`);
+    }
+
+    await expect(page.getByText("Click on the + button to add a tag")).toBeVisible(); 
+    await page.close();   
+  });
 });
     
