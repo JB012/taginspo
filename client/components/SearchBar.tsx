@@ -180,7 +180,7 @@ export default function SearchBar({ handleImageClick, addQueryString} : SearchBa
     return ( 
         <div className="flex shrink flex-col">
             <div className="flex items-center relative">
-                <input disabled={images.length === 0 && tags.length === 0} value={input} onFocus={() => setResultsView(true)} onChange={(e) => handleInput(e.target.value)} className="flex outline outline-black rounded-full xl:w-[600px] lg:w-[400px] md:w-[300px] xxs:w-[200px] pl-20 pr-10 h-[39px]" />        
+                <input disabled={images.length === 0 && tags.length === 0} value={input} onClick={() => setResultsView(true)} onFocus={() => setResultsView(true)} onChange={(e) => handleInput(e.target.value)} className="flex outline outline-black rounded-full xl:w-[600px] lg:w-[400px] md:w-[300px] xxs:w-[200px] pl-20 pr-10 h-[39px]" />        
                 <FaCircleXmark onClick={() => setInput("")} size={20} className="absolute right-5"/>
                 <div id="selected-option" className="absolute left-5 flex items-center gap-2">
                     <RxTriangleDown data-testid='select-search-options' id="open-search-type-list" onClick={() => setShowList(!showList)} size={18} scale={1} />

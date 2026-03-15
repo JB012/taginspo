@@ -181,8 +181,8 @@ test.describe('signed in tests', () => {
       await expect(page.getByTestId('search-tag')).toBeVisible();
 
       for (const tagName of tags) {
-        await page.getByRole('textbox').pressSequentially(tagName);
         await page.getByRole('textbox').click();
+        await page.getByRole('textbox').pressSequentially(tagName);
         await expect(page.getByRole('textbox')).toBeFocused();
         
         await expect(page.getByTestId('search-results')).toBeVisible();
@@ -214,8 +214,9 @@ test.describe('signed in tests', () => {
 
       await expect(page.getByTestId('search-tag')).not.toBeVisible();
 
-      await page.getByRole('textbox').pressSequentially(input);
+      
       await page.getByRole('textbox').click();
+      await page.getByRole('textbox').pressSequentially(input);
       await expect(page.getByRole('textbox')).toBeFocused();
 
       await expect(page.getByTestId('search-results')).toBeVisible();
