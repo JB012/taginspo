@@ -22,7 +22,7 @@ export default function EditTag() {
             try {
                 const token = await getToken();
 
-                const res = await axios.get(`http://localhost:3000/tags/${id}`, 
+                const res = await axios.get(`https://8t1pk2onwe.execute-api.us-east-1.amazonaws.com/tags/${id}`, 
                     {headers: {Authorization: `Bearer ${token}`}}
                 )
 
@@ -55,7 +55,7 @@ export default function EditTag() {
             try {
                 const token = await getToken();
 
-                const res = await axios.post(`http://localhost:3000/tags/edit`, {title: title, color: color, tagID: id}, 
+                const res = await axios.post(`https://8t1pk2onwe.execute-api.us-east-1.amazonaws.com/tags/edit`, {title: title, color: color, tagID: id}, 
                     {headers: {Authorization: `Bearer ${token}`}});
                 
                 if (res.status === 200 && queryClient) {
@@ -79,7 +79,7 @@ export default function EditTag() {
 
         try {
             if (queryClient) {
-                await axios.delete(`http://localhost:3000/tags/delete/${id}`, 
+                await axios.delete(`https://8t1pk2onwe.execute-api.us-east-1.amazonaws.com/tags/delete/${id}`, 
                 {headers: {Authorization: `Bearer ${token}`}});
                     
                 await queryClient.refetchQueries();
@@ -108,8 +108,8 @@ export default function EditTag() {
         <div className={`w-full h-full relative`}>
             <div className={`flex flex-col p-4 gap-4 w-full min-h-screen ${(editWarning && editWarning !== "set") || deleteWarning ? "backdrop-brightness-75 brightness-50 pointer-events-none" : ""}`}>
                 <div className="flex w-full justify-between">
-                        <button className="rounded-full p-4" style={{backgroundColor: "red", color: "white"}} onClick={() => setDeleteWarning(true)}>Delete tag</button>
-                        <button className="rounded-full p-4" style={{backgroundColor: title ? "cyan" : "gainsboro", 
+                        <button className="rounded-full xxs:test-[10px] xxs:p-2 xs:p-4" style={{backgroundColor: "red", color: "white"}} onClick={() => setDeleteWarning(true)}>Delete tag</button>
+                        <button className="rounded-full xxs:test-[10px] xxs:p-2 xs:p-4" style={{backgroundColor: title ? "cyan" : "gainsboro", 
                         color: title ? "black" : "white"}} onClick={() => handleSubmitClick()}>Save Changes</button>
                 </div>
                 <div className="text-[32px]">Edit Tag</div>
@@ -118,7 +118,7 @@ export default function EditTag() {
                         <div className="flex gap-3">
                             <label className="text-2xl" htmlFor="title">Title</label>
                         </div>
-                        <input required value={title} onChange={(e) => setTitle(e.target.value)} id="title" className="xs:w-[464px] xxs:w-[300px] h-[45px] p-4 rounded-full outline outline-black" />
+                        <input required value={title} onChange={(e) => setTitle(e.target.value)} id="title" className="xs:w-[450px] xxs:text-sm xxs:w-[285px] h-[45px] p-4 rounded-full outline outline-black" />
                     </div>
                     <div className="flex flex-col gap-4">
                         <label className="text-2xl" htmlFor="color">Color</label>
@@ -126,7 +126,7 @@ export default function EditTag() {
                     </div>
                 </div>
             </div>
-            <div className={editWarning && editWarning !== "set" ? "absolute z-10 bg-white flex flex-col gap-8 w-[300px] p-4 rounded-3xl top-1/4 left-150" : "hidden"}>
+            <div className={editWarning && editWarning !== "set" ? "absolute z-10 bg-[#f4f4f4] flex flex-col gap-8 w-[300px] p-4 rounded-3xl top-1/4 left-150" : "hidden"}>
                 <div>
                     Editing this tag will affect images that are attached to them.<br />
                     Are you sure you want to make this change?
@@ -140,7 +140,7 @@ export default function EditTag() {
                     <button onClick={() => setEditWarning('')} className={"rounded-full px-2 outline outline-black"}>No</button>
                 </div>
             </div>
-            <div data-testid="delete-warning" className={deleteWarning ? "absolute z-10 bg-white flex flex-col gap-8 w-[300px] p-4 rounded-3xl top-1/4 left-150" : "hidden"}>
+            <div data-testid="delete-warning" className={deleteWarning ? "absolute z-10 bg-[#f4f4f4] flex flex-col gap-8 xxs:w-[200px] xs:w-[300px] xxs:text-sm w-[300px] p-4 rounded-3xl top-1/4 xxs:left-14 xs:left-25 sm:left-45 md:left-60 lg:left-90 xl:left-125 2xl:left-150" : "hidden"}>
                 {
                     !clickedDelete ?     
                     <div>

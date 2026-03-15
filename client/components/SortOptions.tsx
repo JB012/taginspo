@@ -39,7 +39,7 @@ export default function SortOptions({viewSortOptions, currentOption, handleChang
         closeView()
     }
     return (
-        <div ref={sortOptionRef} className={viewSortOptions ? "flex p-1 fixed right-24 bg-white flex-col gap-4 shadow" : "hidden"}>
+        <div ref={sortOptionRef} className={viewSortOptions ? "flex p-1 fixed right-24 bg-[#f4f4f4] flex-col gap-4 shadow" : "hidden"}>
             <div onClick={() => handleOptionClick('created_at')} className={`flex items-center cursor-pointer gap-2 ${currentOption === 'created_at' ? "backdrop-brightness-95" : ""}`}>
                 <FaCheck size={12} className={currentOption === "created_at" ? "" : "hidden"} />
                 <div>Last created</div>

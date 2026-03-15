@@ -154,13 +154,13 @@ export default function TagSearch({allTags, duplicateTag, addTagToImage} : TagSe
     return (
         <div className="flex flex-col relative">
             <FaPlus data-testid="add-tag" onClick={() => {setTagInput(""); setAddTag(true)}} className={!addTag ? "" : "hidden"} size={20} scale={1}/>
-            <div id="tag-input-container" className={addTag ? "flex flex-col" : "hidden"}>
+            <div id="tag-input-container" className={addTag ? "flex flex-col xxs:w-[245px] xs:w-[345px]" : "hidden"}>
                 <div className="flex gap-6">
                     <div className="flex gap-4">
-                        <input tabIndex={-1} value={tagInput} onChange={handleTagSearch} style={{color: tagInput.includes('&') ? "red" : "black"}} placeholder="Enter tag here" multiple={false} className="w-[243px] h-[30px] rounded-full px-3 outline outline-black" />
+                        <input tabIndex={-1} value={tagInput} onChange={handleTagSearch} style={{color: tagInput.includes('&') ? "red" : "black"}} placeholder="Enter tag here" multiple={false} className="w-full h-[30px] rounded-full px-3 outline outline-black" />
                         <input tabIndex={-1} type="color" data-testid="color-input" value={color} onChange={(e) => setColor(e.target.value)} />
                     </div>
-                    <div className="flex justify-between w-[60px]">
+                    <div className="flex justify-between gap-4">
                         <div data-testid="submit-tag" onClick={() => handleConfirm()}><FaCheck size={20} scale={1} /></div>
                         <FaX data-testid="cancel-tag" onClick={() => handleCancel()} size={20} scale={1} />
                     </div>
@@ -168,7 +168,7 @@ export default function TagSearch({allTags, duplicateTag, addTagToImage} : TagSe
                 <div className={duplicateTagError ? "text-red-500" : "hidden"}> 
                     A tag with the same title has already been added.
                 </div>
-                <div id="tag-results" data-testid="tag-results" ref={tagResultsRef} style={{display: tagSearchResults.length ? 'flex' : 'none'}} className="flex flex-col fixed max-h-[185px] mt-8.5 z-10 bg-white outline outline-black w-[239px] p-4 gap-4 overflow-y-auto">
+                <div id="tag-results" data-testid="tag-results" ref={tagResultsRef} style={{display: tagSearchResults.length ? 'flex' : 'none'}} className="flex flex-col fixed max-h-[185px] mt-8.5 z-10 bg-[#f4f4f4] outline outline-black lg:w-1/4 xl:w-1/8 p-4 gap-4 overflow-y-auto">
                     {
                         tagSearchResults.map((tag, index) => <div id={`div-${tag.tag_id}`} key={tag.tag_id} className={index == currentIndex ? "backdrop-brightness-95" : ""}><Tag key={tag.tag_id} title={tag.title} id={tag.tag_id} color={tag.color} addedTag={false} tagResult={true} duplicateTag={duplicateTag} handleAddTag={handleAddTag}/></div>)
                     }

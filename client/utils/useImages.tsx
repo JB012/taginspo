@@ -12,7 +12,7 @@ export default function useImages() {
 
     async function retrieveImages() {
         const token = await getToken();
-        const res = await axios.get('http://localhost:3000/images', 
+        const res = await axios.get('https://8t1pk2onwe.execute-api.us-east-1.amazonaws.com/images', 
             {headers: { Authorization: `Bearer ${token}` }});
 
         return res.data;        

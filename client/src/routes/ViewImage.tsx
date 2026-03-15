@@ -9,6 +9,7 @@ import Tag from "../../components/Tag";
 import ImageOptions from "../../components/ImageOptions";
 import { useQuery } from "@tanstack/react-query";
 import type { ImageType } from "../../types/ImageType";
+import LoadingSpin from "../../components/LoadingSpin";
 
 interface ViewImageProp {
     id: string | null
@@ -38,7 +39,7 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
 
     async function fetchTagByID(id: string) {
         const token = await getToken();
-        const response = await axios.get(`http://localhost:3000/tags?imageID=${id}`, 
+        const response = await axios.get(`https://8t1pk2onwe.execute-api.us-east-1.amazonaws.com/tags?imageID=${id}`, 
         {headers: {Authorization: `Bearer ${token}`}});
 
         return response.data;
@@ -88,7 +89,7 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
 
         try {
             if (id) {
-                await axios.delete(`http://localhost:3000/images/delete/${id}`, 
+                await axios.delete(`https://8t1pk2onwe.execute-api.us-east-1.amazonaws.com/images/delete/${id}`, 
                 {headers: {Authorization: `Bearer ${token}`}});
             
                 setDeletePopup(false);
@@ -118,8 +119,15 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
         }     
     }
     
+    if (id !== null && (tagQuery.isLoading || imageData === undefined)) {
+        return (
+            <div className="fixed flex bg-[#f4f4f4] w-full h-full justify-center self-center">
+                <LoadingSpin />
+            </div>
+        )
+    }
     return (
-        <div className={id && !tagQuery.isLoading ? "fixed bg-white self-center flex flex-col p-4 w-full h-full" : "hidden"}>
+        <div className={id && !tagQuery.isLoading ? "fixed bg-[#f4f4f4] self-center flex flex-col p-4 w-full h-full" : "hidden"}>
             <div className="flex justify-between">
                 <div className="flex">
                     <div className="flex gap-4">
@@ -144,16 +152,16 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
                     <div id="image-container" className="flex justify-center items-center w-[925px] h-[450px] md:w-[600px] md:h-[350px] xs:w-[300px] xs:h-[275px] xxs:w-[185px] xxs:h-[125px]">
                         <img data-testid="view-image" id={imageData?.image_id} src={imageData?.url} alt={`${imageData?.title} ${tagsToString(imageData?.tagIDs ?? [])}`.trim()} className={`w-[925px] max-h-[450px] md:max-w-[600px] md:max-h-[350px] xs:max-w-[300px] xs:max-h-[275px] xxs:max-w-[185px] xxs:max-h-[125px] bg-amber-100`} />
                     </div>
-                    <div className={hideInfo ? "hidden" : "flex justify-between"}>
-                        <div data-testid="tags-view" className="flex flex-wrap py-4 w-[500px] gap-4">
+                    <div className={hideInfo ? "hidden" : "flex xxs:w-[200px] xs:w-[300px] sm:w-[500px] md:w-[600px] justify-between"}>
+                        <div data-testid="tags-view" className="flex self-start flex-wrap py-4 w-[500px] gap-4">
                             {
                                 tags ? tags.map((tag) => <Tag key={tag.tag_id} id={tag.tag_id} title={tag.title} color={tag.color} addedTag={false} tagResult={false} />) 
                                 : ""
                             }
                         </div>
-                        <div className="flex text-gray-400 flex-col gap-4 md:text-lg xxs:text-xs">
-                            <div className={imageData?.created_at ? "self-end" : "hidden"}>Date Uploaded: {formatDateTime(imageData?.created_at)}</div>
-                            <div className={imageData?.source ? "" : "hidden"}>Source: {imageData?.source}</div>
+                        <div className="flex text-gray-400 flex-col justify-center gap-4 md:text-lg xxs:text-[10px] xs:text-sm">
+                            <div className={imageData?.created_at ? "text-center" : "hidden"}>Date Uploaded: {formatDateTime(imageData?.created_at)}</div>
+                            <div className={imageData?.source ? "text-center" : "hidden"}>Source: {imageData?.source}</div>
                         </div>
                     </div> 
                 </div>

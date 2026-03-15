@@ -12,8 +12,6 @@ import useTags from "../../utils/useTags";
 import { QueryClientContext, skipToken, useQuery } from "@tanstack/react-query";
 import LoadingSpin from "../../components/LoadingSpin";
 
-const url = import.meta.env.VITE_DEFAULT_URL;
-
 export default function EditImage() {
     const queryClient = useContext(QueryClientContext);
     const { id } = useParams();
@@ -44,7 +42,7 @@ export default function EditImage() {
 
     async function retrieveImageData(id : string) {
         const token = await getToken();
-        const res = await axios.get(`http://localhost:3000/images/${id}`, 
+        const res = await axios.get(`https://8t1pk2onwe.execute-api.us-east-1.amazonaws.com/images/${id}`, 
             {headers:  { Authorization: `Bearer ${token}` }});
         
         return res.data; 
@@ -95,13 +93,13 @@ export default function EditImage() {
                         const token = await getToken();
 
                         if (token) {
-                            const res = await axios.post('http://localhost:3000/images/add', formData, 
+                            const res = await axios.post('https://8t1pk2onwe.execute-api.us-east-1.amazonaws.com/images/add', formData, 
                             {headers:  { Authorization: `Bearer ${token}`, 
                             "Content-Type": "multipart/form-data"}});
 
                             if (res.status === 200 && !res.data.includes("Title already exists")) {
                                 await queryClient?.refetchQueries();
-                                await navigate(url);
+                                await navigate("/gallery?type=image");
                             }
                             else {
                                 setError(res.data);
@@ -113,12 +111,12 @@ export default function EditImage() {
                         const token = await getToken();
                         
                         if (token) {
-                            const res = await axios.post(`http://localhost:3000/images/edit/${id}`, 
+                            const res = await axios.post(`https://8t1pk2onwe.execute-api.us-east-1.amazonaws.com/images/edit/${id}`, 
                                 {title: title ? title.trim().replaceAll(" ", "_") : new Date().toString(), source: source, addedTags: JSON.stringify(addedTags)}, 
                                 {headers:  { Authorization: `Bearer ${token}`}});
                             
                             if (res.status === 200 && !res.data.includes("Title already exists")) {
-                                await navigate(url);
+                                await navigate("/gallery?type=image");
                                 setEditing(true);
                                 await queryClient?.refetchQueries();    
                             }
@@ -199,7 +197,7 @@ export default function EditImage() {
         <form onSubmit={(e) => {e.preventDefault(); return false}} encType="multipart/form-data" method="post" className="flex flex-col p-4 gap-4 sm:py-8 w-full h-full">
             <div className="flex w-full justify-between items-center">
                 <FaArrowLeft onClick={() => navigate(-1)} data-testid="cancel-image" size={20} scale={1} />
-                <button className="rounded-full p-4" style={{backgroundColor:  submitable ? "cyan" : "gainsboro", 
+                <button className="rounded-full xs:p-4 xs:text-[16px] xxs:p-2 xxs:text-xs" style={{backgroundColor:  submitable ? "cyan" : "gainsboro", 
                     color: submitable ? "black" : "white"}}>
                     Save Changes
                 </button>
@@ -207,22 +205,22 @@ export default function EditImage() {
             <div className="flex lg:flex-row xxs:flex-col justify-around w-full">
                 <DragAndDrop fileRef={fileRef} imageRef={imageRef} changeTitle={(title : string) => setTitle(title)} 
                 enableSubmit={() => setSubmitable(true)} disableSubmit={() => setSubmitable(false)} editImageURL={image ? image.url : undefined}/>
-                <div className="flex flex-col gap-16">
+                <div className="flex flex-col gap-16 xxs:w-[300px] sm:w-[600px] lg:w-[400px]">
                     <div style={{display: error ? "block" : "none"}}>{error}</div>
                     <div className="flex flex-col gap-4">
                         <label htmlFor="title">Title</label>
-                        <input value={title} onChange={(e) => setTitle(e.target.value)} id="title" name="title" className="p-4 w-[464px] lg:w-[375px] h-[50px] rounded-full outline outline-black" />
+                        <input value={title} onChange={(e) => setTitle(e.target.value)} id="title" name="title" className="p-4 w-full h-[50px] rounded-full outline outline-black" />
                     </div>
                     <div className="flex flex-col gap-4">
                         <label htmlFor="source">Source</label>
-                        <input value={source} onChange={(e) => setSource(e.target.value)} id="source" name="source" className="p-4 w-[464px] lg:w-[375px] h-[50px] rounded-full outline outline-black" />
+                        <input value={source} onChange={(e) => setSource(e.target.value)} id="source" name="source" className="p-4 w-full h-[50px] rounded-full outline outline-black" />
                     </div>
                     <div className="flex flex-col">
                         <div className="flex gap-3">
                             <div>Tags</div>
                             <TagSearch allTags={allTags} duplicateTag={duplicateTag} addTagToImage={addTagToImage} />
                         </div>
-                        <div className="flex flex-wrap py-4 w-[500px] gap-4">
+                        <div className="flex flex-wrap py-4 w-full gap-4">
                             {
                                 addedTags.map(tag => <Tag key={tag.tag_id} id={tag.tag_id} title={tag.title} color={tag.color} addedTag={true} tagResult={false} removeTag={removeTag} editTag={editTag} duplicateTag={duplicateTag}/>)
                             }

@@ -18,8 +18,8 @@ export default function ImageOptions({optionsRef, imageOptions, deletePopup, ima
     return (
         <div className="relative" ref={optionsRef}>
             <FaEllipsisH data-testid="image-options" onClick={() => setImageOptions(!imageOptions)} size={20} scale={20}/>
-            <div className={imageOptions ? "flex flex-col absolute top-1 left-6 w-[110px] bg-white outline" : "hidden"}>
-                <div onClick={() => {if (imageID) navigate(`http://localhost:5173/editimage/${imageID}`)}} className="cursor-pointer p-2">Edit Image</div>
+            <div className={imageOptions ? "flex flex-col absolute top-1 left-6 w-[110px] bg-[#f4f4f4] outline" : "hidden"}>
+                <div onClick={() => {if (imageID) navigate(`/editimage/${imageID}`)}} className="cursor-pointer p-2">Edit Image</div>
                 <hr />
                 <div data-testid="delete-image" onClick={() => setDeletePopup(!deletePopup)} className="relative cursor-pointer p-2">
                     <div className="text-red-500">Delete Image</div>
