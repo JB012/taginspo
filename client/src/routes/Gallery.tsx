@@ -232,17 +232,17 @@ export default function Gallery() {
     return (
         <>
         <SignedIn>
-            <div className={`flex flex-col w-full h-full lg:px-16 xxs:px-4 ${searchParams.get("id") ? "fixed" : ""}`}>
+            <div className={`flex flex-col w-full h-full lg:px-16 xxs:px-2 xs:px-4 ${searchParams.get("id") ? "fixed" : ""}`}>
                  <GalleryHeader type={type} addQueryString={addQueryString} handleImageClick={handleImageClick} handleGalleryType={handleGalleryType} />
                  <div className="flex flex-col w-full">
                     <div className="flex grow w-full justify-between xs:py-10 xxs:py-4 items-center">
                         <div className="flex items-center gap-8">
                             <div className="text-[32px] xxs:text-[22px] font-bold">{!query ? type === "image" ? "Your images" : "Your tags" : "Search results"}</div>
-                            <div className={query ? "hidden" : "flex gap-8"}>
+                            <div className={query ? "hidden" : "flex gap-8 items-center"}>
                                 <FaPlusCircle data-testid="add-image" className={type !== "image" ? "hidden" : ""} onClick={() => navigate("/addimage")} id="add-button" scale={1} size={20}/>
                                 <div className="flex items-center gap-1">
                                     <FaWrench data-testid={"edit-tag"} className={type !== "tag" ? "hidden" : ""} color={editMode ? "#7FEF9A" : "black"} onClick={() => setEditMode(!editMode)} id="edit-button" scale={1} size={20} />
-                                    {editMode ? <div>Click a tag to edit</div> : <div></div>}
+                                    {editMode && type === "tag" ? <div className="xxs:text-xs xs:text-sm">Click a tag to edit</div> : <div></div>}
                                 </div>
                             </div>
                         </div>
