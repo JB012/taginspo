@@ -42,7 +42,7 @@ export default function EditImage() {
 
     async function retrieveImageData(id : string) {
         const token = await getToken();
-        const res = await axios.get(`https://api.taginspo.com/images/${id}`, 
+        const res = await axios.get(`http://localhost:3000/images/${id}`, 
             {headers:  { Authorization: `Bearer ${token}` }});
         
         return res.data; 
