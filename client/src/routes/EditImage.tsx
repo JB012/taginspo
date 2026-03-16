@@ -42,7 +42,7 @@ export default function EditImage() {
 
     async function retrieveImageData(id : string) {
         const token = await getToken();
-        const res = await axios.get(`https://8t1pk2onwe.execute-api.us-east-1.amazonaws.com/images/${id}`, 
+        const res = await axios.get(`https://api.taginspo.com/images/${id}`, 
             {headers:  { Authorization: `Bearer ${token}` }});
         
         return res.data; 
@@ -93,7 +93,7 @@ export default function EditImage() {
                         const token = await getToken();
 
                         if (token) {
-                            const res = await axios.post('https://8t1pk2onwe.execute-api.us-east-1.amazonaws.com/images/add', formData, 
+                            const res = await axios.post('https://api.taginspo.com/images/add', formData, 
                             {headers:  { Authorization: `Bearer ${token}`, 
                             "Content-Type": "multipart/form-data"}});
 
@@ -111,7 +111,7 @@ export default function EditImage() {
                         const token = await getToken();
                         
                         if (token) {
-                            const res = await axios.post(`https://8t1pk2onwe.execute-api.us-east-1.amazonaws.com/images/edit/${id}`, 
+                            const res = await axios.post(`https://api.taginspo.com/images/edit/${id}`, 
                                 {title: title ? title.trim().replaceAll(" ", "_") : new Date().toString(), source: source, addedTags: JSON.stringify(addedTags)}, 
                                 {headers:  { Authorization: `Bearer ${token}`}});
                             

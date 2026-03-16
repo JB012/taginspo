@@ -12,7 +12,7 @@ export default function useTags() {
 
     async function retrieveTags() {
         const token = await getToken();
-        const res = await axios.get('https://8t1pk2onwe.execute-api.us-east-1.amazonaws.com/tags', 
+        const res = await axios.get('https://api.taginspo.com/tags', 
             {headers: { Authorization: `Bearer ${token}` }});
 
         return res.data;

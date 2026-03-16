@@ -83,9 +83,10 @@ test.describe('signed in tests', () => {
 
       await page.getByRole('button', {name: 'Save changes'}).click({delay: 1500});
 
-      await page.waitForURL('/gallery?type=image');
+      await page.waitForURL('/gallery?type=image', {waitUntil: 'load'});
       await expect(page).toHaveURL('/gallery?type=image');
 
+      await expect(page.getByTestId(`image-${input}`)).toBeVisible();
       await expect(page.getByTestId(`image-${input}`).getByRole('img')).toHaveAttribute("alt", getImageAlt(input, fileName));
       }
     
