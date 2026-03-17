@@ -105,11 +105,15 @@ export default function DragAndDrop({fileRef, imageRef, editImageURL, changeTitl
         function displayImage(file : File | null) {
             if (file?.type.startsWith("image/")) {
                 
-                if (imageRef.current) {
+                if (imageRef.current && fileRef.current) {
                     imageRef.current.src = URL.createObjectURL(file);
                     imageRef.current.alt = file.name;
                     imageRef.current.style.display = "block";
                     
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    fileRef.current.files = dataTransfer.files;
+
                     message.style.display = "none";
                     clearBtn.style.display = "block";
                     dropZoneContainer.style.outlineStyle = "none";

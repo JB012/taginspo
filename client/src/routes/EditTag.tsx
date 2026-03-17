@@ -22,7 +22,7 @@ export default function EditTag() {
             try {
                 const token = await getToken();
 
-                const res = await axios.get(`http://localhost:3000/tags/${id}`, 
+                const res = await axios.get(`https://api.taginspo.com/tags/${id}`, 
                     {headers: {Authorization: `Bearer ${token}`}}
                 )
 
@@ -55,7 +55,7 @@ export default function EditTag() {
             try {
                 const token = await getToken();
 
-                const res = await axios.post(`http://localhost:3000/tags/edit`, {title: title, color: color, tagID: id}, 
+                const res = await axios.post(`https://api.taginspo.com/tags/edit`, {title: title, color: color, tagID: id}, 
                     {headers: {Authorization: `Bearer ${token}`}});
                 
                 if (res.status === 200 && queryClient) {
@@ -79,7 +79,7 @@ export default function EditTag() {
 
         try {
             if (queryClient) {
-                await axios.delete(`http://localhost:3000/tags/delete/${id}`, 
+                await axios.delete(`https://api.taginspo.com/tags/delete/${id}`, 
                 {headers: {Authorization: `Bearer ${token}`}});
                     
                 await queryClient.refetchQueries();
