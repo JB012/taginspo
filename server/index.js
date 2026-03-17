@@ -68,4 +68,3 @@ app.post('/api/webhooks', express.raw({ type: 'application/json' }), async (req,
 })
 
 app.listen(port, () => `Listening on http://localhost:${port}`);
-

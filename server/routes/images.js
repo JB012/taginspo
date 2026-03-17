@@ -14,10 +14,9 @@ const cors = require('cors');
 const axios = require('axios');
 const { encrypt } = require('../symm_enc');
 const upload = multer({storage: multer.memoryStorage()});
-const bucketName = "www.taginspo.com";
+const bucketName = "taginspo-images";
 
 dotenv.config();
-
 router.use(cors());
 router.use(clerkMiddleware());
 router.use(express.json());
@@ -130,7 +129,7 @@ router.post("/add", upload.single('file'), async (req, res) => {
                 const hashTitle = hash.update(`${userId}/${title}`).digest('hex');
 
                 const command = new PutObjectCommand({
-                    Bucket: 'www.taginspo.com',
+                    Bucket: bucketName,
                     Key: encryptedTitle,
                     Body: req.file.buffer,
                     ContentType: req.file.mimetype
@@ -199,7 +198,7 @@ router.post("/edit/:id", async (req, res) => {
                 const command = new CopyObjectCommand(copyOriginalParams);
                 await s3Client.send(command);
                 
-                //await deleteImageInS3(originalTitle);
+                await deleteImageInS3(originalTitle);
 
                 await supabase.from('images').update({title: title, source: source, edited_at: createDateTime()}).eq('user_id', userId).eq('image_id', imageID);
             

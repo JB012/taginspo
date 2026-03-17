@@ -24,7 +24,7 @@ const cloudFront = new CloudFrontClient({
 })
 
 function createSignedURL(title) {
-    const imageURL = `https://d2ijutr0xv20w3.cloudfront.net/${title}`;
+    const imageURL = `https://d1wm1israaip6b.cloudfront.net/${title}`;
     const expiresInOneHour = new Date(Date.now() + 1000 * 60 * 60);
     const signedURL = getSignedUrl({
         url: imageURL,
