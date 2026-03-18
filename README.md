@@ -1,10 +1,17 @@
 # TagInspo
 
-TagInspo is an image gallery where users can attach custom tags to images for an easy search access.
-Get started on creating your gallery: https://taginspo.com
+TagInspo is an image gallery where users can attach custom tags to images for an easy search access.  
+
+Get started: https://taginspo.com
 
 ## Installation
+Install [ngrok](https://ngrok.com/download/windows)  
 
+In a terminal, enter the following command:
+```
+ngrok http 3000
+```
+Open a new terminal and enter the commands below:
 ```
 git clone https://github.com/JB012/taginspo.git
 cd taginspo
