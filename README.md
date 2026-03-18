@@ -36,6 +36,7 @@ for gathering and retrieving images, while adding on to their image references.
 
 ## Built With
 - React
+- TypeScript
 - Express.js
 - PostgreSQL
 - TailwindCSS
