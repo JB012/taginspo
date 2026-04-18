@@ -39,7 +39,7 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
 
     async function fetchTagByID(id: string) {
         const token = await getToken();
-        const response = await axios.get(`http://localhost:3000/tags?imageID=${id}`, 
+        const response = await axios.get(`https://api.taginspo.com/tags?imageID=${id}`, 
         {headers: {Authorization: `Bearer ${token}`}});
 
         return response.data;
@@ -89,7 +89,7 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
 
         try {
             if (id) {
-                await axios.delete(`http://localhost:3000/images/delete/${id}`, 
+                await axios.delete(`https://api.taginspo.com/images/delete/${id}`, 
                 {headers: {Authorization: `Bearer ${token}`}});
             
                 setDeletePopup(false);
@@ -150,7 +150,7 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
                 </button>
                 <div className={`flex justify-center items-center flex-col gap-6 w-full h-full pb-12`}>
                     <div id="image-container" className="flex justify-center items-center w-[925px] h-[450px] md:w-[600px] md:h-[350px] xs:w-[300px] xs:h-[275px] xxs:w-[185px] xxs:h-[125px]">
-                        <img data-testid="view-image" id={imageData?.image_id} src={imageData?.url} alt={`${imageData?.title} ${tagsToString(imageData?.tagIDs ?? [])}`.trim()} className={`w-[925px] max-h-[450px] md:max-w-[600px] md:max-h-[350px] xs:max-w-[300px] xs:max-h-[275px] xxs:max-w-[185px] xxs:max-h-[125px] bg-amber-100`} />
+                        <img data-testid="view-image" id={imageData?.image_id} src={imageData?.url} alt={`${imageData?.title} ${tagsToString(imageData?.tagIDs ?? [])}`.trim()} className={`w-[925px] max-h-[450px] md:max-w-[600px] md:max-h-[350px] xs:max-w-[300px] xs:max-h-[275px] xxs:max-w-[185px] xxs:max-h-[125px]`} />
                     </div>
                     <div className={hideInfo ? "hidden" : "flex xxs:w-[200px] xs:w-[300px] sm:w-[500px] md:w-[600px] justify-between"}>
                         <div data-testid="tags-view" className="flex self-start flex-wrap py-4 w-[500px] gap-4">

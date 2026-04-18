@@ -111,9 +111,10 @@ export default function DragAndDrop({fileRef, imageRef, editImageURL, changeTitl
                     imageRef.current.style.display = "block";
                     
                     const dataTransfer = new DataTransfer();
+                    
                     dataTransfer.items.add(file);
-                    fileRef.current.files = dataTransfer.files;
-
+                    fileInput.files = dataTransfer.files;
+                    
                     message.style.display = "none";
                     clearBtn.style.display = "block";
                     dropZoneContainer.style.outlineStyle = "none";
@@ -151,7 +152,7 @@ export default function DragAndDrop({fileRef, imageRef, editImageURL, changeTitl
             fileInput?.removeEventListener('input', handleFileInput);
             dropZone?.removeEventListener("drop", handleDrop);
         }
-    }, [imageRef, enableSubmit, disableSubmit, changeTitle]);
+    }, [imageRef, enableSubmit, disableSubmit, changeTitle, fileRef]);
 
     return (
     <div id="drop-zone-container" className={`${editImageURL ? "outline-none" : "outline-dashed"} outline-black flex w-[800px] h-[567px] xl:w-[600px] lg:w-[400px] xs:w-[300px] xs:h-[300px] xxs:w-[200px] xxs:h-[200px] xxs:self-center`}>
