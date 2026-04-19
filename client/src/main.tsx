@@ -9,7 +9,7 @@ import EditImage from './routes/EditImage.tsx'
 import EditTag from './routes/EditTag.tsx'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
-const PUBLISHABLE_KEY = "pk_test_c2ltcGxlLXNlYWhvcnNlLTcyLmNsZXJrLmFjY291bnRzLmRldiQ"
+const PUBLISHABLE_KEY = "pk_live_Y2xlcmsudGFnaW5zcG8uY29tJA"
 const URL = "/gallery?type=image"
 
 const queryClient = new QueryClient({
