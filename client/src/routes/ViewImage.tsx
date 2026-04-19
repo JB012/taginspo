@@ -39,7 +39,7 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
 
     async function fetchTagByID(id: string) {
         const token = await getToken();
-        const response = await axios.get(`https://api.taginspo.com/tags?imageID=${id}`, 
+        const response = await axios.get(`http://localhost:3000/tags?imageID=${id}`, 
         {headers: {Authorization: `Bearer ${token}`}});
 
         return response.data;
@@ -89,7 +89,7 @@ export default function ViewImage({id, clearID, isFirstImage, isLastImage, delet
 
         try {
             if (id) {
-                await axios.delete(`https://api.taginspo.com/images/delete/${id}`, 
+                await axios.delete(`http://localhost:3000/images/delete/${id}`, 
                 {headers: {Authorization: `Bearer ${token}`}});
             
                 setDeletePopup(false);
