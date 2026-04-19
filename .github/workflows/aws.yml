@@ -46,4 +46,6 @@ jobs:
 
     - name: Deploy to AWS S3
       run: aws s3 sync ./client/dist ${{ secrets.REACT_S3_BUCKET }} --delete
+    
+    - name: Create CloudFront Invalidation
       run: aws cloudfront create-invalidation --distribution-id ${{ secrets.STATIC_DISTRIBUTION_ID }} --paths "/*"
